@@ -11,7 +11,7 @@ The proof architecture is: axiomatize key analytic/probabilistic results with
 detailed proof sketches, prove the logical structure connecting them, and
 progressively fill in the axioms with full proofs.
 
-**pphi2: 41 axioms, 0 sorries** (plus 1 private axiom `schwartz_riemann_sum_bound` in GaussianContinuumLimit; plus 1 unused computation and 1 unused Option B file in `Unused/`) | **gaussian-field (upstream): 2 axioms, 0 sorries (none used by pphi2)**
+**pphi2: 45 axioms, 3 sorries** (plus 1 private axiom `schwartz_riemann_sum_bound` in GaussianContinuumLimit; plus 1 unused computation and 1 unused Option B file in `Unused/`) | **gaussian-field (upstream): 2 axioms, 0 sorries (none used by pphi2)**
 
 `Pphi2/Unused/HypercontractivityOptionB.lean` preserves an optional
 Gross-Rothaus-Simon OU semigroup route as inactive reference material.
@@ -57,6 +57,12 @@ It is not imported and not counted in the active axiom inventory.
 | — | `OSforGFF/TimeTranslation.lean` | 0 axioms, 0 sorries (Schwartz translation continuity) |
 | 6 | `OSAxioms.lean` | 0 axioms, 0 sorries |
 | 6 | `Main.lean` | 1 axiom, 0 sorries |
+| 4T | `TorusContinuumLimit/TorusEmbedding.lean` | 0 axioms, 1 sorry (`torusContinuumGreen`) |
+| 4T | `TorusContinuumLimit/TorusPropagatorConvergence.lean` | 1 axiom, 2 sorries |
+| 4T | `TorusContinuumLimit/TorusTightness.lean` | 1 axiom, 0 sorries |
+| 4T | `TorusContinuumLimit/TorusConvergence.lean` | 0 axioms, 0 sorries (Prokhorov proved!) |
+| 4T | `TorusContinuumLimit/TorusGaussianLimit.lean` | 1 axiom, 0 sorries |
+| 4T | `TorusContinuumLimit/TorusInteractingLimit.lean` | 1 axiom, 0 sorries |
 | 6 | `Bridge.lean` | 4 axioms, 0 sorries |
 
 ### Inactive files (old DDJ/stochastic quantization approach)
@@ -302,6 +308,29 @@ refactoring (functionality consolidated into L2Operator axioms).
 - `continuumGreenBilinear_pos`: `G(f,f) > 0` from Fourier injectivity on Schwartz space.
 
 Note: `os1_inheritance` is a theorem (not axiom) — OS1 transfers trivially since |cos(·)| ≤ 1.
+
+### Phase 4T: Torus continuum limit (UV only, L fixed)
+
+| Axiom | File | Difficulty | Description |
+|-------|------|-----------|-------------|
+| `torus_propagator_convergence` | TorusPropagatorConvergence | Medium | Lattice eigenvalues `(4N²/L²)sin²(πn/N) + m²` → continuum `(2πn/L)² + m²`. Pure UV limit, dominated convergence with rapid Fourier decay. |
+| `torusContinuumMeasures_tight` | TorusTightness | Medium | Tightness via Mitoma criterion on torus. Finite volume makes this cleaner than S'(ℝ^d). |
+| `torusGaussianLimit_isGaussian` | TorusGaussianLimit | Medium | Weak limits of Gaussians on torus are Gaussian. Bochner-Minlos + characteristic functionals. |
+| `torus_interacting_tightness` | TorusInteractingLimit | Medium | Cauchy-Schwarz density transfer from Gaussian tightness. Nelson's estimate + hypercontractivity. |
+
+**Proved theorems (TorusContinuumLimit/):**
+- `torusEmbedLift_measurable`: Measurability of torus embedding lift.
+- `torusContinuumMeasure_isProbability`: Pushforward of probability measure is probability.
+- `torus_second_moment_uniform`: Uniform second moment bound from `torusEmbeddedTwoPoint_uniform_bound`.
+- `torusGaussianLimit_exists`: **PROVED** — Prokhorov extraction on Polish torus (no `prokhorov_configuration_sequential` axiom needed).
+- `torusGaussianLimit_nontrivial`: `∫ (ω f)² dμ > 0` from `torusContinuumGreen_pos`.
+- `torusInteractingMeasure_isProbability`: Interacting pushforward is probability.
+- `torusInteractingLimit_exists`: **PROVED** — Prokhorov extraction for interacting measures.
+
+**Sorries (provable):**
+- `torusContinuumGreen`: Continuum Green's function definition (will be `greenFunctionBilinear` from gaussian-field).
+- `torusEmbeddedTwoPoint_uniform_bound`: `E[Φ_N(f)²] ≤ C` from eigenvalue bound λ ≥ m².
+- `torusContinuumGreen_pos`: `G(f,f) > 0` from Fourier injectivity on C∞(T²).
 
 ### Phase 5: Euclidean invariance (OS2) and OS proof chains
 

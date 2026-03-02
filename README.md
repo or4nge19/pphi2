@@ -59,8 +59,15 @@ The construction proceeds in six phases:
 All six phases are structurally complete and the full project builds
 (`lake build`, 3516 jobs).
 
-- **pphi2:** 41 axioms, 0 sorries
+- **pphi2:** 45 axioms, 3 sorries
 - **gaussian-field** (upstream dependency): 2 axioms, 0 sorries (none used by pphi2)
+
+The torus continuum limit (`TorusContinuumLimit/`) provides a cleaner alternative
+to the S'(ℝ^d) approach: by fixing the physical volume L and taking only N→∞,
+the UV limit is isolated from IR issues. Prokhorov extraction on the Polish
+torus configuration space is **proved** (not axiomatized). The same pipeline
+handles both Gaussian and interacting (P(φ)₂) measures via Cauchy-Schwarz
+density transfer.
 
 See [status.md](status.md) for a complete inventory of all axioms and sorries,
 organized by difficulty and priority.
@@ -121,6 +128,13 @@ Pphi2/
     PropagatorConvergence.lean       -- Lattice propagator → continuum Green's function; uniform bound
     GaussianTightness.lean           -- Tightness of {ν_{GFF,a}} via Mitoma criterion
     GaussianLimit.lean               -- Existence + Gaussianity of the limit; IsGaussianContinuumLimit
+  TorusContinuumLimit/               -- Phase 4T: Torus continuum limit (UV only, L fixed)
+    TorusEmbedding.lean              -- torusEmbedLift, torusContinuumMeasure, Green's function
+    TorusPropagatorConvergence.lean  -- Lattice → continuum eigenvalues, uniform bound, positivity
+    TorusTightness.lean              -- Tightness via Mitoma on torus (finite volume)
+    TorusConvergence.lean            -- Prokhorov extraction (PROVED, not axiomatized)
+    TorusGaussianLimit.lean          -- Gaussian identification, IsTorusGaussianContinuumLimit
+    TorusInteractingLimit.lean       -- P(φ)₂ tightness + existence (Cauchy-Schwarz transfer)
   GeneralResults/
     FunctionalAnalysis.lean          -- Pure Mathlib results: Cesàro, Schwartz Lp, trig identity
   OSAxioms.lean                      -- Phase 6: OS axiom definitions (matching OSforGFF)
