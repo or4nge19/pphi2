@@ -93,31 +93,6 @@ def continuumGreenBilinear (mass : ℝ)
 
 /-! ## Algebraic identities connecting the two-point functions -/
 
-/-- The embedded two-point function unfolds to a lattice Riemann sum.
-
-  `⟨Φ_a(f) · Φ_a(g)⟩_{GFF} = a^{2d} Σ_{x,y} C_a(x,y) f(ax) g(ay)`
-
-where `C_a(x,y)` is the lattice Green's function `(-Δ_a + m²)⁻¹(x,y)`.
-
-Proof sketch:
-1. Unfold the pushforward integral: `∫ F d(map ι μ) = ∫ F∘ι dμ`.
-2. The evaluation `(ι_a φ)(f) = a^d Σ_x φ(x) f(ax)` gives a bilinear
-   form in φ.
-3. Gaussian integration `∫ φ(x)φ(y) dμ_{GFF} = C_a(x,y)` yields the
-   lattice sum. -/
-theorem embeddedTwoPoint_eq_latticeSum (a mass : ℝ) (ha : 0 < a) (hmass : 0 < mass)
-    (f g : ContinuumTestFunction d) :
-    embeddedTwoPoint d N a mass ha hmass f g =
-    a ^ (2 * d) * ∑ x : FinLatticeSites d N, ∑ y : FinLatticeSites d N,
-      GaussianField.covariance (latticeCovariance d N a mass ha hmass)
-        (Pi.single x 1) (Pi.single y 1) *
-      evalAtSite d N a f x * evalAtSite d N a g y := by
-  -- The pushforward integral unfolds as ∫ (F ∘ ι) dμ_GFF
-  -- where F(ω) = ω(f) * ω(g) and ι = latticeEmbedLift.
-  -- Then ι(ω)(f) = a^d Σ_x ω(e_x) f(ax), so the product gives the double sum.
-  -- The Gaussian integration ∫ ω(e_x) ω(e_y) = C(e_x, e_y) finishes.
-  sorry
-
 /-- The embedded two-point function connects to the lattice Gaussian integral.
 
 Rewrites the pushforward integral as an integral over lattice field
@@ -134,6 +109,72 @@ theorem embeddedTwoPoint_eq_covariance (a mass : ℝ) (ha : 0 < a) (hmass : 0 < 
     ((configuration_eval_measurable f).mul (configuration_eval_measurable g)
       |>.aestronglyMeasurable)]
   rfl
+
+theorem embeddedTwoPoint_eq_latticeSum (a mass : ℝ) (ha : 0 < a) (hmass : 0 < mass)
+    (f g : ContinuumTestFunction d) :
+    embeddedTwoPoint d N a mass ha hmass f g =
+    a ^ (2 * d) * ∑ x : FinLatticeSites d N, ∑ y : FinLatticeSites d N,
+      GaussianField.covariance (latticeCovariance d N a mass ha hmass)
+        (Pi.single x 1) (Pi.single y 1) *
+      evalAtSite d N a f x * evalAtSite d N a g y := by
+  -- Step 1: Rewrite as integral over lattice configurations
+  rw [embeddedTwoPoint_eq_covariance]
+  -- Step 2: Unfold latticeEmbed to latticeEmbedEval
+  simp only [latticeEmbed_eval, latticeEmbedEval]
+  -- Step 3: Rewrite integrand to factor out a^{2d} and expand product of sums
+  set μ := latticeGaussianMeasure d N a mass ha hmass
+  set T := latticeCovariance d N a mass ha hmass
+  -- Abbreviate: each factor is a^d * Σ_x ω(e_x) * f(ax)
+  -- Their product = a^{2d} * (Σ_x ω(e_x) f(ax)) * (Σ_y ω(e_y) g(ay))
+  --              = a^{2d} * Σ_x Σ_y ω(e_x) ω(e_y) f(ax) g(ay)
+  have hrewrite : ∀ ω : Configuration (FinLatticeField d N),
+      (a ^ d * ∑ x, ω (Pi.single x 1) * evalAtSite d N a f x) *
+      (a ^ d * ∑ y, ω (Pi.single y 1) * evalAtSite d N a g y) =
+      a ^ (2 * d) * ∑ x, ∑ y,
+        ω (Pi.single x 1) * ω (Pi.single y 1) *
+        evalAtSite d N a f x * evalAtSite d N a g y := by
+    intro ω
+    -- (a^d * Σf) * (a^d * Σg) = a^{2d} * (Σf) * (Σg) = a^{2d} * Σ_{x,y} f_x * g_y
+    have hpow : a ^ d * a ^ d = a ^ (2 * d) := by rw [← pow_add]; ring_nf
+    rw [show (a ^ d * ∑ x, ω (Pi.single x 1) * evalAtSite d N a f x) *
+        (a ^ d * ∑ y, ω (Pi.single y 1) * evalAtSite d N a g y) =
+        a ^ d * a ^ d *
+        ((∑ x, ω (Pi.single x 1) * evalAtSite d N a f x) *
+         (∑ y, ω (Pi.single y 1) * evalAtSite d N a g y))
+      from by ring]
+    rw [hpow, Finset.sum_mul_sum]
+    congr 1
+    apply Finset.sum_congr rfl; intro x _
+    apply Finset.sum_congr rfl; intro y _
+    ring
+  simp_rw [hrewrite]
+  -- Step 4: Pull constant a^{2d} and finite sums out of the integral
+  rw [integral_const_mul]
+  congr 1
+  -- Now need: ∫ Σ_x Σ_y ... = Σ_x Σ_y ∫ ...
+  -- Integrability of each summand
+  have hint : ∀ (x y : FinLatticeSites d N),
+      Integrable (fun ω : Configuration (FinLatticeField d N) =>
+        ω (Pi.single x 1) * ω (Pi.single y 1) *
+        evalAtSite d N a f x * evalAtSite d N a g y) μ := by
+    intro x y
+    have h1 := pairing_product_integrable T (Pi.single x 1) (Pi.single y 1)
+    exact (h1.mul_const _).mul_const _
+  -- Swap integral and outer sum
+  rw [integral_finset_sum _ (fun x _ =>
+    integrable_finset_sum _ (fun y _ => hint x y))]
+  congr 1; ext x
+  -- Swap integral and inner sum
+  rw [integral_finset_sum _ (fun y _ => hint x y)]
+  congr 1; ext y
+  -- Step 5: Factor out constants and apply Gaussian cross moment
+  have : (fun ω : Configuration (FinLatticeField d N) =>
+      ω (Pi.single x 1) * ω (Pi.single y 1) *
+      evalAtSite d N a f x * evalAtSite d N a g y) =
+      fun ω => (ω (Pi.single x 1) * ω (Pi.single y 1)) *
+      (evalAtSite d N a f x * evalAtSite d N a g y) := by
+    ext ω; ring
+  rw [this, integral_mul_const, lattice_cross_moment d N a mass ha hmass]; ring
 
 end Pphi2
 
