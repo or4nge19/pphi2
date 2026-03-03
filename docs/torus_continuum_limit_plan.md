@@ -1,165 +1,224 @@
-# Torus Continuum Limit Completion Plan
+# Torus Continuum Limit: OS Axioms Plan
 
-## Overview
+## Goal
 
-The torus continuum limit isolates the UV limit (a = L/N → 0) from IR issues
-by fixing the physical volume L. The pipeline handles both Gaussian and
-interacting (P(φ)₂) measures.
+Prove OS axioms OS0–OS3 for **both** the Gaussian and interacting P(φ)₂
+continuum limit measures on the torus T²_L. The torus approach isolates
+the UV limit (a = L/N → 0) from IR issues by fixing the physical volume L.
 
-**Current state (2026-03-03):** 7 files in `TorusContinuumLimit/`, 15 torus
-axioms, 2 sorries (both in TorusOSAxioms). OS0–OS3 defined for the torus
-Gaussian continuum limit; OS2 + OS3 proved, OS0 + OS1 sorry'd.
+**Current state (2026-03-03):**
+
+| | Gaussian | Interacting |
+|--|----------|-------------|
+| Limit exists | PROVED (full sequence) | PROVED (subsequential) |
+| OS0 (Analyticity) | sorry | not started |
+| OS1 (Regularity) | sorry | not started |
+| OS2 (Translation+D4) | PROVED | not started |
+| OS3 (Reflection Positivity) | PROVED | not started |
+| `SatisfiesTorusOS` | assembled (2 sorries) | not started |
+
+7 files in `TorusContinuumLimit/`, 15 torus axioms, 2 sorries.
 
 ## Architecture
 
+The OS axiom definitions (`SatisfiesTorusOS`) are measure-agnostic — they
+apply to any probability measure on `Configuration(TorusTestFunction L)`.
+The Gaussian and interacting cases share the same axiom bundle but have
+different proof paths.
+
 ```
-gaussian-field (upstream)                    pphi2 (downstream)
-─────────────────────────                    ──────────────────
-NuclearTensorProduct.evalCLM ──────────────→ TorusEmbedding.lean
-HeatKernel/Bilinear.lean    ──────────────→   torusContinuumGreen = greenFunctionBilinear
-  HasLaplacianEigenvalues                      torusContinuumMeasure
-  heatKernelBilinear                           torusEmbeddedTwoPoint
-  greenFunctionBilinear
-Torus/Symmetry.lean         ──────────────→ TorusOSAxioms.lean
-  torusTranslation                             torusGeneratingFunctional
-  torusSwap                                    TorusOS0 (sorry)
-  torusTimeReflection                          TorusOS1 (sorry)
-  torusConfigReflection                        TorusOS2_Translation (PROVED)
-                                               TorusOS2_D4 (PROVED)
-                                             TorusPropagatorConvergence.lean
-                                               torus_propagator_convergence (axiom)
-                                               torusEmbeddedTwoPoint_uniform_bound (axiom)
-                                               torusContinuumGreen_pos (PROVED)
-
-                                             TorusTightness.lean
-                                               torusContinuumMeasures_tight (axiom)
-
-                                             TorusConvergence.lean
-                                               torusGaussianLimit_exists (PROVED)
-
-                                             TorusGaussianLimit.lean
-                                               torusGaussianLimit_isGaussian (axiom)
-                                               torusGaussianMeasure_isGaussian (axiom)
-                                               torusLimit_covariance_eq (axiom)
-                                               gaussian_measure_unique_of_covariance (axiom)
-                                               torusGaussianMeasure_z2_symmetric (axiom)
-                                               z2_symmetric_of_weakLimit (axiom)
-                                               torusGaussianLimit_fullConvergence (axiom)
-                                               torusGaussianLimit_converges (PROVED)
-                                               torusGaussianLimit_nontrivial (PROVED)
-
-                                             TorusOSAxioms.lean
-                                               torusGaussianLimit_characteristic_functional (axiom)
-                                               torusContinuumGreen_translation_invariant (axiom)
-                                               torusContinuumGreen_pointGroup_invariant (axiom)
-                                               torusLattice_rp (axiom)
-                                               torusGaussianLimit_os0 (sorry)
-                                               torusGaussianLimit_os1 (sorry)
-                                               torusGaussianLimit_os2_translation (PROVED)
-                                               torusGaussianLimit_os2_D4 (PROVED)
-                                               torusGaussianLimit_os3 (PROVED)
-                                               torusGaussianLimit_satisfies_OS (PROVED)
-
-                                             TorusInteractingLimit.lean
-                                               torus_interacting_tightness (axiom)
-                                               torusInteractingLimit_exists (PROVED)
+                        SatisfiesTorusOS L μ
+                       (measure-agnostic bundle)
+                      ╱                        ╲
+    Gaussian proof path                  Interacting proof path
+    ───────────────────                  ──────────────────────
+    OS0: exp(-½Q) entire                 OS0: exponential moments
+    OS1: |E[e^{iX}]| ≤ 1  (shared)      OS1: |E[e^{iX}]| ≤ 1  (shared)
+    OS2: G_L invariance                  OS2: V_a invariance
+    OS3: rp_closed_under_weak_limit      OS3: rp_closed_under_weak_limit
+         + torusLattice_rp                    + interacting lattice RP
+         + full sequence convergence          + subsequential convergence
 ```
 
-## Current Status by File
+## Phase 1: Complete Gaussian OS (fill 2 sorries)
 
-| File | Axioms | Sorries | Proved |
-|------|--------|---------|--------|
-| TorusEmbedding | 0 | 0 | `torusEmbedLift_measurable`, `torusContinuumMeasure_isProbability` |
-| TorusPropagatorConvergence | 2 | 0 | `torusContinuumGreen_pos` |
-| TorusTightness | 1 | 0 | `torus_second_moment_uniform` |
-| TorusConvergence | 0 | 0 | `torusGaussianLimit_exists` |
-| TorusGaussianLimit | 7 | 0 | `torusGaussianLimit_converges`, `torusGaussianLimit_nontrivial` |
-| TorusOSAxioms | 4 | 2 | `os2_translation`, `os2_D4`, `os3`, `satisfies_OS` |
-| TorusInteractingLimit | 1 | 0 | `torusInteractingLimit_exists` |
-| **Total** | **15** | **2** | |
+### 1a. `torusGaussianLimit_os1` — OS1 (easy, no axioms)
 
-## Next Steps: Fill the 2 Sorries
+`‖Z[f]‖ ≤ 1` for any probability measure. Proof:
+`|E[e^{iωf}]| ≤ E[|e^{iωf}|] = E[1] = 1` via `norm_integral_le_integral_norm`
++ `Complex.abs_exp_ofReal_mul_I` + `measure_univ`.
 
-### `torusGaussianLimit_os1` (OS1, easy)
+Same as the proved `norm_generatingFunctional_le_one` in OS2_WardIdentity.lean.
 
-**Statement:** `‖torusGeneratingFunctional L μ f‖ ≤ 1`
+### 1b. `torusGaussianLimit_os0` — OS0 (straightforward, uses char. func. axiom)
 
-**Proof:** `|E[e^{iωf}]| ≤ E[|e^{iωf}|] = E[1] = 1` by norm_integral_le_integral_norm
-+ `‖exp(ix)‖ = 1` + probability measure has total mass 1.
+By `torusGaussianLimit_characteristic_functional`, `Z[Σ zᵢJᵢ]` =
+`exp(-½ Σᵢⱼ zᵢzⱼ G(Jᵢ,Jⱼ))`. Re of this is a real-analytic function of
+z ∈ ℝⁿ (composition of polynomial with exp).
 
-This is the same argument as the proved `norm_generatingFunctional_le_one` in
-OS2_WardIdentity.lean — just for torus test functions instead of Schwartz.
+## Phase 2: Interacting OS3 (Reflection Positivity)
 
-**Blocked by:** Nothing.
+OS3 is the easiest interacting axiom because `rp_closed_under_weak_limit`
+is already proved and applies to any weak limit of RP measures.
 
-### `torusGaussianLimit_os0` (OS0, straightforward)
+### 2a. Interacting lattice RP
 
-**Statement:** `Re(Z[Σ zᵢJᵢ])` is real-analytic on ℝⁿ.
+Need: `IsRP (torusInteractingMeasure L N P mass hmass) (torusConfigReflection L) (torusRP_admissible L)`
 
-**Proof:** By `torusGaussianLimit_characteristic_functional`, Z[f] = exp(-½G(f,f)).
-So Z[Σ zᵢJᵢ] = exp(-½ Σᵢⱼ zᵢzⱼ G(Jᵢ,Jⱼ)), a composition of a polynomial (the
-bilinear form) with exp, which is entire. Take Re to get a real-analytic function.
+The interacting measure `dμ_P = (1/Z) e^{-V} dμ_{GFF}` is RP because:
+- The GFF is RP (transfer matrix `H ≥ 0`)
+- The Wick-ordered interaction `V = Σ_x :P(φ(x)):` decomposes as `V = V_+ + V_-`
+  where `V_±` depend on the positive/negative time sites respectively
+- The Boltzmann weight `e^{-V} = e^{-V_+} · e^{-V_-}` factors, preserving the
+  RP structure
 
-**Blocked by:** `torusGaussianLimit_characteristic_functional` axiom (needed in proof).
+This is a new axiom (or provable from `torusLattice_rp` + interaction structure).
 
-## Axiom Inventory (15 axioms)
+**Reference:** Glimm-Jaffe §6.3, Simon Ch. II.
 
-### Tier A: Convergence Infrastructure (7 axioms in TorusGaussianLimit)
+### 2b. Thread subsequence through RP closure
 
-| Axiom | Difficulty | Description |
-|-------|-----------|-------------|
-| `torusGaussianLimit_isGaussian` | Medium | Weak limits of Gaussians are Gaussian (Bochner-Minlos) |
-| `torusGaussianMeasure_isGaussian` | Easy | Lattice GFF pushforward is Gaussian (linear pushforward of Gaussian) |
-| `torusLimit_covariance_eq` | Easy-Med | Weak convergence transfers second moments (uniform integrability) |
-| `gaussian_measure_unique_of_covariance` | Easy | Gaussian determined by covariance (Bochner-Minlos uniqueness) |
-| `torusGaussianMeasure_z2_symmetric` | Easy | Centered Gaussian is Z₂-symmetric |
-| `z2_symmetric_of_weakLimit` | Easy | Z₂ symmetry preserved under weak limits (homeomorphism) |
-| `torusGaussianLimit_fullConvergence` | Medium | Full sequence convergence from uniqueness |
+`torusInteractingLimit_exists` gives `(φ, μ, StrictMono φ, IsProbabilityMeasure μ, weak convergence along φ)`.
+Need to apply `rp_closed_under_weak_limit` with the subsequential measures
+`fun n => torusInteractingMeasure L (φ n + 1) P mass hmass`.
 
-### Tier B: UV Convergence (3 axioms)
+This is a straightforward adaptation of `torusGaussianLimit_os3` —
+the only difference is using subsequential convergence instead of full
+sequence convergence.
 
-| Axiom | Difficulty | Description |
-|-------|-----------|-------------|
-| `torus_propagator_convergence` | Medium | Lattice eigenvalues → continuum eigenvalues |
-| `torusEmbeddedTwoPoint_uniform_bound` | Easy | E[Φ_N(f)²] ≤ C uniformly (λ ≥ m²) |
-| `torusContinuumMeasures_tight` | Medium | Tightness via Mitoma criterion |
+## Phase 3: Interacting OS1 (Regularity)
 
-### Tier C: OS Axiom Support (4 axioms in TorusOSAxioms)
+`‖Z[f]‖ ≤ 1` — identical proof to the Gaussian case. The bound
+`|E[e^{iX}]| ≤ 1` holds for any probability measure.
 
-| Axiom | Difficulty | Description |
-|-------|-----------|-------------|
-| `torusGaussianLimit_characteristic_functional` | Easy-Med | Z[f] = exp(-½G(f,f)) from MGF → CF analytic continuation |
-| `torusContinuumGreen_translation_invariant` | Easy | G_L(Tf,Tg) = G_L(f,g) — phase cancellation in Fourier |
-| `torusContinuumGreen_pointGroup_invariant` | Easy | G_L is D4-invariant — eigenvalue symmetry |
-| `torusLattice_rp` | Medium | Lattice GFF is RP (transfer matrix H ≥ 0) |
+## Phase 4: Interacting OS2 (Symmetry)
 
-### Tier D: Interacting Extension (1 axiom)
+### 4a. Translation invariance
 
-| Axiom | Difficulty | Description |
-|-------|-----------|-------------|
-| `torus_interacting_tightness` | Hard | Cauchy-Schwarz density transfer + Nelson |
+The lattice interaction is translation-invariant (`latticeAction_translation_invariant`
+is proved). The lattice GFF is translation-invariant. Therefore the interacting
+lattice measure is translation-invariant, and this transfers to the limit.
 
-## Priority for Axiom Reduction
+Two approaches:
+1. **Direct:** Prove the interacting lattice generating functional is
+   translation-invariant, then transfer by weak convergence.
+2. **Via covariance:** If the limit measure is determined by its Schwinger
+   functions, and the Schwinger functions inherit lattice translation
+   invariance, then the limit is translation-invariant.
 
-1. **`torusGaussianMeasure_z2_symmetric`** (Easy) — centered Gaussian is even
-2. **`z2_symmetric_of_weakLimit`** (Easy) — negation is a homeomorphism
-3. **`torusGaussianMeasure_isGaussian`** (Easy) — linear pushforward of Gaussian
-4. **`torusContinuumGreen_translation_invariant`** (Easy) — spectral argument
-5. **`torusContinuumGreen_pointGroup_invariant`** (Easy) — eigenvalue symmetry
-6. **`torusEmbeddedTwoPoint_uniform_bound`** (Easy) — λ ≥ m² + Parseval
-7. **`gaussian_measure_unique_of_covariance`** (Easy) — Fourier transform injectivity
-8. **`torusLimit_covariance_eq`** (Easy-Med) — uniform integrability
-9. **`torusGaussianLimit_characteristic_functional`** (Easy-Med) — Wick rotation
-10. **`torusGaussianLimit_isGaussian`** (Medium) — Bochner-Minlos
-11. **`torus_propagator_convergence`** (Medium) — dominated convergence
-12. **`torusContinuumMeasures_tight`** (Medium) — Mitoma criterion
-13. **`torusGaussianLimit_fullConvergence`** (Medium) — subsequential uniqueness
-14. **`torusLattice_rp`** (Medium) — transfer matrix argument
-15. **`torus_interacting_tightness`** (Hard) — Nelson + hypercontractivity
+Approach 1 is cleaner. Need axiom or proof:
+- `torusInteractingMeasure_translation_invariant`: `Z_P[T_v f] = Z_P[f]`
+  for all lattice translation vectors v.
+
+### 4b. D4 invariance
+
+Similar to translation invariance: the lattice action is D4-invariant
+(nearest-neighbor interactions are symmetric under the square lattice point group).
+
+Need axiom or proof:
+- `torusInteractingMeasure_D4_invariant`: `Z_P[σf] = Z_P[f]` for σ ∈ D4.
+
+### 4c. Transfer to continuum
+
+Weak convergence: if `Z_N[σf] = Z_N[f]` for all N, and `Z_N → Z` pointwise,
+then `Z[σf] = Z[f]`. This is immediate from the convergence.
+
+## Phase 5: Interacting OS0 (Analyticity)
+
+This is the hardest axiom for the interacting case.
+
+OS0 requires `Re(Z[Σ zᵢJᵢ])` to be real-analytic on ℝⁿ. For the Gaussian
+this was trivial (exp of quadratic). For the interacting case, this requires
+showing the measure has all exponential moments:
+
+`∫ exp(c|ω(f)|) dμ < ∞` for all c > 0, f ∈ TorusTestFunction L.
+
+On the finite torus, this should follow from:
+1. The interacting measure has density `(1/Z) e^{-V}` w.r.t. the GFF
+2. V is bounded below (proved: `latticeInteraction_bounded_below`)
+3. The GFF has all Gaussian moments
+4. On the torus, the interaction is a polynomial in finitely many
+   Gaussian variables, so all moments are finite
+
+The transfer to the continuum limit requires uniform moment bounds
+(analogue of `continuum_exponential_moments`).
+
+**Difficulty:** Medium-Hard. Needs Nelson-type estimates on the torus.
+
+## Phase 6: Assembly
+
+### 6a. `IsTorusInteractingContinuumLimit` predicate
+
+Define a predicate for the interacting continuum limit, analogous to
+`IsTorusGaussianContinuumLimit`. Should include:
+- `IsProbabilityMeasure μ`
+- Z₂ symmetry (inherited from the even polynomial P)
+- Weak limit of interacting lattice measures
+
+### 6b. `torusInteractingLimit_satisfies_OS`
+
+Assemble OS0–OS3 for the interacting case.
+
+### 6c. `torusInteractingOS_exists`
+
+Master existence theorem:
+```
+theorem torusInteractingOS_exists (P : InteractionPolynomial)
+    (mass : ℝ) (hmass : 0 < mass) :
+    ∃ (μ : Measure (Configuration (TorusTestFunction L)))
+      (_ : IsProbabilityMeasure μ),
+      @SatisfiesTorusOS L hL μ ‹_›
+```
+
+## New Axioms Needed for Interacting OS
+
+| Axiom | Difficulty | Phase |
+|-------|-----------|-------|
+| Interacting lattice RP | Easy-Med | 2a |
+| Interacting translation invariance (lattice) | Easy | 4a |
+| Interacting D4 invariance (lattice) | Easy | 4b |
+| Interacting exponential moments (continuum) | Med-Hard | 5 |
+
+Total: ~4 new axioms for the interacting case.
+
+## Dependency Graph
+
+```
+Phase 1 (Gaussian sorries)         independent, do first
+  ├─ 1a: OS1 (easy)
+  └─ 1b: OS0 (straightforward)
+
+Phase 2 (Interacting OS3)          needs: interacting lattice RP axiom
+  ├─ 2a: interacting lattice RP
+  └─ 2b: thread subsequence
+
+Phase 3 (Interacting OS1)          trivial, same as Gaussian
+
+Phase 4 (Interacting OS2)          needs: lattice symmetry axioms
+  ├─ 4a: translation invariance
+  ├─ 4b: D4 invariance
+  └─ 4c: transfer to limit
+
+Phase 5 (Interacting OS0)          hardest, needs moment bounds
+  └─ exponential moments
+
+Phase 6 (Assembly)                 depends on all above
+```
+
+## Implementation Order
+
+1. Fill Gaussian OS1 sorry (Phase 1a) — easy win
+2. Fill Gaussian OS0 sorry (Phase 1b) — straightforward
+3. Add interacting lattice RP axiom + prove OS3 (Phase 2)
+4. Prove interacting OS1 (Phase 3) — trivial
+5. Add symmetry axioms + prove OS2 (Phase 4)
+6. Add moment axiom + prove OS0 (Phase 5)
+7. Assembly + master theorem (Phase 6)
 
 ## Success Criteria
 
-- 2 sorries filled (OS0 + OS1)
 - `torusGaussianLimit_satisfies_OS` compiles with no sorry
-- `lake build` passes with no regressions
-- Axiom count ideally decreases (easy axioms proved)
+- `torusInteractingLimit_satisfies_OS` compiles (with axioms, no sorry)
+- `torusInteractingOS_exists` master theorem
+- `lake build` passes
+- Total new axiom count ≤ 4

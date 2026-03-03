@@ -54,6 +54,33 @@ The construction proceeds in six phases:
 
 6. **Assembly** — Combine all axioms into the main theorem.
 
+## Construction parameters and renormalization
+
+The construction takes two inputs:
+
+- **P** (`InteractionPolynomial`) — an even polynomial of degree ≥ 4, bounded below.
+  Examples: P(τ) = λτ⁴, P(τ) = λτ⁴ + μτ², P(τ) = (τ²−a²)⁴.
+  P may have a nonzero quadratic coefficient; the physical mass receives
+  contributions from both the Gaussian mass and the quadratic term in P.
+
+- **mass** (`mass : ℝ`, `0 < mass`) — the mass parameter in the Gaussian
+  reference measure, whose covariance is (−Δ_a + mass²)⁻¹. This must be
+  strictly positive so the lattice operator is invertible (the zero mode
+  has eigenvalue mass²). This is a technical requirement for the Gaussian
+  reference measure, not a physical restriction on the theory.
+
+The expansion is always around φ = 0, but this does not force the theory
+into the symmetric phase. An even polynomial can have its global minima at
+±a ≠ 0 (e.g. P(τ) = (τ²−a²)⁴); the functional integral determines which
+phase the theory is in.
+
+**Renormalization:** P(Φ)₂ is super-renormalizable in d = 2. The only UV
+counterterm is the Wick ordering constant c_a = G_a(0,0) ~ (1/2π)log(1/a),
+which is the lattice propagator at coinciding points. The Wick-ordered
+interaction :P(φ(x)):_a subtracts the divergent self-contractions at each
+lattice spacing. No mass, coupling constant, or wave function
+renormalization is needed beyond Wick ordering.
+
 ## Current status
 
 All six phases are structurally complete and the full project builds

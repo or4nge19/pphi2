@@ -295,7 +295,11 @@ theorem torusGaussianLimit_os3
 
 /-! ## Bundle and main theorem -/
 
-/-- **Bundled torus OS axioms OS0–OS3.** -/
+/-- **Bundled torus OS axioms OS0–OS3.**
+
+This structure is measure-agnostic: it applies to any probability measure
+on Configuration(TorusTestFunction L), whether Gaussian or interacting.
+The axiom definitions depend only on `L` and `μ`, not on mass or polynomial. -/
 structure SatisfiesTorusOS
     (μ : Measure (Configuration (TorusTestFunction L)))
     [IsProbabilityMeasure μ] : Prop where
@@ -305,7 +309,11 @@ structure SatisfiesTorusOS
   os2_D4 : TorusOS2_D4Invariance L μ
   os3 : TorusOS3_ReflectionPositivity L μ
 
-/-- **Main theorem: The torus Gaussian continuum limit satisfies OS0–OS3.** -/
+/-- **The torus Gaussian continuum limit satisfies OS0–OS3.**
+
+The proof uses the Gaussian structure (characteristic functional = exp(-½G))
+to establish OS0 and OS2. OS1 holds for any probability measure. OS3 is
+inherited from lattice RP via weak limits. -/
 theorem torusGaussianLimit_satisfies_OS
     (mass : ℝ) (hmass : 0 < mass)
     (μ : Measure (Configuration (TorusTestFunction L)))
@@ -317,6 +325,21 @@ theorem torusGaussianLimit_satisfies_OS
   os2_translation := torusGaussianLimit_os2_translation L mass hmass μ hGCL
   os2_D4 := torusGaussianLimit_os2_D4 L mass hmass μ hGCL
   os3 := torusGaussianLimit_os3 L mass hmass μ hGCL
+
+/-- **Existence of a torus Gaussian measure satisfying OS0–OS3.**
+
+Master theorem: for any torus size L > 0 and mass m > 0, there exists
+a probability measure on Configuration(TorusTestFunction L) satisfying
+all torus OS axioms. The measure is the continuum limit of lattice GFFs.
+
+The statement hides all construction details (mass, lattice, convergence)
+behind the existential — the output is just a measure satisfying `SatisfiesTorusOS`. -/
+theorem torusGaussianOS_exists (mass : ℝ) (hmass : 0 < mass) :
+    ∃ (μ : Measure (Configuration (TorusTestFunction L)))
+      (_ : IsProbabilityMeasure μ),
+      @SatisfiesTorusOS L hL μ ‹_› := by
+  obtain ⟨μ, hμ_prob, hGCL, _⟩ := torusGaussianLimit_converges L mass hmass
+  exact ⟨μ, hμ_prob, torusGaussianLimit_satisfies_OS L mass hmass μ hGCL⟩
 
 end Pphi2
 
