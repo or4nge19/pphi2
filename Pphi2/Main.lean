@@ -246,6 +246,42 @@ theorem pphi2_wightman (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mas
   -- Apply os_reconstruction to extract the mass gap of the Wightman QFT
   exact ⟨μ, hμ, hos, os_reconstruction P mass hmass μ hμ hos⟩
 
+/-! ## Consistency checks -/
+
+/-- **Mass reparametrization invariance.**
+
+The continuum limit measure depends on the total action, not on how it is
+split between the Gaussian reference measure and the interaction polynomial.
+The total lattice action is `½ φ·(−Δ+m²)·φ + Σ_x :P(φ(x)):`, where
+the Gaussian contributes `m²/2 · τ²` to the quadratic part.
+
+Shifting `mass → mass'` while compensating `P → P + mass²/2 − (mass')²/2`
+(via `shiftQuadratic`) leaves the total action unchanged at each lattice
+spacing. Therefore any continuum limit of one parametrization is also a
+continuum limit of the other. -/
+theorem mass_reparametrization_invariance
+    (P : InteractionPolynomial) (mass mass' : ℝ)
+    (hmass : 0 < mass) (hmass' : 0 < mass')
+    (μ : Measure FieldConfig2) [IsProbabilityMeasure μ]
+    (h_limit : IsPphi2Limit μ P mass) :
+    IsPphi2Limit μ (P.shiftQuadratic (mass ^ 2 / 2 - mass' ^ 2 / 2)) mass' := by
+  sorry
+
+/-- **Mass reparametrization: existence form.**
+
+Corollary: for any (P, mass, mass'), the measures obtained from
+`pphi2_exists` with (P, mass) also arise as limits from the shifted
+parametrization (P.shiftQuadratic(m²/2 − m'²/2), mass'). -/
+theorem mass_reparametrization_exists
+    (P : InteractionPolynomial) (mass mass' : ℝ)
+    (hmass : 0 < mass) (hmass' : 0 < mass') :
+    ∃ (μ : Measure FieldConfig2) (_ : IsProbabilityMeasure μ),
+      @IsPphi2Limit 2 μ P mass ∧
+      @IsPphi2Limit 2 μ (P.shiftQuadratic (mass ^ 2 / 2 - mass' ^ 2 / 2)) mass' := by
+  obtain ⟨μ, hμ, hlim⟩ := pphi2_limit_exists P mass hmass
+  exact ⟨μ, hμ, hlim,
+    mass_reparametrization_invariance P mass mass' hmass hmass' μ hlim⟩
+
 end Pphi2
 
 end

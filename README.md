@@ -54,6 +54,22 @@ The construction proceeds in six phases:
 
 6. **Assembly** — Combine all axioms into the main theorem.
 
+## Spacetimes
+
+The construction is carried out on two spacetimes:
+
+- **ℝ²** (infinite volume) — The full construction targets S'(ℝ²) and proves
+  all five OS axioms OS0–OS4, including clustering (OS4) from the spectral gap.
+  The continuum limit involves both UV (a → 0) and IR (volume → ∞) limits.
+
+- **T²_L = (ℝ/Lℤ)²** (torus, fixed volume L) — A cleaner alternative that
+  isolates the UV limit by fixing the physical volume. The lattice is
+  (ℤ/Nℤ)² with spacing a = L/N → 0. Configuration space is Polish (proved),
+  enabling direct Prokhorov extraction without axioms. OS0–OS3 are proved for
+  the Gaussian continuum limit; the interacting case is in progress.
+  On the compact torus there is no clustering axiom (OS4), but there is also
+  no IR divergence.
+
 ## Construction parameters and renormalization
 
 The construction takes two inputs:
@@ -81,12 +97,33 @@ interaction :P(φ(x)):_a subtracts the divergent self-contractions at each
 lattice spacing. No mass, coupling constant, or wave function
 renormalization is needed beyond Wick ordering.
 
+## Consistency checks
+
+Beyond the OS axioms themselves, the construction should satisfy additional
+consistency checks:
+
+- **Mass reparametrization invariance.** The physical measure depends on the
+  total action, not on how it is split between the Gaussian reference measure
+  and the interaction. Shifting the bare mass m → m' while compensating
+  P → P + m²/2 − (m')²/2 leaves the total quadratic term (−Δ + m²) + P
+  unchanged, so the resulting continuum measure must be identical.
+
+- **Wick ordering scheme independence.** The Wick ordering constant
+  c_a = G_a(0,0) depends on the bare mass m through the propagator. A mass
+  shift changes c_a, but the compensating shift in P absorbs this, so the
+  Wick-ordered interaction :P(φ):_a is scheme-independent up to the total
+  action.
+
+- **Torus–infinite volume consistency.** For test functions supported well
+  inside T²_L (away from the boundary identification), the torus and
+  infinite-volume Schwinger functions should agree in the L → ∞ limit.
+
 ## Current status
 
 All six phases are structurally complete and the full project builds
 (`lake build`, 3530 jobs).
 
-- **pphi2:** 56 axioms, 2 sorries
+- **pphi2:** 56 axioms, 3 sorries
 - **gaussian-field** (upstream dependency): 5 axioms, 14 sorries
 
 The torus continuum limit (`TorusContinuumLimit/`) provides a cleaner alternative
@@ -193,7 +230,7 @@ lake build
 
 - [status.md](status.md) — Complete axiom/sorry inventory with difficulty
   ratings and priority ordering
-- [plan.md](plan.md) — Development roadmap and construction outline
+- [docs/plan.md](docs/plan.md) — Development roadmap and construction outline
 - [docs/axiom_audit.md](docs/axiom_audit.md) — Self-audit of all axioms
   (pphi2 + gaussian-field) with correctness ratings
 - [docs/gemini_review.md](docs/gemini_review.md) — External review of axioms

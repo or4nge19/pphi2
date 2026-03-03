@@ -54,6 +54,28 @@ theorem InteractionPolynomial.eval_neg (P : InteractionPolynomial) (τ : ℝ) :
       congr 1
       exact Even.neg_pow hm τ
 
+/-- Shift the quadratic (τ²) coefficient of P by δ.
+
+Used for mass reparametrization: the total lattice action splits as
+½φ·(−Δ+m²)·φ + Σ :P(φ): with the Gaussian contributing m²/2 · τ² to the
+quadratic part. Shifting m → m' while setting P → P.shiftQuadratic(m²/2 − m'²/2)
+leaves the total action unchanged.
+
+The shifted polynomial remains a valid `InteractionPolynomial`: degree and
+leading coefficient are unchanged (n ≥ 4 > 2), and the τ² term is even
+so the parity condition is preserved. -/
+def InteractionPolynomial.shiftQuadratic (P : InteractionPolynomial) (δ : ℝ) :
+    InteractionPolynomial where
+  n := P.n
+  hn_ge := P.hn_ge
+  hn_even := P.hn_even
+  coeff m := if (m : ℕ) = 2 then P.coeff m + δ else P.coeff m
+  coeff_odd_eq_zero m hm := by
+    have hne : (m : ℕ) ≠ 2 := by
+      intro h; rw [h] at hm; revert hm; decide
+    rw [if_neg hne]
+    exact P.coeff_odd_eq_zero m hm
+
 /-- The Wick-ordered polynomial P(τ, c).
     P(τ, c) = Σ_{m=0}^n a_m Σ_{k=0}^{⌊m/2⌋} (-1)^k m!/(m-2k)!k!2^k c^k τ^{m-2k}.
     DDJ Eq. (2.4). -/
