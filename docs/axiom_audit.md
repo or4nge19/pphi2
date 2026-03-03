@@ -1,7 +1,7 @@
 # Comprehensive Axiom Audit: pphi2 + gaussian-field
 
-**Updated**: 2026-03-02 (GaussianContinuumLimit module added, 41 axioms)
-**pphi2**: 41 axioms, 3 sorries | **gaussian-field**: 2 axioms, 0 sorries | **Total**: 43
+**Updated**: 2026-03-03 (TorusOSAxioms + Symmetry added, 56 axioms)
+**pphi2**: 56 axioms, 2 sorries | **gaussian-field**: 5 axioms, 14 sorries | **Total**: 61
 
 ## Verification Sources
 
@@ -320,6 +320,26 @@ The following were previously axioms and are now theorems:
 
 ---
 
+## Torus OS Axioms (TorusOSAxioms.lean + Torus/Symmetry.lean)
+
+### gaussian-field axioms
+
+| # | Axiom | Rating | Source |
+|---|-------|--------|--------|
+| 1 | `nuclearTensorProduct_mapCLM` | ✅ Standard | ✅ DT 2026-03-03: Trèves Ch.50, standard projective tensor product property |
+| 2 | `nuclearTensorProduct_swapCLM` | ✅ Standard | ✅ DT 2026-03-03: canonical isomorphism, Trèves Ch.43 |
+
+### pphi2 axioms
+
+| # | Axiom | Rating | Source |
+|---|-------|--------|--------|
+| 3 | `torusGaussianLimit_characteristic_functional` | ✅ Standard | ✅ DT 2026-03-03: definition of Gaussian characteristic functional, Fernique §III.4 |
+| 4 | `torusContinuumGreen_translation_invariant` | ✅ Standard | ✅ DT 2026-03-03: translation acts by phase in Fourier space |
+| 5 | `torusContinuumGreen_pointGroup_invariant` | ✅ Standard | ✅ DT 2026-03-03: D4 symmetry of Laplacian eigenvalues |
+| 6 | `torusLattice_rp` | ⚠️ Likely correct | ✅ DT 2026-03-03: correct for transfer matrix factorization; note: uses all bounded continuous F, mathematically RP requires positive-time support restriction which is enforced by the single-function formulation |
+
+---
+
 ## References
 
 - Glimm-Jaffe, *Quantum Physics: A Functional Integral Point of View* (1987)
@@ -333,4 +353,7 @@ The following were previously axioms and are now theorems:
 - Symanzik (1983) — lattice continuum limit, improved action
 - Guerra-Rosen-Simon (1975) — Cluster expansion uniqueness
 
-**Audit Date**: 2026-02-25
+- Trèves, *Topological Vector Spaces, Distributions, and Kernels* — tensor product CLMs
+- Fernique (1975) — Gaussian measures on nuclear spaces
+
+**Audit Date**: 2026-03-03

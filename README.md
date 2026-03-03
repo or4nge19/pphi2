@@ -57,17 +57,20 @@ The construction proceeds in six phases:
 ## Current status
 
 All six phases are structurally complete and the full project builds
-(`lake build`, 3516 jobs).
+(`lake build`, 3530 jobs).
 
-- **pphi2:** 52 axioms, 0 sorries
-- **gaussian-field** (upstream dependency): 1 axiom, 8 sorries (none used by pphi2)
+- **pphi2:** 56 axioms, 2 sorries
+- **gaussian-field** (upstream dependency): 5 axioms, 14 sorries
 
 The torus continuum limit (`TorusContinuumLimit/`) provides a cleaner alternative
 to the S'(ℝ^d) approach: by fixing the physical volume L and taking only N→∞,
 the UV limit is isolated from IR issues. Prokhorov extraction on the Polish
 torus configuration space is **proved** (not axiomatized). The same pipeline
 handles both Gaussian and interacting (P(φ)₂) measures via Cauchy-Schwarz
-density transfer.
+density transfer. The torus Gaussian continuum limit satisfies OS axioms
+OS0–OS3 (`TorusOSAxioms.lean`), with OS2 (translation + D4 invariance) and
+OS3 (reflection positivity) **proved** from Green's function invariance axioms
+and the weak-limit RP inheritance theorem.
 
 See [status.md](status.md) for a complete inventory of all axioms and sorries,
 organized by difficulty and priority.

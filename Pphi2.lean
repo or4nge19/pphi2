@@ -33,6 +33,15 @@ import Pphi2.ContinuumLimit.Tightness
 import Pphi2.ContinuumLimit.Convergence
 import Pphi2.ContinuumLimit.AxiomInheritance
 
+-- Phase 4b: Torus continuum limit (Gaussian)
+import Pphi2.TorusContinuumLimit.TorusEmbedding
+import Pphi2.TorusContinuumLimit.TorusPropagatorConvergence
+import Pphi2.TorusContinuumLimit.TorusTightness
+import Pphi2.TorusContinuumLimit.TorusConvergence
+import Pphi2.TorusContinuumLimit.TorusGaussianLimit
+import Pphi2.TorusContinuumLimit.TorusInteractingLimit
+import Pphi2.TorusContinuumLimit.TorusOSAxioms
+
 -- Phase 5: Euclidean invariance (OS2)
 import Pphi2.OSProofs.OS2_WardIdentity
 
