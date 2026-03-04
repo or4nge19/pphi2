@@ -5,13 +5,13 @@
 The project formalizes the construction of P(Φ)₂ Euclidean quantum field theory
 in Lean 4 via the Glimm-Jaffe/Nelson lattice approach. All six phases are
 structurally complete and the full project builds successfully (`lake build`,
-3530 jobs).
+3532 jobs).
 
 The proof architecture is: axiomatize key analytic/probabilistic results with
 detailed proof sketches, prove the logical structure connecting them, and
 progressively fill in the axioms with full proofs.
 
-**pphi2: 46 axioms, 0 sorries** (plus 1 private axiom `schwartz_riemann_sum_bound` in GaussianContinuumLimit) | **gaussian-field (upstream): 10 axioms, 1 sorry**
+**pphi2: 46 axioms, 0 sorries** (plus 1 private axiom `schwartz_riemann_sum_bound` in GaussianContinuumLimit) | **gaussian-field (upstream): 10 axioms, 0 sorries**
 
 `schwinger2_convergence` was proved from
 `schwinger_n_convergence`, and `pphi2_nonGaussianity` from `continuumLimit_nonGaussian`.
