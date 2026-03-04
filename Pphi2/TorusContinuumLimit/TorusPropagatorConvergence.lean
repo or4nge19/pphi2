@@ -38,7 +38,7 @@ import Lattice.Covariance
 
 noncomputable section
 
-open GaussianField MeasureTheory Filter
+open GaussianField MeasureTheory Filter NuclearTensorProduct
 
 namespace Pphi2
 
@@ -58,7 +58,7 @@ def latticeTestFn (N : ℕ) [NeZero N] (f : TorusTestFunction L) : FinLatticeFie
   fun x => evalTorusAtSite L N x f
 
 /-- Key identity: the lattice test function equals the sum of its values times delta functions. -/
-private theorem latticeTestFn_expand (N : ℕ) [NeZero N] (f : TorusTestFunction L) :
+theorem latticeTestFn_expand (N : ℕ) [NeZero N] (f : TorusTestFunction L) :
     latticeTestFn L N f =
     ∑ x : FinLatticeSites 2 N, (latticeTestFn L N f) x • Pi.single x (1 : ℝ) := by
   funext y
@@ -66,7 +66,7 @@ private theorem latticeTestFn_expand (N : ℕ) [NeZero N] (f : TorusTestFunction
     mul_zero, Finset.sum_ite_eq, Finset.mem_univ, ite_true]
 
 /-- The embedded two-point function (with f = g) factors through the lattice. -/
-private theorem torusEmbedLift_eval_eq (N : ℕ) [NeZero N]
+theorem torusEmbedLift_eval_eq (N : ℕ) [NeZero N]
     (f : TorusTestFunction L) (ω : Configuration (FinLatticeField 2 N)) :
     (torusEmbedLift L N ω) f = ω (latticeTestFn L N f) := by
   -- LHS = Σ_x ω(δ_x) * eval_x(f) by definition of torusEmbedLift
@@ -238,6 +238,79 @@ theorem covariance_inner_le_mass_inv_sq_norm_sq
         simp_rw [← sq] at hparseval ⊢
         linarith
 
+/-! ## Helper lemmas for the Riemann sum bound
+
+The following lemmas connect the DyninMityaginSpace structure (basis, coefficients)
+of `SmoothMap_Circle` and `NuclearTensorProduct` to the concrete Fourier basis
+and circle restriction map, enabling pointwise bounds on `evalTorusAtSite`. -/
+
+/-- Biorthogonality of the DyninMityaginSpace coefficient and basis functions
+for `SmoothMap_Circle`. -/
+private theorem smoothCircle_coeff_basis (m n : ℕ) :
+    DyninMityaginSpace.coeff m (DyninMityaginSpace.basis n : SmoothMap_Circle L ℝ) =
+    if m = n then 1 else 0 := by
+  show (RapidDecaySeq.coeffCLM m).comp
+    (SmoothMap_Circle.smoothCircleRapidDecayEquiv (L := L)).toContinuousLinearMap
+    ((SmoothMap_Circle.smoothCircleRapidDecayEquiv (L := L)).symm (RapidDecaySeq.basisVec n)) =
+    if m = n then 1 else 0
+  simp only [ContinuousLinearMap.comp_apply,
+    RapidDecaySeq.coeffCLM, ContinuousLinearMap.coe_mk', RapidDecaySeq.coeffLM,
+    LinearMap.coe_mk, AddHom.coe_mk]
+  show (SmoothMap_Circle.smoothCircleRapidDecayEquiv (L := L)
+    ((SmoothMap_Circle.smoothCircleRapidDecayEquiv (L := L)).symm
+      (RapidDecaySeq.basisVec n))).val m = if m = n then 1 else 0
+  rw [ContinuousLinearEquiv.apply_symm_apply]; simp [RapidDecaySeq.basisVec]
+
+/-- The pure tensor of DyninMityaginSpace basis elements equals a `basisVec`
+indexed by the Cantor pairing. -/
+private theorem pure_basis_eq_basisVec_pair (i j : ℕ) :
+    (NuclearTensorProduct.pure
+      (DyninMityaginSpace.basis i : SmoothMap_Circle L ℝ)
+      (DyninMityaginSpace.basis j : SmoothMap_Circle L ℝ) : TorusTestFunction L) =
+    RapidDecaySeq.basisVec (Nat.pair i j) := by
+  ext m
+  simp only [NuclearTensorProduct.pure_val, RapidDecaySeq.basisVec]
+  rw [smoothCircle_coeff_basis L (Nat.unpair m).1 i,
+      smoothCircle_coeff_basis L (Nat.unpair m).2 j]
+  by_cases h1 : (Nat.unpair m).1 = i <;> by_cases h2 : (Nat.unpair m).2 = j <;> simp [h1, h2]
+  · conv_lhs => rw [← Nat.pair_unpair m]; rw [h1, h2]
+  · intro h; exact h2 (by have := congr_arg (fun p => (Nat.unpair p).2) h
+                          simpa [Nat.unpair_pair] using this)
+  · intro h; exact h1 (by have := congr_arg (fun p => (Nat.unpair p).1) h
+                          simpa [Nat.unpair_pair] using this)
+  · intro h; exact h1 (by have := congr_arg (fun p => (Nat.unpair p).1) h
+                          simpa [Nat.unpair_pair] using this)
+
+/-- Evaluation of a torus test function at a lattice site, applied to a basis vector,
+equals the product of circle restrictions applied to each component. -/
+private theorem evalTorusAtSite_basisVec (N : ℕ) [NeZero N]
+    (x : FinLatticeSites 2 N) (m : ℕ) :
+    evalTorusAtSite L N x (RapidDecaySeq.basisVec m) =
+    circleRestriction L N (DyninMityaginSpace.basis (Nat.unpair m).1 :
+      SmoothMap_Circle L ℝ) (x 0) *
+    circleRestriction L N (DyninMityaginSpace.basis (Nat.unpair m).2 :
+      SmoothMap_Circle L ℝ) (x 1) := by
+  rw [show RapidDecaySeq.basisVec m = NuclearTensorProduct.pure
+      (DyninMityaginSpace.basis (Nat.unpair m).1 : SmoothMap_Circle L ℝ)
+      (DyninMityaginSpace.basis (Nat.unpair m).2 : SmoothMap_Circle L ℝ) from by
+    rw [pure_basis_eq_basisVec_pair, Nat.pair_unpair]]
+  show NuclearTensorProduct.evalCLM _ _ _ = _
+  rw [NuclearTensorProduct.evalCLM_pure]
+  simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.proj_apply]
+
+/-- The DyninMityaginSpace basis for `SmoothMap_Circle` is the Fourier basis. -/
+private theorem dm_basis_eq_fourierBasis (m : ℕ) :
+    (DyninMityaginSpace.basis m : SmoothMap_Circle L ℝ) =
+    SmoothMap_Circle.fourierBasis (L := L) m := by
+  apply SmoothMap_Circle.ext; intro x
+  change (SmoothMap_Circle.fromRapidDecay (RapidDecaySeq.basisVec m) : ℝ → ℝ) x =
+    SmoothMap_Circle.fourierBasisFun m x
+  show ∑' n, (RapidDecaySeq.basisVec m).val n *
+    SmoothMap_Circle.fourierBasisFun (L := L) n x = SmoothMap_Circle.fourierBasisFun m x
+  rw [tsum_eq_single m]
+  · simp [RapidDecaySeq.basisVec]
+  · intro n hn; simp [RapidDecaySeq.basisVec, hn]
+
 /-- **Riemann sum bound.**
 
 The sum `Σ_x (evalTorusAtSite L N x f)²` is bounded uniformly in N.
@@ -248,7 +321,91 @@ More precisely: `evalTorusAtSite L N x f` involves `circleRestriction` with
 theorem latticeTestFn_norm_sq_bounded (f : TorusTestFunction L) :
     ∃ C : ℝ, 0 < C ∧ ∀ (N : ℕ) [NeZero N],
     ∑ x : FinLatticeSites 2 N, (latticeTestFn L N f x) ^ 2 ≤ C := by
-  sorry
+  -- Step 1: Uniform C^0 bound on Fourier basis elements.
+  -- sobolevSeminorm 0 (fourierBasis n) <= C₀ uniformly in n
+  obtain ⟨C₀, hC₀_pos, hC₀_bound⟩ :=
+    SmoothMap_Circle.sobolevSeminorm_fourierBasis_le (L := L) 0
+  have hC₀ : ∀ n, SmoothMap_Circle.sobolevSeminorm (L := L) 0
+      (SmoothMap_Circle.fourierBasis n) ≤ C₀ := fun n => by
+    specialize hC₀_bound n; simp at hC₀_bound; exact hC₀_bound
+  -- Step 2: Set up the witness for the bound.
+  set p₀f := RapidDecaySeq.rapidDecaySeminorm 0 f
+  refine ⟨L ^ 2 * C₀ ^ 4 * p₀f ^ 2 + 1, by positivity, fun N _ => ?_⟩
+  -- Step 3: Summability of |f.val m|.
+  have hf_sum : Summable (fun m => |f.val m|) :=
+    (f.rapid_decay 0).congr (fun m => by simp [pow_zero])
+  -- Step 4: Bound |circleRestriction L N (DM.basis n) k| ≤ √(L/N) * C₀.
+  have h_cr : ∀ n (k : ZMod N),
+      |circleRestriction L N (DyninMityaginSpace.basis n :
+        SmoothMap_Circle L ℝ) k| ≤ Real.sqrt (L / ↑N) * C₀ := by
+    intro n k
+    rw [dm_basis_eq_fourierBasis, circleRestriction_apply, circleSpacing_eq,
+      abs_mul, abs_of_nonneg (Real.sqrt_nonneg _)]
+    apply mul_le_mul_of_nonneg_left _ (Real.sqrt_nonneg _)
+    calc |(SmoothMap_Circle.fourierBasis (L := L) n : ℝ → ℝ) (circlePoint L N k)|
+        = ‖iteratedDeriv 0 ((SmoothMap_Circle.fourierBasis (L := L) n : ℝ → ℝ))
+            (circlePoint L N k)‖ := by rw [iteratedDeriv_zero, Real.norm_eq_abs]
+      _ ≤ SmoothMap_Circle.sobolevSeminorm 0 (SmoothMap_Circle.fourierBasis n) :=
+          SmoothMap_Circle.norm_iteratedDeriv_le_sobolevSeminorm' _ 0 _
+      _ ≤ C₀ := hC₀ n
+  -- Step 5: Bound |eval_x(basisVec m)| ≤ (L/N) * C₀².
+  have hLN : (0 : ℝ) ≤ L / ↑N :=
+    (div_pos hL.out (Nat.cast_pos.mpr (NeZero.pos N))).le
+  have h_basis : ∀ (x : FinLatticeSites 2 N) (m : ℕ),
+      |evalTorusAtSite L N x (RapidDecaySeq.basisVec m)| ≤ L / ↑N * C₀ ^ 2 := by
+    intro x m
+    rw [evalTorusAtSite_basisVec, abs_mul]
+    calc |circleRestriction L N (DyninMityaginSpace.basis (Nat.unpair m).1 :
+            SmoothMap_Circle L ℝ) (x 0)| *
+          |circleRestriction L N (DyninMityaginSpace.basis (Nat.unpair m).2 :
+            SmoothMap_Circle L ℝ) (x 1)|
+        ≤ (Real.sqrt (L / ↑N) * C₀) * (Real.sqrt (L / ↑N) * C₀) :=
+          mul_le_mul (h_cr _ _) (h_cr _ _) (abs_nonneg _)
+            (mul_nonneg (Real.sqrt_nonneg _) hC₀_pos.le)
+      _ = L / ↑N * C₀ ^ 2 := by nlinarith [Real.sq_sqrt hLN]
+  -- Step 6: Bound |eval_x f| ≤ (L/N) * C₀² * p₀f using DM expansion.
+  have h_pw : ∀ x : FinLatticeSites 2 N,
+      |evalTorusAtSite L N x f| ≤ L / ↑N * C₀ ^ 2 * p₀f := by
+    intro x
+    rw [DyninMityaginSpace.expansion (evalTorusAtSite L N x) f]
+    -- Summability of the product series
+    have hsf : Summable (fun m => f.val m *
+        evalTorusAtSite L N x (RapidDecaySeq.basisVec m)) :=
+      (hf_sum.mul_right (L / ↑N * C₀ ^ 2)).of_norm_bounded
+        (fun m => by rw [Real.norm_eq_abs, abs_mul]
+                     exact mul_le_mul_of_nonneg_left (h_basis x m) (abs_nonneg _))
+    -- |∑' m, c_m * eval_x(e_m)| ≤ ∑' m, |c_m| * bound = bound * ∑' |c_m| = bound * p₀f
+    calc |∑' m, f.val m * evalTorusAtSite L N x (RapidDecaySeq.basisVec m)|
+        = ‖∑' m, f.val m * evalTorusAtSite L N x (RapidDecaySeq.basisVec m)‖ :=
+          (Real.norm_eq_abs _).symm
+      _ ≤ ∑' m, ‖f.val m * evalTorusAtSite L N x (RapidDecaySeq.basisVec m)‖ :=
+          norm_tsum_le_tsum_norm hsf.norm
+      _ ≤ ∑' m, |f.val m| * (L / ↑N * C₀ ^ 2) := by
+          apply Summable.tsum_le_tsum _ hsf.norm (hf_sum.mul_right _)
+          intro m
+          rw [Real.norm_eq_abs, abs_mul]
+          exact mul_le_mul_of_nonneg_left (h_basis x m) (abs_nonneg _)
+      _ = L / ↑N * C₀ ^ 2 * ∑' m, |f.val m| := by rw [tsum_mul_right]; ring
+      _ = L / ↑N * C₀ ^ 2 * p₀f := by
+          congr 1
+          show ∑' m, |f.val m| = ∑' m, |f.val m| * (1 + (m : ℝ)) ^ 0
+          simp
+  -- Step 7: Sum of squares over lattice sites.
+  -- N² * (L/N)² * C₀⁴ * p₀f² = L² * C₀⁴ * p₀f² (the N cancels)
+  calc ∑ x : FinLatticeSites 2 N, (latticeTestFn L N f x) ^ 2
+      = ∑ x, (evalTorusAtSite L N x f) ^ 2 := rfl
+    _ ≤ ∑ _x : FinLatticeSites 2 N, (L / ↑N * C₀ ^ 2 * p₀f) ^ 2 := by
+        apply Finset.sum_le_sum; intro x _
+        exact sq_le_sq' (by linarith [h_pw x, neg_abs_le (evalTorusAtSite L N x f)])
+          (le_of_abs_le (h_pw x))
+    _ = ↑(Fintype.card (FinLatticeSites 2 N)) * (L / ↑N * C₀ ^ 2 * p₀f) ^ 2 := by
+        simp [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+    _ = ↑N ^ 2 * (L / ↑N * C₀ ^ 2 * p₀f) ^ 2 := by
+        congr 1; simp [FinLatticeSites, ZMod.card, Fintype.card_fin]
+    _ = L ^ 2 * C₀ ^ 4 * p₀f ^ 2 := by
+        have hN : (N : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne N)
+        field_simp
+    _ ≤ L ^ 2 * C₀ ^ 4 * p₀f ^ 2 + 1 := le_add_of_nonneg_right one_pos.le
 
 /-! ## Propagator convergence on the torus -/
 

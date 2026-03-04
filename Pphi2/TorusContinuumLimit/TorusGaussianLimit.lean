@@ -36,10 +36,11 @@ the S'(ℝ^d) approach, but on the torus configuration space.
 
 import Pphi2.TorusContinuumLimit.TorusConvergence
 import Mathlib.MeasureTheory.Measure.HasOuterApproxClosed
+import Mathlib.Probability.Distributions.Gaussian.Real
 
 noncomputable section
 
-open GaussianField MeasureTheory Filter
+open GaussianField MeasureTheory Filter ProbabilityTheory
 
 namespace Pphi2
 
@@ -118,12 +119,58 @@ generating function satisfies `E[e^{ω(f)}] = exp(½ E[ω(f)²])`.
 Mathematically: `ν_{GFF,N}` is the pushforward of a Gaussian measure under
 a linear map, hence Gaussian. The MGF formula follows from the standard
 Gaussian identity `E[e^{tX}] = exp(½t²σ²)` at t=1. -/
-axiom torusGaussianMeasure_isGaussian (N : ℕ) [NeZero N]
+theorem torusGaussianMeasure_isGaussian (N : ℕ) [NeZero N]
     (mass : ℝ) (hmass : 0 < mass)
     (f : TorusTestFunction L) :
     ∫ ω : Configuration (TorusTestFunction L),
       Real.exp (ω f) ∂(torusContinuumMeasure L N mass hmass) =
+    Real.exp ((1 / 2) * torusEmbeddedTwoPoint L N mass hmass f f) := by
+  -- Abbreviations
+  set a := circleSpacing L N
+  set ha := circleSpacing_pos L N
+  set T := latticeCovariance 2 N a mass ha hmass
+  set μ_lat := latticeGaussianMeasure 2 N a mass ha hmass
+  set g := latticeTestFn L N f
+  -- Step 1: Unfold torusContinuumMeasure as pushforward and apply integral_map
+  -- torusContinuumMeasure = Measure.map (torusEmbedLift L N) μ_lat
+  change ∫ ω, Real.exp (ω f) ∂(Measure.map (torusEmbedLift L N) μ_lat) =
     Real.exp ((1 / 2) * torusEmbeddedTwoPoint L N mass hmass f f)
+  have h_meas := torusEmbedLift_measurable L N
+  rw [integral_map h_meas.aemeasurable]
+  · -- Step 2: Rewrite integrand using torusEmbedLift_eval_eq
+    -- ∫ φ, exp((torusEmbedLift φ) f) dμ_lat = ∫ φ, exp(φ g) dμ_lat
+    have h_eval : ∀ φ : Configuration (FinLatticeField 2 N),
+        (torusEmbedLift L N φ) f = φ g :=
+      fun φ => torusEmbedLift_eval_eq L N f φ
+    simp_rw [h_eval]
+    -- Step 3: Relate to MGF
+    -- ∫ φ, exp(φ g) dμ_lat = mgf (fun φ => φ g) μ_lat 1
+    have h_mgf : ∫ φ : Configuration (FinLatticeField 2 N),
+        Real.exp (φ g) ∂μ_lat =
+        ProbabilityTheory.mgf (fun φ : Configuration (FinLatticeField 2 N) => φ g) μ_lat 1 := by
+      simp only [ProbabilityTheory.mgf, one_mul]
+    rw [h_mgf]
+    -- Step 4: Apply mgf_gaussianReal using pairing_is_gaussian
+    have h_gauss : μ_lat.map (fun φ : Configuration (FinLatticeField 2 N) => φ g) =
+        ProbabilityTheory.gaussianReal 0 (@inner ℝ ell2' _ (T g) (T g) : ℝ).toNNReal :=
+      GaussianField.pairing_is_gaussian T g
+    rw [ProbabilityTheory.mgf_gaussianReal h_gauss]
+    -- Now goal: exp(0 * 1 + ⟨Tg,Tg⟩.toNNReal * 1^2 / 2) = exp(1/2 * twoPoint f f)
+    simp only [zero_add, one_pow, mul_one]
+    -- Step 5: Match the RHS
+    -- torusEmbeddedTwoPoint f f = ∫ (ω f)*(ω f) d(torusContinuumMeasure)
+    --   = ∫ (φ g)^2 dμ_lat  (by torusEmbeddedTwoPoint_eq_lattice_second_moment)
+    --   = ⟨Tg, Tg⟩  (by lattice_second_moment_eq_inner)
+    have h_two_pt : torusEmbeddedTwoPoint L N mass hmass f f =
+        @inner ℝ ell2' _ (T g) (T g) := by
+      rw [torusEmbeddedTwoPoint_eq_lattice_second_moment L N mass hmass f,
+          lattice_second_moment_eq_inner L N mass hmass g]
+    rw [h_two_pt]
+    congr 1
+    rw [Real.coe_toNNReal _ real_inner_self_nonneg]
+    ring
+  · -- Measurability of ω ↦ exp(ω f)
+    exact (Real.measurable_exp.comp (configuration_eval_measurable f)).aestronglyMeasurable
 
 /-! ## Covariance of the limit -/
 
@@ -138,7 +185,7 @@ axiom torusLimit_covariance_eq
     (mass : ℝ) (hmass : 0 < mass)
     (μ : Measure (Configuration (TorusTestFunction L)))
     [IsProbabilityMeasure μ]
-    (φ : ℕ → ℕ) (hφ : StrictMono φ)
+    (φ : ℕ → ℕ) (hφ : Tendsto φ atTop atTop)
     (hconv : ∀ (g : Configuration (TorusTestFunction L) → ℝ),
       Continuous g → (∃ C, ∀ x, |g x| ≤ C) →
       Tendsto (fun n => ∫ ω, g ω ∂(torusContinuumMeasure L (φ n + 1) mass hmass))
@@ -181,7 +228,7 @@ axiom gaussian_measure_unique_of_covariance
 
 Each evaluation `ω ↦ (-ω)(f) = -(ω f)` is measurable since `ω ↦ ω f` is
 measurable and negation on ℝ is measurable. -/
-theorem configuration_neg_measurable :
+private theorem torus_configuration_neg_measurable :
     @Measurable _ _ instMeasurableSpaceConfiguration instMeasurableSpaceConfiguration
       (Neg.neg : Configuration (TorusTestFunction L) →
         Configuration (TorusTestFunction L)) := by
@@ -220,7 +267,7 @@ theorem torusGaussianMeasure_z2_symmetric (N : ℕ) [NeZero N]
   set ν := torusContinuumMeasure L N mass hmass
   set ν' := Measure.map (Neg.neg : Configuration (TorusTestFunction L) →
     Configuration (TorusTestFunction L)) ν
-  have hneg_meas := configuration_neg_measurable L
+  have hneg_meas := torus_configuration_neg_measurable L
   -- ν' is a probability measure
   haveI hν_prob : IsProbabilityMeasure ν := torusContinuumMeasure_isProbability L N mass hmass
   haveI hν'_prob : IsProbabilityMeasure ν' :=
@@ -306,7 +353,7 @@ theorem z2_symmetric_of_weakLimit
   -- We use the measure extensionality theorem for finite Borel measures.
   haveI := configuration_torus_borelSpace L
   haveI := configuration_torus_polish L
-  have hneg_meas := configuration_neg_measurable L
+  have hneg_meas := torus_configuration_neg_measurable L
   haveI : IsProbabilityMeasure (Measure.map
       (Neg.neg : Configuration (TorusTestFunction L) →
         Configuration (TorusTestFunction L)) μ) :=
@@ -361,7 +408,7 @@ Together: every subsequential limit is the unique Gaussian with covariance
 
 This is the standard "subsequential compactness + unique limit ⇒ convergence"
 argument from point-set topology. -/
-axiom torusGaussianLimit_fullConvergence
+theorem torusGaussianLimit_fullConvergence
     (mass : ℝ) (hmass : 0 < mass)
     (μ : Measure (Configuration (TorusTestFunction L)))
     [IsProbabilityMeasure μ]
@@ -375,7 +422,53 @@ axiom torusGaussianLimit_fullConvergence
     ∀ (g : Configuration (TorusTestFunction L) → ℝ),
       Continuous g → (∃ C, ∀ x, |g x| ≤ C) →
       Tendsto (fun N => ∫ ω, g ω ∂(torusContinuumMeasure L (N + 1) mass hmass))
-        atTop (nhds (∫ ω, g ω ∂μ))
+        atTop (nhds (∫ ω, g ω ∂μ)) := by
+  intro g hg_cont hg_bdd
+  -- Use the "unique subsequential limit ⟹ convergence" theorem.
+  -- For any reindexing ns : ℕ → ℕ with ns → ∞, we extract a further
+  -- subsequence converging to ∫ g dμ, using Prokhorov + Gaussian uniqueness.
+  apply Filter.tendsto_of_subseq_tendsto
+  intro ns hns
+  -- Apply Prokhorov to the reindexed measures ν_{ns(n)+1}
+  haveI : PolishSpace (Configuration (TorusTestFunction L)) :=
+    configuration_torus_polish L
+  haveI : BorelSpace (Configuration (TorusTestFunction L)) :=
+    configuration_torus_borelSpace L
+  obtain ⟨ψ, ν', hψ_mono, hν'_prob, hν'_conv⟩ := prokhorov_sequential
+    (fun n => torusContinuumMeasure L (ns n + 1) mass hmass)
+    (fun n => torusContinuumMeasure_isProbability L (ns n + 1) mass hmass)
+    (fun ε hε => by
+      obtain ⟨K, hK_compact, hK_bound⟩ :=
+        torusContinuumMeasures_tight L mass hmass ε hε
+      exact ⟨K, hK_compact, fun n => hK_bound (ns n + 1)⟩)
+  haveI := hν'_prob
+  -- The subsequential limit ν' is Gaussian
+  have hν'_gauss : ∀ f : TorusTestFunction L,
+      ∫ ω : Configuration (TorusTestFunction L),
+        Real.exp (ω f) ∂ν' =
+      Real.exp ((1 / 2) * ∫ ω, (ω f) ^ 2 ∂ν') :=
+    torusGaussianLimit_isGaussian L
+      (fun n => torusContinuumMeasure L (ns (ψ n) + 1) mass hmass)
+      (fun n => torusContinuumMeasure_isProbability L (ns (ψ n) + 1) mass hmass)
+      (fun n f => by
+        rw [torusGaussianMeasure_isGaussian L (ns (ψ n) + 1) mass hmass f]
+        congr 1; congr 1; simp only [torusEmbeddedTwoPoint]
+        congr 1; funext ω; ring)
+      ν' hν'_conv
+  -- The covariance of ν' equals the continuum Green's function
+  have hν'_cov : ∀ f : TorusTestFunction L,
+      ∫ ω : Configuration (TorusTestFunction L), (ω f) ^ 2 ∂ν' =
+      torusContinuumGreen L mass hmass f f :=
+    fun f => torusLimit_covariance_eq L mass hmass ν'
+      (fun n => ns (ψ n))
+      (hns.comp hψ_mono.tendsto_atTop)
+      hν'_conv f
+  -- By Gaussian uniqueness: ν' = μ
+  have hν'_eq_μ : ν' = μ :=
+    gaussian_measure_unique_of_covariance L ν' μ hν'_gauss hμ_gauss
+      (fun f => by rw [hν'_cov f, hcov f])
+  -- The integrals converge along ψ
+  exact ⟨ψ, by rw [← hν'_eq_μ]; exact hν'_conv g hg_cont hg_bdd⟩
 
 /-! ## Full sequence convergence -/
 
@@ -427,7 +520,7 @@ theorem torusGaussianLimit_converges
   have hcov : ∀ f : TorusTestFunction L,
       ∫ ω : Configuration (TorusTestFunction L), (ω f) ^ 2 ∂μ =
       torusContinuumGreen L mass hmass f f :=
-    fun f => torusLimit_covariance_eq L mass hmass μ φ hφ_mono hconv f
+    fun f => torusLimit_covariance_eq L mass hmass μ φ hφ_mono.tendsto_atTop hconv f
   -- Step 4: The limit satisfies IsTorusGaussianContinuumLimit
   have hGCL : IsTorusGaussianContinuumLimit L μ mass hmass := {
     isProbability := hμ_prob

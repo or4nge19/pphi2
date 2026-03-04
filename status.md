@@ -11,7 +11,7 @@ The proof architecture is: axiomatize key analytic/probabilistic results with
 detailed proof sketches, prove the logical structure connecting them, and
 progressively fill in the axioms with full proofs.
 
-**pphi2: 55 axioms, 3 sorries** (plus 1 private axiom `schwartz_riemann_sum_bound` in GaussianContinuumLimit; plus 1 unused computation and 1 unused Option B file in `Unused/`) | **gaussian-field (upstream): 10 axioms, 1 sorry**
+**pphi2: 53 axioms, 2 sorries** (plus 1 private axiom `schwartz_riemann_sum_bound` in GaussianContinuumLimit; plus 1 unused computation and 1 unused Option B file in `Unused/`) | **gaussian-field (upstream): 10 axioms, 1 sorry**
 
 `Pphi2/Unused/HypercontractivityOptionB.lean` preserves an optional
 Gross-Rothaus-Simon OU semigroup route as inactive reference material.
@@ -58,7 +58,7 @@ It is not imported and not counted in the active axiom inventory.
 | 6 | `OSAxioms.lean` | 0 axioms, 0 sorries |
 | 6 | `Main.lean` | 1 axiom, 1 sorry |
 | 4T | `TorusContinuumLimit/TorusEmbedding.lean` | 0 axioms, 0 sorries (`torusContinuumGreen` now `greenFunctionBilinear`) |
-| 4T | `TorusContinuumLimit/TorusPropagatorConvergence.lean` | 1 axiom, 1 sorry (`latticeTestFn_norm_sq_bounded`) |
+| 4T | `TorusContinuumLimit/TorusPropagatorConvergence.lean` | 1 axiom, 0 sorries (`latticeTestFn_norm_sq_bounded` proved) |
 | 4T | `TorusContinuumLimit/TorusTightness.lean` | 1 axiom, 0 sorries |
 | 4T | `TorusContinuumLimit/TorusConvergence.lean` | 0 axioms, 0 sorries (Prokhorov proved!) |
 | 4T | `TorusContinuumLimit/TorusGaussianLimit.lean` | 5 axioms, 0 sorries |
@@ -315,7 +315,7 @@ Note: `os1_inheritance` is a theorem (not axiom) — OS1 transfers trivially sin
 | Axiom | File | Difficulty | Description |
 |-------|------|-----------|-------------|
 | `torus_propagator_convergence` | TorusPropagatorConvergence | Medium | Lattice eigenvalues `(4N²/L²)sin²(πn/N) + m²` → continuum `(2πn/L)² + m²`. Pure UV limit, dominated convergence with rapid Fourier decay. |
-| `torusEmbeddedTwoPoint_uniform_bound` | TorusPropagatorConvergence | Easy | `E[Φ_N(f)²] ≤ C` uniformly in N. Eigenvalue lower bound `λ_k ≥ m²` + Parseval + Riemann sum bound on compact torus. |
+| ~~`torusEmbeddedTwoPoint_uniform_bound`~~ | TorusPropagatorConvergence | **PROVED** | `E[Φ_N(f)²] ≤ C` uniformly in N. Eigenvalue lower bound `λ_k ≥ m²` + Parseval + Riemann sum bound on compact torus. |
 | `torusContinuumMeasures_tight` | TorusTightness | Medium | Tightness via Mitoma criterion on torus. Finite volume makes this cleaner than S'(ℝ^d). |
 | `torusGaussianMeasure_isGaussian` | TorusGaussianLimit | Easy | Lattice GFF pushforward is Gaussian. MGF: `E[e^{ω(f)}] = exp(½ E[ω(f)²])`. |
 | `torusGaussianLimit_isGaussian` | TorusGaussianLimit | Medium | Weak limits of Gaussians on torus are Gaussian. Bochner-Minlos + characteristic functionals. |
@@ -346,7 +346,7 @@ Note: `os1_inheritance` is a theorem (not axiom) — OS1 transfers trivially sin
 - `torusGaussianLimit_os3`: **PROVED** — OS3 reflection positivity from `torusMatrixRP_of_weakLimit` + `torusLattice_rp` + `torusGaussianLimit_fullConvergence`.
 
 **Sorries (provable):**
-- `torusEmbeddedTwoPoint_uniform_bound`: `E[Φ_N(f)²] ≤ C` from eigenvalue bound λ ≥ m².
+- ~~`torusEmbeddedTwoPoint_uniform_bound`~~: **PROVED.** `latticeTestFn_norm_sq_bounded` filled via DM expansion + Fourier basis C^0 bounds.
 
 **Former sorries (now resolved):**
 - ~~`torusContinuumGreen`~~: Now defined as `greenFunctionBilinear` from gaussian-field `HeatKernel/Bilinear.lean`.
@@ -548,7 +548,7 @@ infrastructure. Assessment date: 2026-03-03.
 | Axiom | File | Strategy |
 |-------|------|----------|
 | ~~`torusContinuumGreen_continuous_diag`~~ | TorusOSAxioms | **PROVED.** Via `greenFunctionBilinear_continuous_diag` in gaussian-field (Weierstrass M-test + coeff_decay). |
-| `torusEmbeddedTwoPoint_uniform_bound` | TorusPropagatorConvergence | `E[Φ_N(f)²] ≤ C` from eigenvalue lower bound `λ_k ≥ m²` + Parseval on compact torus. Finite sum, no limiting argument. |
+| ~~`torusEmbeddedTwoPoint_uniform_bound`~~ | TorusPropagatorConvergence | **PROVED.** `E[Φ_N(f)²] ≤ C` from eigenvalue lower bound `λ_k ≥ m²` + Parseval + `latticeTestFn_norm_sq_bounded` (DM expansion + Fourier basis bounds). |
 | `torusGaussianMeasure_z2_symmetric` | TorusGaussianLimit | **PROVED.** Both `neg_* ν` and `ν` are Gaussian with same covariance → equal by `gaussian_measure_unique_of_covariance`. |
 
 ### Tier 2: Easy-Moderate (clear strategy, some work)
@@ -599,7 +599,7 @@ infrastructure. Assessment date: 2026-03-03.
 
 ### Recommended attack order
 
-1. **Torus tier 1**: ~~`torusContinuumGreen_continuous_diag`~~ (PROVED), `torusEmbeddedTwoPoint_uniform_bound`, `torusGaussianMeasure_z2_symmetric` — each provable in a single session
+1. **Torus tier 1**: ~~`torusContinuumGreen_continuous_diag`~~ (PROVED), ~~`torusEmbeddedTwoPoint_uniform_bound`~~ (PROVED), `torusGaussianMeasure_z2_symmetric` — each provable in a single session
 2. **Torus tier 2**: `torus_propagator_convergence`, `z2_symmetric_of_weakLimit`, `torusGaussianMeasure_isGaussian` — clear strategies, moderate work
 3. **Transfer matrix**: `transferOperator_isCompact`, `gaussian_conv_strictlyPD` — unlocks full spectral theory
 4. **OS inheritance**: `lattice_rp`, `os3_inheritance`, `os0_inheritance` — fills the RP chain
