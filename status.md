@@ -11,7 +11,7 @@ The proof architecture is: axiomatize key analytic/probabilistic results with
 detailed proof sketches, prove the logical structure connecting them, and
 progressively fill in the axioms with full proofs.
 
-**pphi2: 46 axioms, 0 sorries** (plus 1 private axiom `schwartz_riemann_sum_bound` in GaussianContinuumLimit) | **gaussian-field (upstream): 9 axioms, 0 sorries**
+**pphi2: 44 axioms, 0 sorries** (plus 1 private axiom `schwartz_riemann_sum_bound` in GaussianContinuumLimit) | **gaussian-field (upstream): 21 axioms, 0 sorries**
 
 `schwinger2_convergence` was proved from
 `schwinger_n_convergence`, and `pphi2_nonGaussianity` from `continuumLimit_nonGaussian`.
@@ -60,7 +60,7 @@ progressively fill in the axioms with full proofs.
 | 4T | `TorusContinuumLimit/TorusConvergence.lean` | 0 axioms, 0 sorries (Prokhorov proved!) |
 | 4T | `TorusContinuumLimit/TorusGaussianLimit.lean` | 3 axioms, 0 sorries |
 | 4T | `TorusContinuumLimit/TorusInteractingLimit.lean` | 1 axiom, 0 sorries |
-| 4T | `TorusContinuumLimit/TorusOSAxioms.lean` | 5 axioms, 0 sorries (OS0–OS3 all proved) |
+| 4T | `TorusContinuumLimit/TorusOSAxioms.lean` | 3 axioms, 0 sorries (OS0–OS3 all proved; translation + D4 Green's invariance proved) |
 | 6 | `Bridge.lean` | 4 axioms, 0 sorries |
 
 ### Inactive files (old DDJ/stochastic quantization approach)
@@ -566,8 +566,8 @@ infrastructure. Assessment date: 2026-03-03.
 | Axiom | File | Strategy |
 |-------|------|----------|
 | `torusGaussianLimit_complex_cf_quadratic` | TorusOSAxioms | Complex CF of Gaussian = exp(-½ ∑ zᵢzⱼ Gᵢⱼ). Requires bilinearity of Green's function (from linearity of DMS coefficients) + multivariate complex MGF (analytic continuation of real MGF). |
-| `torusContinuumGreen_translation_invariant` | TorusOSAxioms | Green's function bilinear form invariant under torus translation. Translation acts by phase multiplication on Fourier modes; `|e^{ikx}|² = 1` preserves eigenvalues. |
-| `torusContinuumGreen_pointGroup_invariant` | TorusOSAxioms | D₄ symmetry of Laplacian eigenvalues `(2πn₁/L)² + (2πn₂/L)²` under coordinate permutation and reflection. |
+| ~~`torusContinuumGreen_translation_invariant`~~ | TorusOSAxioms | **PROVED.** Via `greenFunctionBilinear_translation_invariant` in gaussian-field. Translation acts by SO(2) rotation on paired cos/sin Fourier modes; paired product invariant from cos²+sin²=1. |
+| ~~`torusContinuumGreen_pointGroup_invariant`~~ | TorusOSAxioms | **PROVED.** Via `greenFunctionBilinear_swap_invariant` (reindex n₁↔n₂) and `greenFunctionBilinear_timeReflection_invariant` (reflection acts ±1 on modes, (±1)²=1). |
 | `torusLimit_covariance_eq` | TorusGaussianLimit | Weak convergence transfers second moments. Uniform integrability from `torusEmbeddedTwoPoint_uniform_bound` + Vitali convergence. |
 | `gaussian_measure_unique_of_covariance` | TorusGaussianLimit | Gaussian on nuclear space determined by covariance. Bochner-Minlos uniqueness: characteristic functional `exp(-½C(f,f))` determines the measure. |
 | `torusGaussianLimit_isGaussian` | TorusGaussianLimit | Weak limits of Gaussians are Gaussian. Pointwise convergence of characteristic functionals `exp(-½σ²_n(f)) → exp(-½σ²(f))` + Lévy continuity. |
@@ -611,13 +611,15 @@ infrastructure. Assessment date: 2026-03-03.
 
 ## Upstream: gaussian-field
 
-The gaussian-field library (dependency) has **9 axioms (+1 skipped), 0 sorries**.
+The gaussian-field library (dependency) has **21 axioms (+1 skipped), 0 sorries**.
 - `GaussianField/Support.lean`: 2 axioms (`not_supported_of_not_hilbertSchmidt`, `supportHilbertSpace_exists`)
 - `HeatKernel/PositionKernel.lean`: 1 axiom (`mehlerKernel_eq_series`)
 - `HeatKernel/Bilinear.lean`: 0 axioms, 0 sorries (all proved)
+- `HeatKernel/GreenInvariance.lean`: 4 axioms (Green's function invariance on pure tensors + extension principle)
 - `Torus/Restriction.lean`: 2 axioms (`configuration_torus_polish`, `configuration_torus_borelSpace`)
 - `SmoothCircle/Basic.lean`: 0 axioms (`sobolevSeminorm_affine_precomp_le` proved)
-- `Nuclear/TensorProductFunctorAxioms.lean`: 4 axioms (tensor product functor)
+- `SmoothCircle/FourierTranslation.lean`: 6 axioms (Fourier coefficient transformation under translation + reflection)
+- `Nuclear/TensorProductFunctorAxioms.lean`: 6 axioms (tensor product functor + pure tensor specifications)
 - `Lattice/FKG.lean`: 0 axioms (all proved)
 - `GaussianField/Density.lean`: 0 axioms (master density theorem proved)
 - `GaussianField/Hypercontractive.lean`: 0 axioms (moment ratio bound proved)

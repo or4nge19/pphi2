@@ -46,6 +46,7 @@ t ∈ (0, L/2), which is the correct half for RP with periodic BCs.
 import Pphi2.TorusContinuumLimit.TorusGaussianLimit
 import Pphi2.TorusContinuumLimit.TorusPropagatorConvergence
 import Torus.Symmetry
+import HeatKernel.GreenInvariance
 import Mathlib.Probability.Moments.ComplexMGF
 import Mathlib.Analysis.Analytic.Constructions
 import Mathlib.Analysis.Analytic.Linear
@@ -523,34 +524,50 @@ def TorusOS2_D4Invariance
 
   `G_L(T_v f, T_v g) = G_L(f, g)` for all v ∈ (ℝ/Lℤ)².
 
-Spectral argument: translation acts by phase e^{2πi⟨n,v⟩/L} on Fourier
-mode n. Since the Green's function is `Σ |f̂(n)|² / (μ_n + m²)`, and
-`|e^{iθ} f̂(n)|² = |f̂(n)|²`, translation doesn't change the sum.
+Spectral argument: translation acts by phase rotation on each cos/sin
+pair. The paired product of Fourier coefficients is invariant
+(from `cos²+sin²=1`), and paired modes share eigenvalues.
+
+Uses `greenFunctionBilinear_translation_invariant` from gaussian-field,
+which combines pure-tensor invariance with the extension principle.
 
 Reference: Glimm-Jaffe, *Quantum Physics*, §6.4. -/
-axiom torusContinuumGreen_translation_invariant
+theorem torusContinuumGreen_translation_invariant
     (mass : ℝ) (hmass : 0 < mass) (v : ℝ × ℝ)
     (f g : TorusTestFunction L) :
     torusContinuumGreen L mass hmass (torusTranslation L v f) (torusTranslation L v g) =
-    torusContinuumGreen L mass hmass f g
+    torusContinuumGreen L mass hmass f g := by
+  simp only [torusContinuumGreen, torusTranslation]
+  exact greenFunctionBilinear_translation_invariant L mass hmass v f g
 
 /-- **D4 point group invariance of the torus continuum Green's function.**
 
   `G_L` is invariant under coordinate swap and time reflection.
 
-The eigenvalues `(2πn₁/L)² + (2πn₂/L)²` are symmetric under
-n₁ ↔ n₂ (swap) and n₁ ↦ -n₁ (reflection), so D4 acts trivially
-on the spectrum.
+- **Swap**: Reindex `(n₁,n₂) ↦ (n₂,n₁)` in the spectral sum;
+  eigenvalues are symmetric under exchange.
+- **Reflection**: Each mode transforms by ±1, so `(±1)² = 1`
+  in the coefficient products.
+
+Uses `greenFunctionBilinear_swap_invariant` and
+`greenFunctionBilinear_timeReflection_invariant` from gaussian-field.
 
 Reference: Glimm-Jaffe, *Quantum Physics*, §6.4. -/
-axiom torusContinuumGreen_pointGroup_invariant
+theorem torusContinuumGreen_pointGroup_invariant
     (mass : ℝ) (hmass : 0 < mass) :
     (∀ f g : TorusTestFunction L,
       torusContinuumGreen L mass hmass (torusSwap L f) (torusSwap L g) =
       torusContinuumGreen L mass hmass f g) ∧
     (∀ f g : TorusTestFunction L,
       torusContinuumGreen L mass hmass (torusTimeReflection L f) (torusTimeReflection L g) =
-      torusContinuumGreen L mass hmass f g)
+      torusContinuumGreen L mass hmass f g) := by
+  constructor
+  · intro f g
+    simp only [torusContinuumGreen, torusSwap]
+    exact greenFunctionBilinear_swap_invariant L mass hmass f g
+  · intro f g
+    simp only [torusContinuumGreen, torusTimeReflection]
+    exact greenFunctionBilinear_timeReflection_invariant L mass hmass f g
 
 /-- OS2 (translation) for the torus Gaussian continuum limit.
 
