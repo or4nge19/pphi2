@@ -11,7 +11,7 @@ The proof architecture is: axiomatize key analytic/probabilistic results with
 detailed proof sketches, prove the logical structure connecting them, and
 progressively fill in the axioms with full proofs.
 
-**pphi2: 46 axioms, 0 sorries** (plus 1 private axiom `schwartz_riemann_sum_bound` in GaussianContinuumLimit) | **gaussian-field (upstream): 10 axioms, 0 sorries**
+**pphi2: 46 axioms, 0 sorries** (plus 1 private axiom `schwartz_riemann_sum_bound` in GaussianContinuumLimit) | **gaussian-field (upstream): 9 axioms, 0 sorries**
 
 `schwinger2_convergence` was proved from
 `schwinger_n_convergence`, and `pphi2_nonGaussianity` from `continuumLimit_nonGaussian`.
@@ -611,13 +611,14 @@ infrastructure. Assessment date: 2026-03-03.
 
 ## Upstream: gaussian-field
 
-The gaussian-field library (dependency) has **5 axioms (+1 skipped), 1 sorry** (per gaussian-field's own count; pphi2's pinned version may differ).
+The gaussian-field library (dependency) has **9 axioms (+1 skipped), 0 sorries**.
 - `GaussianField/Support.lean`: 2 axioms (`not_supported_of_not_hilbertSchmidt`, `supportHilbertSpace_exists`)
 - `HeatKernel/PositionKernel.lean`: 1 axiom (`mehlerKernel_eq_series`)
-- `HeatKernel/Bilinear.lean`: 0 axioms, 1 sorry (`heatKernelBilinear_tensorProduct`)
+- `HeatKernel/Bilinear.lean`: 0 axioms, 0 sorries (all proved)
 - `Torus/Restriction.lean`: 2 axioms (`configuration_torus_polish`, `configuration_torus_borelSpace`)
-- `Lattice/FKG.lean`: 0 axioms (all proved: Ahlswede-Daykin, AD marginal preservation, truncation DCT)
-- `Lattice/SpectralCovariance.lean`: 0 axioms
+- `SmoothCircle/Basic.lean`: 0 axioms (`sobolevSeminorm_affine_precomp_le` proved)
+- `Nuclear/TensorProductFunctorAxioms.lean`: 4 axioms (tensor product functor)
+- `Lattice/FKG.lean`: 0 axioms (all proved)
 - `GaussianField/Density.lean`: 0 axioms (master density theorem proved)
 - `GaussianField/Hypercontractive.lean`: 0 axioms (moment ratio bound proved)
 See [gaussian-field status](../gaussian-field/status.md) for the full inventory.
