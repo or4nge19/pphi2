@@ -35,6 +35,7 @@ The torus T²_L has:
 -/
 
 import Pphi2.TorusContinuumLimit.TorusGaussianLimit
+import Pphi2.TorusContinuumLimit.TorusPropagatorConvergence
 import Pphi2.OSProofs.OS3_RP_Inheritance
 import Torus.Symmetry
 
@@ -132,7 +133,7 @@ theorem torusGaussianLimit_os0
     [IsProbabilityMeasure μ]
     (hGCL : IsTorusGaussianContinuumLimit L μ mass hmass) :
     TorusOS0_Analyticity L μ := by
-  sorry
+  sorry -- Requires AnalyticOn ℂ of exp(-½ G(Σ Re(zᵢ)Jᵢ, Σ Im(zᵢ)Jᵢ))
 
 /-! ## OS1: Regularity -/
 
@@ -167,22 +168,67 @@ def TorusOS1_Regularity
       ‖torusGeneratingFunctionalℂ L μ f_re f_im‖ ≤
         Real.exp (c * (q f_re + q f_im))
 
+/-- **Norm of the complex characteristic functional for Gaussian measures.**
+
+For the Gaussian measure with covariance G_L, the MGF formula with complex
+coefficients (t₁ = i for ω(f_re), t₂ = -1 for ω(f_im)) gives:
+
+  `Z_ℂ[f_re, f_im] = exp(½(G(f_im,f_im) - G(f_re,f_re)) - i·G(f_re,f_im))`
+
+Taking the norm eliminates the imaginary phase:
+
+  `‖Z_ℂ[f_re, f_im]‖ = exp(½(G(f_im,f_im) - G(f_re,f_re)))`
+
+Reference: Fernique (1975), §III.4; cf. Gaussian MGF E[exp(Σ tᵢXᵢ)] = exp(½ Σ tᵢtⱼCᵢⱼ). -/
+axiom torusGaussianLimit_complex_cf_norm
+    (mass : ℝ) (hmass : 0 < mass)
+    (μ : Measure (Configuration (TorusTestFunction L)))
+    [IsProbabilityMeasure μ]
+    (hGCL : IsTorusGaussianContinuumLimit L μ mass hmass)
+    (f_re f_im : TorusTestFunction L) :
+    ‖torusGeneratingFunctionalℂ L μ f_re f_im‖ =
+    Real.exp ((1 / 2) * (torusContinuumGreen L mass hmass f_im f_im -
+                          torusContinuumGreen L mass hmass f_re f_re))
+
+/-- **Continuity of the Green's function diagonal.**
+
+  `f ↦ G_L(f, f)` is continuous on `TorusTestFunction L`.
+
+`G_L` is a continuous bilinear form on the nuclear Fréchet space
+`TorusTestFunction L` (its spectral sum `Σ |ĉ_m(f)|²/(μ_m+m²)` converges
+uniformly on bounded sets because `1/(μ_m+m²) ≤ 1/m²` and coefficients
+are rapidly decreasing). The diagonal restriction of a continuous bilinear
+form is continuous.
+
+Reference: Trèves, *Topological Vector Spaces*, Ch. 50. -/
+axiom torusContinuumGreen_continuous_diag
+    (mass : ℝ) (hmass : 0 < mass) :
+    Continuous (fun f : TorusTestFunction L => torusContinuumGreen L mass hmass f f)
+
 /-- OS1 for the torus Gaussian continuum limit.
 
 For Gaussian μ with covariance G_L:
-  `‖Z[f_re, f_im]‖ = |exp(-½ G_L(f_re+if_im, f_re+if_im))|`
-  `= exp(½ (G_L(f_im,f_im) - G_L(f_re,f_re)))`
-  `≤ exp(½ G_L(f_im, f_im))`
+  `‖Z[f_re, f_im]‖ = exp(½ (G_L(f_im,f_im) - G_L(f_re,f_re)))`
   `≤ exp(½ (G_L(f_re,f_re) + G_L(f_im,f_im)))`
 
-This gives the bound with `q(f) = G_L(f,f)` and `c = ½`. -/
+since `-G_L(f_re,f_re) ≤ G_L(f_re,f_re)` (using `G_L(f,f) ≥ 0`).
+
+This gives the bound with `q(f) = G_L(f,f)` and `c = 1/2`. -/
 theorem torusGaussianLimit_os1
     (mass : ℝ) (hmass : 0 < mass)
     (μ : Measure (Configuration (TorusTestFunction L)))
     [IsProbabilityMeasure μ]
     (hGCL : IsTorusGaussianContinuumLimit L μ mass hmass) :
     TorusOS1_Regularity L μ := by
-  sorry
+  refine ⟨fun f => torusContinuumGreen L mass hmass f f,
+          torusContinuumGreen_continuous_diag L mass hmass,
+          1 / 2, by norm_num, ?_⟩
+  intro f_re f_im
+  rw [torusGaussianLimit_complex_cf_norm L mass hmass μ hGCL f_re f_im]
+  simp only
+  gcongr
+  have h_nonneg := torusContinuumGreen_nonneg L mass hmass f_re
+  linarith
 
 /-! ## OS2: Euclidean invariance (translation + D4) -/
 

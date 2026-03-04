@@ -109,6 +109,17 @@ theorem torusContinuumGreen_pos (mass : ℝ) (hmass : 0 < mass)
   unfold torusContinuumGreen
   exact greenFunctionBilinear_pos mass hmass f hf
 
+/-- **Nonnegativity of the torus continuum Green's function on the diagonal.**
+
+  `G_L(f, f) ≥ 0` for all f ∈ C∞(T²_L)
+
+Each spectral term `|f̂(n)|² / ((2πn/L)² + m²) ≥ 0`. -/
+theorem torusContinuumGreen_nonneg (mass : ℝ) (hmass : 0 < mass)
+    (f : TorusTestFunction L) :
+    0 ≤ torusContinuumGreen L mass hmass f f := by
+  unfold torusContinuumGreen
+  exact greenFunctionBilinear_nonneg mass hmass f
+
 end Pphi2
 
 end
