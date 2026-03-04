@@ -47,6 +47,9 @@ import Pphi2.TorusContinuumLimit.TorusGaussianLimit
 import Pphi2.TorusContinuumLimit.TorusPropagatorConvergence
 import Torus.Symmetry
 import Mathlib.Probability.Moments.ComplexMGF
+import Mathlib.Analysis.Analytic.Constructions
+import Mathlib.Analysis.Analytic.Linear
+import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 
 noncomputable section
 
@@ -174,19 +177,87 @@ theorem torusGaussianLimit_characteristic_functional
   -- Combine
   rw [← h_lhs, h_eq_at_I, h_rhs]
 
+/-- **Complex generating functional of a torus Gaussian as exp of a quadratic form.**
+
+For a Gaussian measure μ with covariance G_L, the complex generating functional
+evaluated on `f_re = ∑ Re(zᵢ) Jᵢ, f_im = ∑ Im(zᵢ) Jᵢ` simplifies to:
+
+  `Z_ℂ[z] = exp(-½ ∑ᵢⱼ zᵢ zⱼ G_L(Jᵢ, Jⱼ))`
+
+**Derivation:** The integrand is `exp(I ω(f_re) - ω(f_im))` where by linearity:
+- `ω(f_re) = ∑ Re(zᵢ) ω(Jᵢ)` and `ω(f_im) = ∑ Im(zᵢ) ω(Jᵢ)`
+- `I·Re(z) - Im(z) = I·z` (for each complex zᵢ)
+- So the exponent is `I ∑ zᵢ ω(Jᵢ)`
+
+The vector `(ω(J₁), ..., ω(Jₙ))` is jointly Gaussian with covariance matrix
+`Σᵢⱼ = G_L(Jᵢ, Jⱼ)`. The complex MGF of a centered Gaussian vector X at
+complex argument t is `E[exp(⟨t,X⟩)] = exp(½ ⟨t, Σt⟩)`.
+With `t = I·z`: `E[exp(I ∑ zᵢ Xᵢ)] = exp(-½ ∑ zᵢzⱼ Σᵢⱼ)`.
+
+This requires:
+1. Bilinearity of G_L (from linearity of DMS coefficients)
+2. Complex MGF of multivariate Gaussian (analytic continuation of real MGF)
+
+Reference: Fernique (1975), §III.4; Simon, *P(φ)₂ QFT*, Ch. I. -/
+axiom torusGaussianLimit_complex_cf_quadratic
+    (mass : ℝ) (hmass : 0 < mass)
+    (μ : Measure (Configuration (TorusTestFunction L)))
+    [IsProbabilityMeasure μ]
+    (hGCL : IsTorusGaussianContinuumLimit L μ mass hmass)
+    (n : ℕ) (J : Fin n → TorusTestFunction L)
+    (z : Fin n → ℂ) :
+    torusGeneratingFunctionalℂ L μ
+      (∑ i, (z i).re • J i) (∑ i, (z i).im • J i) =
+    Complex.exp ((-1 / 2 : ℂ) * ∑ i : Fin n, ∑ j : Fin n,
+      z i * z j * (torusContinuumGreen L mass hmass (J i) (J j) : ℂ))
+
 /-- OS0 for the torus Gaussian continuum limit.
 
 For Gaussian μ with covariance G_L, the complex generating functional is:
   `Z[f_re, f_im] = exp(-½ G_L(f_re + if_im, f_re + if_im))`
 where G_L extends bilinearly. This is entire in the coefficients zᵢ since
-it is the composition of a polynomial (the bilinear form) with exp. -/
+it is the composition of a polynomial (the bilinear form) with exp.
+
+The proof uses `torusGaussianLimit_complex_cf_quadratic` to rewrite the
+generating functional as `exp(-½ ∑ᵢⱼ zᵢzⱼ Gᵢⱼ)`, then shows this is
+analytic because it is `exp ∘ (quadratic polynomial)`, and both exp
+and polynomials are entire. -/
 theorem torusGaussianLimit_os0
     (mass : ℝ) (hmass : 0 < mass)
     (μ : Measure (Configuration (TorusTestFunction L)))
     [IsProbabilityMeasure μ]
     (hGCL : IsTorusGaussianContinuumLimit L μ mass hmass) :
     TorusOS0_Analyticity L μ := by
-  sorry -- Requires AnalyticOn ℂ of exp(-½ G(Σ Re(zᵢ)Jᵢ, Σ Im(zᵢ)Jᵢ))
+  intro n J
+  -- Rewrite using the closed form: Z_ℂ(z) = exp(-½ ∑ᵢⱼ zᵢzⱼ Gᵢⱼ)
+  have h_eq : (fun z : Fin n → ℂ =>
+      torusGeneratingFunctionalℂ L μ
+        (∑ i, (z i).re • J i) (∑ i, (z i).im • J i)) =
+      (fun z => Complex.exp ((-1 / 2 : ℂ) * ∑ i : Fin n, ∑ j : Fin n,
+        z i * z j * (torusContinuumGreen L mass hmass (J i) (J j) : ℂ))) := by
+    ext z
+    exact torusGaussianLimit_complex_cf_quadratic L mass hmass μ hGCL n J z
+  rw [h_eq]
+  -- Now show exp(quadratic) is analytic on Set.univ
+  intro z _
+  -- It suffices to show AnalyticAt (which implies AnalyticWithinAt)
+  apply AnalyticAt.analyticWithinAt
+  -- Helper: z ↦ z i is analytic (coordinate projection is a CLM from Fin n → ℂ)
+  have h_proj : ∀ (k : Fin n), AnalyticAt ℂ (fun z : Fin n → ℂ => z k) z := by
+    intro k
+    exact ((ContinuousLinearMap.proj (R := ℂ) (φ := fun _ : Fin n => ℂ) k).analyticAt z)
+  -- exp ∘ (quadratic) is analytic since both are
+  apply AnalyticAt.cexp'
+  -- The inner function z ↦ (-1/2) * ∑ᵢⱼ zᵢ zⱼ Gᵢⱼ is analytic
+  apply AnalyticAt.mul
+  · exact analyticAt_const
+  -- ∑ᵢ ∑ⱼ zᵢ zⱼ Gᵢⱼ is analytic (finite sum of analytic functions)
+  · apply Finset.univ.analyticAt_fun_sum
+    intro i _
+    apply Finset.univ.analyticAt_fun_sum
+    intro j _
+    -- zᵢ * zⱼ * Gᵢⱼ is analytic: product of analytic functions times a constant
+    exact (h_proj i |>.mul (h_proj j)).mul analyticAt_const
 
 /-! ## OS1: Regularity -/
 

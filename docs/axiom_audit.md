@@ -333,13 +333,14 @@ The following were previously axioms and are now theorems:
 
 | # | Axiom | Rating | Source |
 |---|-------|--------|--------|
-| 3 | `torusGaussianLimit_characteristic_functional` | ✅ Standard | ✅ DT 2026-03-03: definition of Gaussian characteristic functional, Fernique §III.4 |
+| ~~3~~ | ~~`torusGaussianLimit_characteristic_functional`~~ | **PROVED** | Now a theorem. CF `E[e^{iωf}] = exp(-½G(f,f))` proved from MGF via `complexMGF` analytic continuation + `charFun_gaussianReal`. |
+| 3 | `torusGaussianLimit_complex_cf_quadratic` | ✅ Standard | Complex CF of Gaussian equals exp(-½ ∑ᵢⱼ zᵢzⱼ G(Jᵢ,Jⱼ)). Multivariate complex MGF of joint Gaussian vector. Requires bilinearity of Green's function + complex MGF. Fernique §III.4, Simon P(φ)₂ Ch.I |
 | 4 | `torusContinuumGreen_translation_invariant` | ✅ Standard | ✅ DT 2026-03-03: translation acts by phase in Fourier space |
 | 5 | `torusContinuumGreen_pointGroup_invariant` | ✅ Standard | ✅ DT 2026-03-03: D4 symmetry of Laplacian eigenvalues |
 | 6 | `torusPositiveTimeSubmodule` | ✅ Infrastructure | Submodule of torus test functions with time support in (0, L/2). Nuclear tensor product lacks pointwise evaluation, so axiomatized. |
 | 7 | `torusLattice_rp` | ✅ Standard | Matrix form: Σᵢⱼ cᵢcⱼ Re(Z_N[fᵢ - Θfⱼ]) ≥ 0 for positive-time test functions. Correct by transfer matrix factorization with H ≥ 0. Replaces incorrect single-function form (counterexample: F(ω) = tanh(ω(f) - ω(Θf))). |
-| 8 | `torusGaussianLimit_complex_cf_norm` | ✅ Standard | ✅ DT 2026-03-03: Gaussian MGF with complex coefficients (t₁=i, t₂=-1), norm eliminates imaginary phase. Fernique §III.4, Simon P(φ)₂ Ch.I |
-| 9 | `torusContinuumGreen_continuous_diag` | ✅ Standard | ✅ DT 2026-03-03: diagonal restriction of continuous bilinear form is continuous. G_L bounded by (L²/m²)·p₀²(f). Reed-Simon I, Trèves Ch.50 |
+| ~~8~~ | ~~`torusGaussianLimit_complex_cf_norm`~~ | **ELIMINATED** | OS1 proved directly via triangle inequality without needing exact norm. |
+| ~~9~~ | ~~`torusContinuumGreen_continuous_diag`~~ | **PROVED** | Now a theorem. Via `greenFunctionBilinear_continuous_diag` in gaussian-field. |
 
 ---
 

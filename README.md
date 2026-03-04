@@ -123,7 +123,7 @@ consistency checks:
 All six phases are structurally complete and the full project builds
 (`lake build`, 3530 jobs).
 
-- **pphi2:** 51 axioms, 1 sorry
+- **pphi2:** 46 axioms, 0 sorries
 - **gaussian-field** (upstream dependency): 10 axioms, 1 sorry
 
 The torus continuum limit (`TorusContinuumLimit/`) provides a cleaner alternative
@@ -132,8 +132,9 @@ the UV limit is isolated from IR issues. Prokhorov extraction on the Polish
 torus configuration space is **proved** (not axiomatized). The same pipeline
 handles both Gaussian and interacting (P(φ)₂) measures via Cauchy-Schwarz
 density transfer. The torus Gaussian continuum limit satisfies OS axioms
-OS0–OS3 (`TorusOSAxioms.lean`), with OS1 (regularity), OS2 (translation +
-D4 invariance), and OS3 (reflection positivity) **proved**. OS3 uses the
+OS0–OS3 (`TorusOSAxioms.lean`), with OS0 (analyticity), OS1 (regularity),
+OS2 (translation + D4 invariance), and OS3 (reflection positivity) **proved**.
+OS0 uses `exp ∘ (quadratic polynomial)` analyticity via Mathlib. OS3 uses the
 matrix/generating-functional form matching `OSAxioms.lean`, with
 positive-time test function support; the proof transfers lattice RP through
 weak limits via `torusMatrixRP_of_weakLimit`.
