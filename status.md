@@ -11,7 +11,7 @@ The proof architecture is: axiomatize key analytic/probabilistic results with
 detailed proof sketches, prove the logical structure connecting them, and
 progressively fill in the axioms with full proofs.
 
-**pphi2: 43 axioms, 0 sorries** (plus 1 private axiom `schwartz_riemann_sum_bound` in GaussianContinuumLimit) | **gaussian-field (upstream): 22 axioms, 0 sorries**
+**pphi2: 42 axioms, 0 sorries** (plus 1 private axiom `schwartz_riemann_sum_bound` in GaussianContinuumLimit) | **gaussian-field (upstream): 28 axioms, 0 sorries**
 
 `schwinger2_convergence` was proved from
 `schwinger_n_convergence`, and `pphi2_nonGaussianity` from `continuumLimit_nonGaussian`.
@@ -55,7 +55,7 @@ progressively fill in the axioms with full proofs.
 | 6 | `OSAxioms.lean` | 0 axioms, 0 sorries |
 | 6 | `Main.lean` | 1 axiom, 0 sorries |
 | 4T | `TorusContinuumLimit/TorusEmbedding.lean` | 0 axioms, 0 sorries (`torusContinuumGreen` now `greenFunctionBilinear`) |
-| 4T | `TorusContinuumLimit/TorusPropagatorConvergence.lean` | 1 axiom, 0 sorries (`latticeTestFn_norm_sq_bounded` proved) |
+| 4T | `TorusContinuumLimit/TorusPropagatorConvergence.lean` | 0 axioms, 0 sorries (`torus_propagator_convergence` proved via gaussian-field `lattice_green_tendsto_continuum` axiom) |
 | 4T | `TorusContinuumLimit/TorusTightness.lean` | 1 axiom, 0 sorries |
 | 4T | `TorusContinuumLimit/TorusConvergence.lean` | 0 axioms, 0 sorries (Prokhorov proved!) |
 | 4T | `TorusContinuumLimit/TorusGaussianLimit.lean` | 2 axioms, 0 sorries (`weakLimit_centered_gaussianReal` proved via charFun convergence + `ext_of_charFun`) |
@@ -311,7 +311,7 @@ Note: `os1_inheritance` is a theorem (not axiom) — OS1 transfers trivially sin
 
 | Axiom | File | Difficulty | Description |
 |-------|------|-----------|-------------|
-| `torus_propagator_convergence` | TorusPropagatorConvergence | Medium | Lattice eigenvalues `(4N²/L²)sin²(πn/N) + m²` → continuum `(2πn/L)² + m²`. Pure UV limit, dominated convergence with rapid Fourier decay. |
+| ~~`torus_propagator_convergence`~~ | TorusPropagatorConvergence | **PROVED** | Proved via gaussian-field `lattice_green_tendsto_continuum` axiom. Chain: `torusEmbeddedTwoPoint` → `lattice_cross_moment` → `covariance` → axiom. |
 | ~~`torusEmbeddedTwoPoint_uniform_bound`~~ | TorusPropagatorConvergence | **PROVED** | `E[Φ_N(f)²] ≤ C` uniformly in N. Eigenvalue lower bound `λ_k ≥ m²` + Parseval + Riemann sum bound on compact torus. |
 | `torusContinuumMeasures_tight` | TorusTightness | Medium | Tightness via Mitoma criterion on torus. Finite volume makes this cleaner than S'(ℝ^d). |
 | ~~`torusGaussianMeasure_isGaussian`~~ | TorusGaussianLimit | **PROVED** | Lattice GFF pushforward is Gaussian. MGF: `E[e^{ω(f)}] = exp(½ E[ω(f)²])`. |
@@ -573,7 +573,7 @@ infrastructure. Assessment date: 2026-03-04.
 | Axiom | File | Strategy |
 |-------|------|----------|
 | ~~`weakLimit_centered_gaussianReal`~~ | TorusGaussianLimit | **PROVED.** CharFun decomposition into cos/sin integrals + variance extraction via log + `Measure.ext_of_charFun`. |
-| `torus_propagator_convergence` | TorusPropagatorConvergence | Mode-by-mode `sin(x)/x → 1` + dominated convergence with `1/(m² + k²)` domination + Schwartz rapid decay. |
+| ~~`torus_propagator_convergence`~~ | TorusPropagatorConvergence | **PROVED.** Via gaussian-field `lattice_green_tendsto_continuum` axiom. |
 | `latticeMeasure_translation_invariant` | OS2_WardIdentity | Lattice measure invariant under cyclic translation. Finite-dimensional change of variables with Jacobian = 1. |
 
 ### Tier 3: Moderate (nontrivial but standard)
@@ -644,19 +644,18 @@ infrastructure. Assessment date: 2026-03-04.
 
 ## Upstream: gaussian-field
 
-The gaussian-field library (dependency) has **22 axioms (+1 skipped), 0 sorries**.
+The gaussian-field library (dependency) has **28 axioms (+1 skipped), 0 sorries**.
 - `GaussianField/Properties.lean`: 1 axiom (`measure_unique_of_charFun` — Gaussian measure uniqueness via Minlos)
 - `GaussianField/Support.lean`: 2 axioms (`not_supported_of_not_hilbertSchmidt`, `supportHilbertSpace_exists`)
 - `HeatKernel/PositionKernel.lean`: 1 axiom (`mehlerKernel_eq_series`)
 - `HeatKernel/Bilinear.lean`: 0 axioms, 0 sorries (all proved)
-- `HeatKernel/GreenInvariance.lean`: 4 axioms (Green's function invariance on pure tensors + extension principle)
+- `HeatKernel/GreenInvariance.lean`: 3 axioms (Green's function invariance on pure tensors + extension principle)
 - `Torus/Restriction.lean`: 2 axioms (`configuration_torus_polish`, `configuration_torus_borelSpace`)
 - `SmoothCircle/Basic.lean`: 0 axioms (`sobolevSeminorm_affine_precomp_le` proved)
 - `SmoothCircle/FourierTranslation.lean`: 6 axioms (Fourier coefficient transformation under translation + reflection)
 - `Nuclear/TensorProductFunctorAxioms.lean`: 6 axioms (tensor product functor + pure tensor specifications)
-- `Lattice/FKG.lean`: 0 axioms (all proved)
+- `Lattice/Convergence.lean`: 1 axiom (`lattice_green_tendsto_continuum`)
+- `Lattice/HeatKernelConvergence1d.lean`: 6 axioms (1D DFT coefficients, spectral expansion, convergence)
 - `Lattice/HeatKernel.lean`: 0 axioms (heat kernel via matrix exponential, all proved)
 - `Lattice/Symmetry.lean`: 0 axioms (translation/reflection commutation, all proved)
-- `GaussianField/Density.lean`: 0 axioms (master density theorem proved)
-- `GaussianField/Hypercontractive.lean`: 0 axioms (moment ratio bound proved)
 See [gaussian-field status](../gaussian-field/status.md) for the full inventory.

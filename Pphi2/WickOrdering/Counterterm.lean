@@ -87,13 +87,13 @@ theorem wickConstant_le_inv_mass_sq (a mass : ℝ) (_ha : 0 < a) (hmass : 0 < ma
     intro m _
     rw [inv_pow]
     apply inv_anti₀ (sq_pos_of_pos hmass)
-    unfold latticeEigenvalue
+    unfold latticeEigenvalue latticeLaplacianEigenvalue
     split_ifs with h
     · have h_sin_nonneg : (0 : ℝ) ≤ ∑ i : Fin d,
           sin (π * ↑(ZMod.val ((Fintype.equivFin (FinLatticeSites d N)).symm ⟨m, h⟩ i)) / ↑N) ^ 2 :=
         Finset.sum_nonneg fun _ _ => sq_nonneg _
       linarith [mul_nonneg (div_nonneg (by norm_num : (0:ℝ) ≤ 4) (sq_nonneg a)) h_sin_nonneg]
-    · exact le_refl _
+    · linarith
   -- Sum of |Λ| terms each ≤ C gives sum ≤ |Λ| * C
   have h_sum : ∑ m ∈ Finset.range (Fintype.card (FinLatticeSites d N)),
       (latticeEigenvalue d N a mass m)⁻¹ ≤
@@ -121,12 +121,12 @@ theorem wickConstant_antitone_mass (a : ℝ) (ha : 0 < a)
   intro m _
   -- Eigenvalue is monotone in mass, so inverse is antitone
   apply inv_anti₀ (latticeEigenvalue_pos d N a m₁ ha hm₁ m)
-  unfold latticeEigenvalue
+  unfold latticeEigenvalue latticeLaplacianEigenvalue
   split_ifs with h
   · -- (4/a²) Σ sin² + m₁² ≤ (4/a²) Σ sin² + m₂²
     linarith [pow_le_pow_left₀ (le_of_lt hm₁) hm₂ 2]
-  · -- m₁² ≤ m₂²
-    exact pow_le_pow_left₀ (le_of_lt hm₁) hm₂ 2
+  · -- 0 + m₁² ≤ 0 + m₂²
+    linarith [pow_le_pow_left₀ (le_of_lt hm₁) hm₂ 2]
 
 end Pphi2
 

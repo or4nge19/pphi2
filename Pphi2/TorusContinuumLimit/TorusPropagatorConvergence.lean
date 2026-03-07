@@ -9,7 +9,8 @@ Green's function on T²_L converges to the continuum Green's function as N → �
 
 ## Main results
 
-- `torus_propagator_convergence` — (axiom) lattice eigenvalues → continuum eigenvalues
+- `torusEmbeddedTwoPoint_eq_spectral_sum` — spectral decomposition of lattice two-point
+- `torus_propagator_convergence` — lattice → continuum convergence (DCT on spectral modes)
 - `torusEmbeddedTwoPoint_uniform_bound` — (axiom) `E[Φ_N(f)²] ≤ C/m²·‖f‖²` uniformly in N
 - `torusContinuumGreen_pos` — `G_L(f,f) > 0` for f ≠ 0
 
@@ -35,6 +36,7 @@ f̂(n) decay rapidly, providing dominated convergence.
 
 import Pphi2.TorusContinuumLimit.TorusEmbedding
 import Lattice.Covariance
+import Lattice.Convergence
 
 noncomputable section
 
@@ -415,6 +417,47 @@ theorem latticeTestFn_norm_sq_bounded (f : TorusTestFunction L) :
         field_simp
     _ ≤ L ^ 2 * C₀ ^ 4 * p₀f ^ 2 + 1 := le_add_of_nonneg_right one_pos.le
 
+/-! ## Cross-moment spectral identity -/
+
+/-- The embedded two-point function for general f, g factors through the lattice.
+
+Generalization of `torusEmbeddedTwoPoint_eq_lattice_second_moment` to the cross case:
+  `⟨Φ_N(f), Φ_N(g)⟩ = ∫ ω(ι*f) · ω(ι*g) dμ_{GFF}` -/
+theorem torusEmbeddedTwoPoint_eq_lattice_cross_moment
+    (N : ℕ) [NeZero N] (mass : ℝ) (hmass : 0 < mass)
+    (f g : TorusTestFunction L) :
+    torusEmbeddedTwoPoint L N mass hmass f g =
+    ∫ ω : Configuration (FinLatticeField 2 N),
+      (ω (latticeTestFn L N f)) * (ω (latticeTestFn L N g))
+      ∂(latticeGaussianMeasure 2 N (circleSpacing L N) mass
+        (circleSpacing_pos L N) hmass) := by
+  unfold torusEmbeddedTwoPoint torusContinuumMeasure
+  rw [integral_map (torusEmbedLift_measurable L N).aemeasurable]
+  · congr 1; ext ω
+    rw [torusEmbedLift_eval_eq L N f ω, torusEmbedLift_eval_eq L N g ω]
+  · exact ((configuration_eval_measurable f).mul
+      (configuration_eval_measurable g)).aestronglyMeasurable
+
+/-- The embedded two-point function equals the lattice spectral sum.
+
+  `⟨Φ_N(f), Φ_N(g)⟩ = Σ_k λ_k⁻¹ · c_k(ι*f) · c_k(ι*g)`
+
+where λ_k are eigenvalues of `-Δ_{lat} + m²`, c_k(h) = Σ_x e_k(x) h(x) are
+the coefficients in the lattice eigenbasis, and ι*f = latticeTestFn f. -/
+theorem torusEmbeddedTwoPoint_eq_spectral_sum
+    (N : ℕ) [NeZero N] (mass : ℝ) (hmass : 0 < mass)
+    (f g : TorusTestFunction L) :
+    torusEmbeddedTwoPoint L N mass hmass f g =
+    ∑ k : FinLatticeSites 2 N,
+      (massEigenvalues 2 N (circleSpacing L N) mass k)⁻¹ *
+      (∑ x, (massEigenvectorBasis 2 N (circleSpacing L N) mass k :
+        EuclideanSpace ℝ _) x * (latticeTestFn L N f) x) *
+      (∑ x, (massEigenvectorBasis 2 N (circleSpacing L N) mass k :
+        EuclideanSpace ℝ _) x * (latticeTestFn L N g) x) := by
+  rw [torusEmbeddedTwoPoint_eq_lattice_cross_moment,
+      lattice_cross_moment,
+      lattice_covariance_eq_spectral]
+
 /-! ## Propagator convergence on the torus -/
 
 /-- **Lattice propagator on the torus converges to the continuum Green's function.**
@@ -433,14 +476,38 @@ convergence.
 This is a **pure UV limit**: L is fixed, only N → ∞. There is no IR tail
 issue because the torus has finite volume.
 
+Proof strategy:
+1. Each `torusEmbeddedTwoPoint L (N+1)` is a finite spectral sum
+   (by `torusEmbeddedTwoPoint_eq_spectral_sum`).
+2. The continuum `torusContinuumGreen` is `∑' m, greenTerm mass f g m`.
+3. For each Fourier mode m, the lattice spectral term converges to
+   the continuum term: `sin(πn/N)/(πn/N) → 1` for eigenvalues,
+   and aliasing terms vanish by rapid decay of Schwartz coefficients.
+4. Each term is bounded by `|coeff_m(f)|·|coeff_m(g)|/mass²` (summable).
+5. Apply `tendsto_tsum_of_dominated_convergence`.
+
 Reference: Glimm-Jaffe §6.1, Simon Ch. I. -/
-axiom torus_propagator_convergence
+theorem torus_propagator_convergence
     (mass : ℝ) (hmass : 0 < mass)
     (f g : TorusTestFunction L) :
     Tendsto
       (fun N : ℕ => torusEmbeddedTwoPoint L (N + 1) mass hmass f g)
       atTop
-      (nhds (torusContinuumGreen L mass hmass f g))
+      (nhds (torusContinuumGreen L mass hmass f g)) := by
+  -- Rewrite each torusEmbeddedTwoPoint as lattice covariance
+  have h_eq : ∀ N : ℕ, torusEmbeddedTwoPoint L (N + 1) mass hmass f g =
+      covariance
+        (latticeCovariance 2 (N + 1) (circleSpacing L (N + 1)) mass
+          (circleSpacing_pos L (N + 1)) hmass)
+        (fun x => evalTorusAtSite L (N + 1) x f)
+        (fun x => evalTorusAtSite L (N + 1) x g) := by
+    intro N
+    rw [torusEmbeddedTwoPoint_eq_lattice_cross_moment, lattice_cross_moment]
+    rfl
+  simp_rw [h_eq]
+  -- The target is greenFunctionBilinear
+  show Tendsto _ atTop (nhds (greenFunctionBilinear mass hmass f g))
+  exact lattice_green_tendsto_continuum L mass hmass f g
 
 /-! ## Uniform bound on the embedded two-point function -/
 
