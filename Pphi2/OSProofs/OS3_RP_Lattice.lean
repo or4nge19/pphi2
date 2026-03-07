@@ -411,6 +411,7 @@ factors as
 
 Reference: Glimm-Jaffe Ch. 6.1, Osterwalder-Seiler (1978). -/
 axiom gaussian_density_rp (a mass : ℝ)
+    (ha : 0 < a) (hmass : 0 < mass)
     (G : (ZMod N × ZMod N → ℝ) → ℝ)
     (hG : PositiveTimeSupported N G)
     (w : (ZMod N × ZMod N → ℝ) → ℝ)
@@ -456,7 +457,7 @@ theorem gaussian_rp_with_boundary_weight (a mass : ℝ)
   rw [latticeGaussianMeasure_density_integral' 2 N a mass ha hmass]
   -- Ratio ≥ 0: numerator ≥ 0 from gaussian_density_rp, denominator > 0
   apply div_nonneg
-  · exact gaussian_density_rp N a mass G hG w hw_nonneg hw_boundary
+  · exact gaussian_density_rp N a mass ha hmass G hG w hw_nonneg hw_boundary
   · exact le_of_lt (gaussianDensity_integral_pos 2 N a mass ha hmass)
 
 /-- **Reflection positivity for the interacting lattice measure** (OS3).
