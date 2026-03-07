@@ -5,13 +5,15 @@
 ### 1. Lattice reflection positivity (eliminates 2 axioms)
 
 Target axioms:
-- `lattice_rp` (OSProofs/OS3_RP_Lattice) — Medium
+- `gaussian_rp_with_boundary_weight` (OSProofs/OS3_RP_Lattice) — Medium
 - `torusLattice_rp` (TorusContinuumLimit/TorusOSAxioms) — Medium
 
-Both follow from `action_decomposition` (proved) via Fubini + perfect-square
-argument. The action decomposes as S = S_+ + S_-, where S_+ = V/2, and the
-Boltzmann weight exp(-S) factors as exp(-S_+) * exp(-S_-). The RP inequality
-is then integral of a product of nonneg functions.
+`lattice_rp` is now **proved** from `gaussian_rp_with_boundary_weight` via
+time-slice decomposition V=V₊+V₀+V₋, reflection symmetry V₋(φ)=V₊(Θφ),
+and integrand factorization as G·G∘Θ·w. The remaining axiom is the core
+Gaussian RP with boundary weight: ∫ G(φ)·G(Θφ)·w(φ) dμ_GFF ≥ 0, which
+follows from the Gaussian Markov property (conditional independence of
+positive/negative time fields given boundary).
 
 ### 2. Transfer operator compactness (eliminates 1 axiom)
 

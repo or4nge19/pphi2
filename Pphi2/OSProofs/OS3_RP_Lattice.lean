@@ -174,47 +174,346 @@ theorem action_decomposition (P : InteractionPolynomial) (a mass : ℝ)
   simp only [fieldToSites, fieldReflection2D, Function.comp_apply, σ, Equiv.trans_apply,
              Function.Involutive.coe_toPerm, Equiv.symm_apply_apply]
 
+/-- Lattice field extracted from `Configuration` in product coordinates. -/
+def evalField2D (ω : Configuration (FinLatticeField 2 N)) : ZMod N × ZMod N → ℝ :=
+  fieldFromSites N (fun x => ω (Pi.single x 1))
+
+/-! ## Time-slice interaction decomposition
+
+The interaction V = a² Σ_x v(φ(x)) is a sum of single-site functions.
+We decompose this sum based on the time coordinate into:
+- V₊: sum over positive-time sites (0 < t.val < N/2)
+- V₀: sum over boundary sites (complement of S₊ ∪ Θ(S₊))
+- V₋: sum over negative-time sites (in Θ(S₊))
+
+This decomposition satisfies V = V₊ + V₀ + V₋ and V₋(φ) = V₊(Θφ),
+which is the key algebraic input for reducing the interacting RP to
+Gaussian RP with a boundary weight. -/
+
+/-- A function depends only on boundary sites (sites not in S₊ ∪ Θ(S₊),
+where S₊ = {(t,x) : 0 < t.val < N/2}). -/
+def BoundarySupported (w : (ZMod N × ZMod N → ℝ) → ℝ) : Prop :=
+  ∀ φ₁ φ₂ : ZMod N × ZMod N → ℝ,
+    (∀ tx : ZMod N × ZMod N,
+      ¬(0 < tx.1.val ∧ tx.1.val < N / 2) →
+      ¬(0 < (-tx.1 : ZMod N).val ∧ (-tx.1 : ZMod N).val < N / 2) →
+      φ₁ tx = φ₂ tx) →
+    w φ₁ = w φ₂
+
+/-- Positive-time part of the Wick interaction:
+`V₊(φ) = a² Σ_{(t,x) : 0 < t < N/2} :P(φ(t,x)):`. -/
+private def positiveTimeInteraction (P : InteractionPolynomial) (a mass : ℝ) :
+    (ZMod N × ZMod N → ℝ) → ℝ :=
+  fun φ => a ^ 2 * (Finset.univ.filter (fun tx : ZMod N × ZMod N =>
+    0 < tx.1.val ∧ tx.1.val < N / 2)).sum
+    (fun tx => wickPolynomial P (wickConstant 2 N a mass) (φ tx))
+
+/-- Boundary part of the Wick interaction:
+`V₀(φ) = a² Σ_{(t,x) : t ∉ S₊ ∪ Θ(S₊)} :P(φ(t,x)):`. -/
+private def boundaryTimeInteraction (P : InteractionPolynomial) (a mass : ℝ) :
+    (ZMod N × ZMod N → ℝ) → ℝ :=
+  fun φ => a ^ 2 * (Finset.univ.filter (fun tx : ZMod N × ZMod N =>
+    ¬(0 < tx.1.val ∧ tx.1.val < N / 2) ∧
+    ¬(0 < (-tx.1 : ZMod N).val ∧ (-tx.1 : ZMod N).val < N / 2))).sum
+    (fun tx => wickPolynomial P (wickConstant 2 N a mass) (φ tx))
+
+/-- Negative-time part of the Wick interaction:
+`V₋(φ) = a² Σ_{(t,x) : t ∈ Θ(S₊)} :P(φ(t,x)):`. -/
+private def negativeTimeInteraction (P : InteractionPolynomial) (a mass : ℝ) :
+    (ZMod N × ZMod N → ℝ) → ℝ :=
+  fun φ => a ^ 2 * (Finset.univ.filter (fun tx : ZMod N × ZMod N =>
+    0 < (-tx.1 : ZMod N).val ∧ (-tx.1 : ZMod N).val < N / 2)).sum
+    (fun tx => wickPolynomial P (wickConstant 2 N a mass) (φ tx))
+
+/-- S₊ and Θ(S₊) are disjoint: no site has both 0 < t.val < N/2 and
+0 < (-t).val < N/2. -/
+private theorem positiveTime_negativeTime_disjoint
+    (tx : ZMod N × ZMod N) :
+    ¬((0 < tx.1.val ∧ tx.1.val < N / 2) ∧
+      (0 < (-tx.1 : ZMod N).val ∧ (-tx.1 : ZMod N).val < N / 2)) := by
+  intro ⟨⟨h1, h2⟩, ⟨_, h4⟩⟩
+  -- t.val > 0 and t.val < N/2, and (-t).val > 0 and (-t).val < N/2
+  -- For t ≠ 0: (-t).val = N - t.val
+  have hne : (tx.1 : ZMod N) ≠ 0 := by
+    intro h; rw [h, ZMod.val_zero] at h1; omega
+  haveI : NeZero (tx.1 : ZMod N) := ⟨hne⟩
+  have hval : (-tx.1 : ZMod N).val = N - tx.1.val := ZMod.val_neg_of_ne_zero tx.1
+  rw [hval] at h4
+  -- h2: t.val < N/2 and h4: N - t.val < N/2, so N < N. Contradiction.
+  omega
+
+/-- The interaction decomposes as V = V₊ + V₀ + V₋ when expressed via evalField2D.
+This is a partition of the site sum: S₊, S₀, Θ(S₊) partition all sites of
+ZMod N × ZMod N. -/
+private theorem interactionFunctional_decomposition (P : InteractionPolynomial)
+    (a mass : ℝ) (ω : Configuration (FinLatticeField 2 N)) :
+    interactionFunctional 2 N P a mass ω =
+      positiveTimeInteraction N P a mass (evalField2D N ω) +
+      boundaryTimeInteraction N P a mass (evalField2D N ω) +
+      negativeTimeInteraction N P a mass (evalField2D N ω) := by
+  -- Reindex the sum via siteEquiv: FinLatticeSites 2 N ≅ ZMod N × ZMod N
+  unfold interactionFunctional positiveTimeInteraction boundaryTimeInteraction
+    negativeTimeInteraction
+  -- Factor out a^2 and work with the sums
+  rw [← mul_add, ← mul_add]
+  congr 1
+  -- Reindex: Σ_{x : FinLatticeSites} f(x) = Σ_{tx : ZMod N × ZMod N} f(siteEquiv tx)
+  rw [show ∑ x : FinLatticeSites 2 N,
+      wickPolynomial P (wickConstant 2 N a mass)
+        (ω (finLatticeDelta 2 N x)) =
+    ∑ tx : ZMod N × ZMod N,
+      wickPolynomial P (wickConstant 2 N a mass) (evalField2D N ω tx) from by
+    apply Fintype.sum_equiv (siteEquiv N).symm
+    intro x
+    simp only [evalField2D, fieldFromSites, Function.comp_apply,
+      Equiv.apply_symm_apply]
+    congr 2; ext y; simp [finLatticeDelta, Pi.single, Function.update]]
+  -- Three-way sum partition: Σ_all = Σ_{S₊} + Σ_{S₀} + Σ_{Θ(S₊)}
+  set v := fun tx : ZMod N × ZMod N =>
+    wickPolynomial P (wickConstant 2 N a mass) (evalField2D N ω tx)
+  set Cplus := fun tx : ZMod N × ZMod N =>
+    0 < tx.1.val ∧ tx.1.val < N / 2
+  set Cminus := fun tx : ZMod N × ZMod N =>
+    0 < (-tx.1 : ZMod N).val ∧ (-tx.1 : ZMod N).val < N / 2
+  -- Split: Σ_all = Σ_{Cplus} + Σ_{¬Cplus}
+  have h1 := (Finset.sum_filter_add_sum_filter_not Finset.univ Cplus v).symm
+  -- Split: Σ_{¬Cplus} = Σ_{Cminus ∧ ¬Cplus} + Σ_{¬Cminus ∧ ¬Cplus}
+  have h2 : (Finset.univ.filter (fun tx => ¬Cplus tx)).sum v =
+    ((Finset.univ.filter (fun tx => ¬Cplus tx)).filter Cminus).sum v +
+    ((Finset.univ.filter (fun tx => ¬Cplus tx)).filter (fun tx => ¬Cminus tx)).sum v :=
+    (Finset.sum_filter_add_sum_filter_not _ Cminus v).symm
+  -- Cminus ∧ ¬Cplus = Cminus (since Cplus ∧ Cminus is impossible)
+  have h3 : (Finset.univ.filter (fun tx => ¬Cplus tx)).filter Cminus =
+    Finset.univ.filter Cminus := by
+    ext tx; simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+    constructor
+    · exact fun ⟨_, h⟩ => h
+    · exact fun h => ⟨fun hc => positiveTime_negativeTime_disjoint N tx ⟨hc, h⟩, h⟩
+  -- ¬Cminus ∧ ¬Cplus = ¬Cplus ∧ ¬Cminus (just reorder)
+  have h4 : (Finset.univ.filter (fun tx => ¬Cplus tx)).filter (fun tx => ¬Cminus tx) =
+    Finset.univ.filter (fun tx => ¬Cplus tx ∧ ¬Cminus tx) := by
+    ext tx; simp [Finset.mem_filter]
+  rw [h1, h2, h3, h4]
+  ring
+
+/-- The negative-time interaction equals the positive-time interaction on the
+reflected field: V₋(φ) = V₊(Θφ). This is the site-relabeling argument:
+Θ bijects S₊ to Θ(S₊), so Σ_{t ∈ Θ(S₊)} v(φ(t)) = Σ_{t ∈ S₊} v(φ(Θt)) = V₊(Θφ). -/
+private theorem negativeTime_eq_positiveTime_reflected (P : InteractionPolynomial)
+    (a mass : ℝ) (φ : ZMod N × ZMod N → ℝ) :
+    negativeTimeInteraction N P a mass φ =
+      positiveTimeInteraction N P a mass (fieldReflection2D N φ) := by
+  unfold negativeTimeInteraction positiveTimeInteraction fieldReflection2D
+  congr 1
+  -- Reindex: Σ_{tx ∈ filter(C₋)} v(φ(tx)) = Σ_{tx ∈ filter(C₊)} v(φ(Θ(tx)))
+  -- using the bijection Θ: S₊ → Θ(S₊)
+  set c := wickConstant 2 N a mass
+  set v := fun t : ℝ => wickPolynomial P c t
+  set Cplus := fun tx : ZMod N × ZMod N =>
+    0 < tx.1.val ∧ tx.1.val < N / 2
+  set Cminus := fun tx : ZMod N × ZMod N =>
+    0 < (-tx.1 : ZMod N).val ∧ (-tx.1 : ZMod N).val < N / 2
+  -- The time reflection as an equiv on ZMod N × ZMod N
+  let θ : ZMod N × ZMod N ≃ ZMod N × ZMod N :=
+    (timeReflection2D_involution N).toPerm (timeReflection2D N)
+  -- θ maps Cplus to Cminus
+  have hθ_map : ∀ tx, Cplus tx → Cminus (θ tx) := by
+    intro ⟨t, x⟩ ⟨h1, h2⟩
+    simp only [θ, Function.Involutive.coe_toPerm, timeReflection2D, Cminus]
+    simp only [neg_neg]
+    exact ⟨h1, h2⟩
+  -- θ maps Cminus to Cplus
+  have hθ_inv : ∀ tx, Cminus tx → Cplus (θ tx) := by
+    intro ⟨t, x⟩ ⟨h1, h2⟩
+    simp only [θ, Function.Involutive.coe_toPerm, timeReflection2D, Cplus]
+    exact ⟨h1, h2⟩
+  -- θ bijects filter(Cplus) to filter(Cminus)
+  have hθ_bij : Finset.image θ (Finset.univ.filter Cplus) = Finset.univ.filter Cminus := by
+    ext tx; simp only [Finset.mem_image, Finset.mem_filter, Finset.mem_univ, true_and]
+    constructor
+    · rintro ⟨tx', hC, rfl⟩; exact hθ_map tx' hC
+    · intro hC; exact ⟨θ tx, hθ_inv tx hC, by
+        show θ (θ tx) = tx
+        exact timeReflection2D_involution N tx⟩
+  -- Rewrite using sum_image
+  rw [← hθ_bij]
+  rw [Finset.sum_image (fun _ _ _ _ heq => θ.injective heq)]
+  apply Finset.sum_congr rfl
+  intro tx _
+  simp only [θ, Function.Involutive.coe_toPerm, timeReflection2D, Function.comp_apply]
+
+/-- `exp(-V₊)` is positive-time supported: it depends only on field values
+at sites (t,x) with 0 < t.val < N/2. -/
+private theorem positiveTimeInteraction_supported (P : InteractionPolynomial)
+    (a mass : ℝ) :
+    PositiveTimeSupported N
+      (fun φ => Real.exp (-(positiveTimeInteraction N P a mass φ))) := by
+  intro φ₁ φ₂ hEq
+  change Real.exp (-(positiveTimeInteraction N P a mass φ₁)) =
+       Real.exp (-(positiveTimeInteraction N P a mass φ₂))
+  congr 1; congr 1
+  change positiveTimeInteraction N P a mass φ₁ = positiveTimeInteraction N P a mass φ₂
+  unfold positiveTimeInteraction
+  congr 1
+  apply Finset.sum_congr rfl
+  intro tx htx
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and] at htx
+  congr 1
+  exact hEq tx.1 htx tx.2
+
+/-- `exp(-V₀)` is boundary-supported: it depends only on field values at
+sites not in S₊ ∪ Θ(S₊). -/
+private theorem boundaryTimeInteraction_boundarySupported (P : InteractionPolynomial)
+    (a mass : ℝ) :
+    BoundarySupported N
+      (fun φ => Real.exp (-(boundaryTimeInteraction N P a mass φ))) := by
+  intro φ₁ φ₂ hEq
+  change Real.exp (-(boundaryTimeInteraction N P a mass φ₁)) =
+       Real.exp (-(boundaryTimeInteraction N P a mass φ₂))
+  congr 1; congr 1
+  change boundaryTimeInteraction N P a mass φ₁ = boundaryTimeInteraction N P a mass φ₂
+  unfold boundaryTimeInteraction
+  congr 1
+  apply Finset.sum_congr rfl
+  intro tx htx
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and] at htx
+  congr 1
+  exact hEq tx htx.1 htx.2
+
+omit [NeZero N] in
+/-- Product of positive-time-supported functions is positive-time supported. -/
+private theorem mul_positiveTimeSupported
+    (F G : (ZMod N × ZMod N → ℝ) → ℝ)
+    (hF : PositiveTimeSupported N F) (hG : PositiveTimeSupported N G) :
+    PositiveTimeSupported N (fun φ => F φ * G φ) := by
+  intro φ₁ φ₂ hEq
+  change F φ₁ * G φ₁ = F φ₂ * G φ₂
+  rw [hF φ₁ φ₂ hEq, hG φ₁ φ₂ hEq]
+
 /-! ## Reflection positivity on the lattice -/
 
-/-- **Reflection positivity on the lattice** (OS3).
+/-- **Core Gaussian reflection positivity with boundary weight.**
+
+For any G positive-time supported and w ≥ 0 boundary-supported:
+
+  `∫ G(φ) · G(Θφ) · w(φ) dμ_GFF ≥ 0`
+
+This follows from the Gaussian Markov property: the lattice Laplacian
+`-Δ + m²` couples only nearest-neighbor sites, so the precision matrix
+has `Q_{ij} = 0` for `i ∈ S₊` and `j ∈ Θ(S₊)` (they are separated by
+at least 2 in the time direction for N ≥ 4). This means the Gaussian
+measure conditioned on boundary sites makes the positive-time and
+negative-time fields conditionally independent. Combined with the
+reflection symmetry of the conditional distributions, the integral
+factors as
+
+  `∫ w(φ₀) · [∫ G(φ₊,φ₀) dμ₊|φ₀]² dμ₀ ≥ 0`
+
+Reference: Glimm-Jaffe Ch. 6.1, Osterwalder-Seiler (1978). -/
+axiom gaussian_rp_with_boundary_weight (a mass : ℝ)
+    (ha : 0 < a) (hmass : 0 < mass)
+    (G : (ZMod N × ZMod N → ℝ) → ℝ)
+    (hG : PositiveTimeSupported N G)
+    (w : (ZMod N × ZMod N → ℝ) → ℝ)
+    (hw_nonneg : ∀ φ, 0 ≤ w φ)
+    (hw_boundary : BoundarySupported N w) :
+    0 ≤ ∫ ω : Configuration (FinLatticeField 2 N),
+      (G (evalField2D N ω)) *
+      (G (fieldReflection2D N (evalField2D N ω))) *
+      (w (evalField2D N ω))
+      ∂(latticeGaussianMeasure 2 N a mass ha hmass)
+
+/-- **Reflection positivity for the interacting lattice measure** (OS3).
 
 For any function F supported at positive time:
 
   `∫ F(φ) · F(Θφ) dμ_a ≥ 0`
 
-Proof sketch:
-1. Decompose `S[φ] = S⁺[φ⁺, φ⁰] + S⁻[φ⁻, φ⁰]`
-2. Since F depends only on φ⁺ and S⁻[φ⁻, φ⁰] = S⁺[Θφ⁻, φ⁰]:
-   ```
-   ∫ F(φ) F(Θφ) e^{-S} dφ = ∫ dφ⁰ [∫ F(φ⁺,φ⁰) e^{-S⁺} dφ⁺]² ≥ 0
-   ```
-3. The integral over φ⁻ after substitution Θφ⁻ = ψ⁺ gives
-   the same integral as over φ⁺, yielding a perfect square.
+**Proof**: Decompose V = V₊ + V₀ + V₋ where V₊ sums over positive-time
+sites, V₀ over boundary, V₋ over negative-time. Since V₋(φ) = V₊(Θφ)
+(site relabeling), the Boltzmann weight factors as:
 
-Reference: Glimm-Jaffe Ch. 6.1, Simon Ch. III — lattice action decomposes
-as S = S⁺ + S⁻ + S⁰ where S± involves only φ± and S⁰ couples
-through the boundary. The Fubini factorization plus time-reflection
-symmetry of S gives the perfect-square structure. -/
-axiom lattice_rp (P : InteractionPolynomial) (a mass : ℝ)
+  `exp(-V) = exp(-V₊(φ)) · exp(-V₀(φ)) · exp(-V₊(Θφ))`
+
+Setting G(φ) = F(φ)·exp(-V₊(φ)) (positive-time supported) and
+w(φ) = exp(-V₀(φ)) (boundary-supported, nonneg), the integral becomes
+
+  `(1/Z) ∫ G(φ)·G(Θφ)·w(φ) dμ_GFF ≥ 0`
+
+by `gaussian_rp_with_boundary_weight`.
+
+Reference: Glimm-Jaffe Ch. 6.1, Simon Ch. III.3. -/
+theorem lattice_rp (P : InteractionPolynomial) (a mass : ℝ)
     (ha : 0 < a) (hmass : 0 < mass)
     (F : (ZMod N × ZMod N → ℝ) → ℝ)
     (hF : PositiveTimeSupported N F) :
-    -- Reflection positivity: ∫ F(φ) · F(Θφ) dμ_a ≥ 0
-    -- where Θ is time reflection and μ_a is the interacting lattice measure.
-    -- The integral is expressed using the fieldToSites conversion to connect
-    -- the product representation to the Configuration type.
     0 ≤ ∫ ω : Configuration (FinLatticeField 2 N),
       (F (fieldFromSites N (fun x => ω (Pi.single x 1)))) *
       (F (fieldReflection2D N (fieldFromSites N (fun x => ω (Pi.single x 1)))))
-      ∂(interactingLatticeMeasure 2 N P a mass ha hmass)
+      ∂(interactingLatticeMeasure 2 N P a mass ha hmass) := by
+  -- Setup notation
+  set mu_GFF := latticeGaussianMeasure 2 N a mass ha hmass
+  set bw := boltzmannWeight 2 N P a mass
+  set Vp := positiveTimeInteraction N P a mass
+  set Vb := boundaryTimeInteraction N P a mass
+  -- The integrand uses evalField2D N ω (definitional)
+  change 0 ≤ ∫ ω, F (evalField2D N ω) *
+    F (fieldReflection2D N (evalField2D N ω))
+    ∂(interactingLatticeMeasure 2 N P a mass ha hmass)
+  -- Step 1: Unfold interacting measure = (1/Z) · mu_GFF.withDensity(bw)
+  unfold interactingLatticeMeasure
+  rw [integral_smul_measure]
+  -- 0 ≤ c.toReal • ∫ ... where c = (ofReal Z)⁻¹, c.toReal ≥ 0
+  apply mul_nonneg ENNReal.toReal_nonneg
+  -- Step 2: Rewrite withDensity integral as ∫ bw * f dmu_GFF
+  set bw_nn := fun ω : Configuration (FinLatticeField 2 N) => Real.toNNReal (bw ω)
+  have hbw_nn_meas : Measurable bw_nn :=
+    Measurable.real_toNNReal
+      ((interactionFunctional_measurable 2 N P a mass).neg.exp)
+  -- ENNReal.ofReal = ↑ ∘ Real.toNNReal (definitional)
+  change 0 ≤ ∫ ω, _ ∂(mu_GFF.withDensity (fun ω => ↑(bw_nn ω)))
+  rw [integral_withDensity_eq_integral_smul hbw_nn_meas]
+  simp_rw [NNReal.smul_def, smul_eq_mul]
+  -- Simplify ↑(bw_nn ω) = bw ω
+  have hbw_simp : ∀ ω : Configuration (FinLatticeField 2 N),
+      (bw_nn ω : ℝ) = bw ω := fun ω =>
+    Real.coe_toNNReal _ (le_of_lt (boltzmannWeight_pos 2 N P a mass ω))
+  simp_rw [hbw_simp]
+  -- Step 3: Factor bw * F * F∘Θ as G * G∘Θ * w
+  set G := fun phi : ZMod N × ZMod N → ℝ =>
+    F phi * Real.exp (-(Vp phi))
+  set w := fun phi : ZMod N × ZMod N → ℝ =>
+    Real.exp (-(Vb phi))
+  suffices h_factor : ∀ ω : Configuration (FinLatticeField 2 N),
+      bw ω * (F (evalField2D N ω) * F (fieldReflection2D N (evalField2D N ω))) =
+      G (evalField2D N ω) * G (fieldReflection2D N (evalField2D N ω)) *
+      w (evalField2D N ω) by
+    simp_rw [h_factor]
+    -- Step 4: Apply the Gaussian RP axiom
+    exact gaussian_rp_with_boundary_weight N a mass ha hmass G
+      (mul_positiveTimeSupported N F _ hF
+        (positiveTimeInteraction_supported N P a mass))
+      w (fun phi => le_of_lt (Real.exp_pos _))
+      (boundaryTimeInteraction_boundarySupported N P a mass)
+  -- Prove the integrand factorization
+  intro ω
+  set phi := evalField2D N ω
+  -- bw ω = exp(-V(ω)) where V = Vp + Vb + Vn
+  have h_decomp := interactionFunctional_decomposition N P a mass ω
+  -- Vn(phi) = Vp(Θphi)
+  have h_refl := negativeTime_eq_positiveTime_reflected N P a mass phi
+  -- Expand bw = exp(-V) = exp(-(Vp + Vb + Vn))
+  simp only [bw, boltzmannWeight, h_decomp, neg_add, Real.exp_add]
+  -- Substitute Vn = Vp∘Θ
+  rw [h_refl]
+  -- Algebraic rearrangement: exp(-Vp)·exp(-Vb)·exp(-Vp∘Θ) · F · F∘Θ
+  -- = (F·exp(-Vp)) · (F∘Θ·exp(-Vp∘Θ)) · exp(-Vb)
+  simp only [G, w, phi]
+  ring
 
 /-- Pairing on finite lattice fields in product coordinates. -/
 def pairing2D (φ g : ZMod N × ZMod N → ℝ) : ℝ :=
   ∑ tx : ZMod N × ZMod N, φ tx * g tx
-
-/-- Lattice field extracted from `Configuration` in product coordinates. -/
-def evalField2D (ω : Configuration (FinLatticeField 2 N)) : ZMod N × ZMod N → ℝ :=
-  fieldFromSites N (fun x => ω (Pi.single x 1))
 
 /-- Finite cosine test functional used in matrix RP reduction. -/
 def Fcos (n : ℕ) (c : Fin n → ℝ) (f : Fin n → (ZMod N × ZMod N → ℝ)) :

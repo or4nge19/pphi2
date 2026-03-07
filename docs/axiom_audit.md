@@ -1,7 +1,7 @@
 # Comprehensive Axiom Audit: pphi2 + gaussian-field
 
-**Updated**: 2026-03-03 (TorusOSAxioms + Symmetry added, 58 axioms)
-**pphi2**: 56 axioms, 2 sorries | **gaussian-field**: 5 axioms, 14 sorries | **Total**: 61
+**Updated**: 2026-03-07 (Convergence.lean tensor product route)
+**pphi2**: 42 axioms, 0 sorries | **gaussian-field**: 25 axioms, 0 sorries | **Total**: 67
 
 ## Verification Sources
 
@@ -146,9 +146,9 @@ Most active axioms verified by GR or DT.
 
 ---
 
-## gaussian-field Axioms (2 active, 0 sorries — table below is stale)
+## gaussian-field Axioms (25 active, 0 sorries — table below is partially stale)
 
-*Updated 2026-02-25 (rev 567851c). Many axioms have since been proved upstream. Current count per `count_axioms.sh`: 2 axioms in `HeatKernel/PositionKernel.lean`, 0 sorries.*
+*Updated 2026-03-07. Current count per `count_axioms.sh`: 25 axioms, 0 sorries.*
 
 | File | Axioms | Sorries | Verified | Notes |
 |------|--------|---------|----------|-------|
@@ -175,6 +175,16 @@ Most active axioms verified by GR or DT.
 | 10 | `fkg_truncation_dct_prod` | FKG:739 | ✅ CORRECT | DCT for product truncation. |
 | 11 | `integrable_truncation_mul` | FKG:747 | ✅ CORRECT | Integrability of truncated F·ρ. |
 | 12 | `integrable_truncation_prod_mul` | FKG:752 | ✅ CORRECT | Integrability of truncated F·G·ρ. |
+
+### Lattice Convergence (added 2026-03-07)
+
+| # | Name | File | Rating | Notes |
+|---|------|------|--------|-------|
+| 13 | `lattice_covariance_pure_eq_2d_spectral` | Convergence:65 | ✅ Standard | BCCB circulant diagonalization: lattice covariance for pure tensors = explicit 2D DFT spectral sum. Davis, *Circulant Matrices*, Ch. 5. **(NOT VERIFIED)** |
+| 14 | `latticeDFTCoeff1d_quadratic_bound` | Convergence:85 | ✅ Standard | Uniform quadratic DFT coefficient decay via discrete summation by parts. Katznelson, *Harmonic Analysis*, §I.2. **(NOT VERIFIED)** |
+| 15 | `lattice_green_tendsto_continuum` | Convergence:363 | ⚠️ Likely correct | Bilinear extension from pure tensors to general elements. Follows from `lattice_green_tendsto_continuum_pure` (proved) + density + continuity. **(NOT VERIFIED)** |
+
+**Proved theorem**: `lattice_green_tendsto_continuum_pure` — convergence for pure tensors via Tannery's theorem (`tendsto_tsum_of_dominated_convergence`) on ℕ×ℕ. Uses `latticeEigenvalue1d_tendsto_continuum`, `latticeDFTCoeff1d_tendsto` (mode convergence), and `latticeDFTCoeff1d_quadratic_bound` (domination via `C/((1+m₁)⁴(1+m₂)⁴)`). Summability via shifted p-series (`Real.summable_one_div_nat_pow` + `Summable.comp_injective`) and product (`Summable.mul_of_nonneg`).
 
 ---
 
@@ -211,8 +221,9 @@ meaningful mathematical types.
 - `anomaly_vanishes` — $‖Z[R·f] - Z[f]‖ ≤ C·a²·(1+|log a|)^p$ for continuum-embedded lattice measure (delegates to axiom)
 
 ### OS3: Reflection Positivity
-- `lattice_rp` — RP inequality for `interactingLatticeMeasure` with `fieldFromSites`/`fieldReflection2D` (sorry)
-- `rp_from_transfer_positivity` — $⟨f, T^n f⟩_{L²} ≥ 0$ via `transferOperatorCLM` (sorry)
+- `lattice_rp` — **PROVED** from `gaussian_rp_with_boundary_weight` via time-slice decomposition
+- `gaussian_rp_with_boundary_weight` — Core Gaussian RP: ∫ G·G∘Θ·w dμ_GFF ≥ 0 (axiom, Gaussian Markov property)
+- `rp_from_transfer_positivity` — **PROVED** $⟨f, T^n f⟩_{L²} ≥ 0$ via `transferOperatorCLM`
 
 ### OS4: Clustering & Ergodicity
 - `two_point_clustering_lattice` — Exponential decay bound using `finLatticeDelta` and `massGap` (sorry)
@@ -296,7 +307,7 @@ The following were previously axioms and are now theorems:
 | 41 | `schwinger_n_convergence` | Convergence | ⚠️ Likely correct | Diagonal subsequence extraction for n-pt functions. Standard. |
 | 42 | `continuumLimit_nontrivial` | Convergence | ⚠️ Likely correct | ∃ f with ∫(ω f)² > 0. Free field gives lower bound via Griffiths inequalities. |
 | 43 | `continuumLimit_nonGaussian` | Convergence | ⚠️ Likely correct | Nonzero 4th cumulant. InteractionPolynomial requires degree ≥ 4 with lead coeff 1/n, so interaction is always nontrivial. O(λ) perturbative bound. |
-| 44 | `lattice_rp` | OS3_RP_Lattice | ✅ Standard | Reflection positivity via Fubini + perfect square. Standard textbook result (Glimm-Jaffe Ch. 6.1). |
+| 44 | `gaussian_rp_with_boundary_weight` | OS3_RP_Lattice | ✅ Standard | Core Gaussian RP with boundary weight. Gaussian Markov property (Glimm-Jaffe Ch. 6.1). `lattice_rp` now proved from this. |
 | 45 | `schwinger_agreement` | Bridge | ⚠️ Likely correct | Cluster expansion uniqueness at weak coupling. Properly constrained with `isPhi4`, `IsWeakCoupling` hypotheses. Very deep result (Guerra-Rosen-Simon 1975). |
 | 46 | `pphi2_nontriviality` | Main | ⚠️ Likely correct | ∃ μ, ∀ f ≠ 0, ∫(ω f)² > 0. Griffiths/FKG correlation inequality. The ∃ μ is existential (finds a good measure, not Measure.dirac 0). |
 | 47 | `pphi2_nonGaussianity` | Main | ⚠️ Likely correct | ∃ μ with nonzero 4th cumulant. Same ∃ μ pattern. |

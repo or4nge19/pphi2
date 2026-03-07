@@ -5,13 +5,13 @@
 The project formalizes the construction of P(Φ)₂ Euclidean quantum field theory
 in Lean 4 via the Glimm-Jaffe/Nelson lattice approach. All six phases are
 structurally complete and the full project builds successfully (`lake build`,
-3534 jobs).
+3535 jobs).
 
 The proof architecture is: axiomatize key analytic/probabilistic results with
 detailed proof sketches, prove the logical structure connecting them, and
 progressively fill in the axioms with full proofs.
 
-**pphi2: 42 axioms, 0 sorries** (plus 1 private axiom `schwartz_riemann_sum_bound` in GaussianContinuumLimit) | **gaussian-field (upstream): 23 axioms, 0 sorries**
+**pphi2: 42 axioms, 0 sorries** (plus 1 private axiom `schwartz_riemann_sum_bound` in GaussianContinuumLimit) | **gaussian-field (upstream): 25 axioms, 0 sorries**
 
 `schwinger2_convergence` was proved from
 `schwinger_n_convergence`, and `pphi2_nonGaussianity` from `continuumLimit_nonGaussian`.
@@ -236,7 +236,8 @@ All Phase 1 axioms have been proved or removed. `wickConstant_log_divergence`
 | ~~`transferOperator_eigenvalues_pos`~~ | Jentzsch | ✅ **Proved** | λᵢ > 0. From ⟨bᵢ, Tbᵢ⟩ = λᵢ‖bᵢ‖² > 0 by strict PD. |
 | ~~`transferOperator_ground_simple`~~ | Jentzsch | ✅ **Proved** | Ground-state simplicity. Derived from Jentzsch + eigenvalue positivity + nontriviality. |
 | ~~`action_decomposition`~~ | OS3_RP_Lattice | ✅ **Proved** | S_plus = V/2, using sum-reindexing by site-reflection bijection (timeReflection2D is involution). |
-| `lattice_rp` | OS3_RP_Lattice | Medium | RP inequality for `interactingLatticeMeasure`. Fubini + perfect-square from action decomposition. |
+| ~~`lattice_rp`~~ | OS3_RP_Lattice | ✅ **Proved** | RP inequality for `interactingLatticeMeasure`. Proved from `gaussian_rp_with_boundary_weight` via time-slice decomposition V=V₊+V₀+V₋, reflection symmetry V₋(φ)=V₊(Θφ), and integrand factorization. |
+| `gaussian_rp_with_boundary_weight` | OS3_RP_Lattice | Medium | Core Gaussian RP with boundary weight: ∫ G(φ)·G(Θφ)·w(φ) dμ_GFF ≥ 0 for G positive-time-supported, w ≥ 0 boundary-supported. Gaussian Markov property + conditional independence. |
 | ~~`lattice_rp_matrix`~~ | OS3_RP_Lattice | ✅ **Proved** | Matrix form of RP via cos(u-v) expansion + `lattice_rp`. |
 | ~~`rp_from_transfer_positivity`~~ | OS3_RP_Lattice | ✅ **Proved** | ⟨f, T^n f⟩ ≥ 0 via `transferOperatorCLM`. |
 
@@ -586,7 +587,7 @@ infrastructure. Assessment date: 2026-03-04.
 | `torusPositiveTimeSubmodule` | TorusOSAxioms | Submodule of positive-time test functions. Infrastructure axiom. |
 | `torusGeneratingFunctionalℂ_analyticOnNhd` | TorusOSAxioms | Analyticity of complex generating functional. From exponential moments via Morera. |
 | `torusLattice_rp` | TorusOSAxioms | Matrix-form RP for lattice GFF on torus. Fubini + perfect-square argument. |
-| `lattice_rp` | OS3_RP_Lattice | RP inequality for `interactingLatticeMeasure`. Fubini + perfect-square. Glimm-Jaffe Ch. 6.1. |
+| `gaussian_rp_with_boundary_weight` | OS3_RP_Lattice | Core Gaussian RP: ∫ G·G∘Θ·w dμ_GFF ≥ 0. Gaussian Markov property. Glimm-Jaffe Ch. 6.1. |
 | `transferOperator_isCompact` | L2Operator | Hilbert-Schmidt: kernel `K(ψ,ψ') = w(ψ)G(ψ-ψ')w(ψ')` with Gaussian decay → `∫∫ K² < ∞`. |
 | `translation_invariance_continuum` | OS2_WardIdentity | Continuum translation invariance from lattice + weak convergence. |
 | `analyticOn_generatingFunctionalC` | OS2_WardIdentity | Analyticity of complex generating functional from exponential moments via Morera. |
@@ -637,7 +638,7 @@ infrastructure. Assessment date: 2026-03-04.
 1. **Easy wins**: `weakLimit_centered_gaussianReal`, `torus_propagator_convergence`, `latticeMeasure_translation_invariant`
 2. **Torus infrastructure**: `torusLimit_covariance_eq`, `gaussian_measure_unique_of_covariance`, `torusContinuumMeasures_tight`, `torusLattice_rp`
 3. **Transfer matrix**: `transferOperator_isCompact`, `inner_convCLM_pos_of_fourier_pos` — unlocks spectral theory
-4. **OS inheritance**: `lattice_rp`, `os3_inheritance`, `os0_inheritance` — fills the RP chain
+4. **OS inheritance**: `gaussian_rp_with_boundary_weight`, `os3_inheritance`, `os0_inheritance` — fills the RP chain
 5. **Hard analysis**: spectral gap, clustering, exponential moments — the deep results
 
 ---
@@ -654,7 +655,7 @@ The gaussian-field library (dependency) has **23 axioms (+1 skipped), 0 sorries*
 - `SmoothCircle/Basic.lean`: 0 axioms (`sobolevSeminorm_affine_precomp_le` proved)
 - `SmoothCircle/FourierTranslation.lean`: 6 axioms (Fourier coefficient transformation under translation + reflection)
 - `Nuclear/TensorProductFunctorAxioms.lean`: 6 axioms (tensor product functor + pure tensor specifications)
-- `Lattice/Convergence.lean`: 1 axiom (`lattice_green_tendsto_continuum`)
+- `Lattice/Convergence.lean`: 3 axioms (`lattice_covariance_pure_eq_2d_spectral`, `latticeDFTCoeff1d_quadratic_bound`, `lattice_green_tendsto_continuum`), 1 proved theorem (`lattice_green_tendsto_continuum_pure` via Tannery)
 - `Lattice/HeatKernelConvergence1d.lean`: 1 axiom (spectral expansion; DFT convergence proved via Riemann sums, uniform bound eliminated via eigenvalue decay)
 - `Lattice/HeatKernel.lean`: 0 axioms (heat kernel via matrix exponential, all proved)
 - `Lattice/Symmetry.lean`: 0 axioms (translation/reflection commutation, all proved)
