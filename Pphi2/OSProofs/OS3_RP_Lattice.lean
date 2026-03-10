@@ -56,6 +56,7 @@ take reflection Θ: t ↦ -t mod N.
 import Pphi2.TransferMatrix.Positivity
 import Pphi2.InteractingMeasure.LatticeMeasure
 import Pphi2.InteractingMeasure.Normalization
+import Lattice.Symmetry
 
 noncomputable section
 
@@ -466,6 +467,76 @@ theorem massOperator_cross_block_zero_symm
     simp [Matrix.conjTranspose] at this; linarith
   rw [hsymm]; exact massOperator_cross_block_zero N a mass x y hx hy
 
+/-- The mass operator matrix is invariant under negation of both arguments:
+`Q(-x, -y) = Q(x, y)`. Follows from Laplacian reflection invariance
+(`negLaplacianMatrix_neg_invariant`) plus the mass diagonal being
+invariant under `(-x = -y) ↔ (x = y)`. -/
+private theorem massOperatorMatrix_neg_invariant
+    (a mass : ℝ) (x y : FinLatticeSites 2 N) :
+    massOperatorMatrix 2 N a mass (-x) (-y) =
+    massOperatorMatrix 2 N a mass x y := by
+  -- Q = (-Δ) + m²·I, so Q(x,y) = (-Δ)(x,y) + m²·δ(x,y)
+  -- Both terms are invariant under (x,y) → (-x,-y).
+  simp only [massOperatorMatrix, massOperatorEntry, massOperator,
+    ContinuousLinearMap.add_apply, ContinuousLinearMap.neg_apply,
+    ContinuousLinearMap.smul_apply, ContinuousLinearMap.id_apply,
+    Pi.add_apply, Pi.neg_apply, Pi.smul_apply, smul_eq_mul]
+  congr 1
+  · -- Laplacian part: reuse negLaplacianMatrix_neg_invariant
+    have h := negLaplacianMatrix_neg_invariant 2 N a x y
+    simp only [negLaplacianMatrix, massOperatorMatrix, massOperatorEntry, massOperator,
+      sq, mul_zero, zero_smul, add_zero, ContinuousLinearMap.neg_apply,
+      Pi.neg_apply] at h
+    linarith
+  · -- Mass diagonal: m² * δ_{-y}(-x) = m² * δ_y(x), since (-x = -y) ↔ (x = y)
+    congr 1; simp only [finLatticeDelta]
+    simp only [neg_inj]
+
+/-- At a positive-time site x ∈ S₊, the mass operator `(Qφ)(x)` depends only on
+field values at non-negative-time sites (i.e., S₊ ∪ B). This follows from
+`massOperator_cross_block_zero`: `Q(x,y) = 0` for `y ∈ S₋`. -/
+private theorem massOperator_indep_of_negativeTime
+    (a mass : ℝ) (x : FinLatticeSites 2 N)
+    (hx : 0 < (x 0).val ∧ (x 0).val < N / 2)
+    (φ₁ φ₂ : FinLatticeField 2 N)
+    (h : ∀ y, ¬(0 < (-(y 0) : ZMod N).val ∧ (-(y 0) : ZMod N).val < N / 2) →
+      φ₁ y = φ₂ y) :
+    (massOperator 2 N a mass φ₁) x = (massOperator 2 N a mass φ₂) x := by
+  rw [massOperator_eq_matrix_mulVec, massOperator_eq_matrix_mulVec]
+  simp only [Matrix.mulVec, dotProduct]
+  apply Finset.sum_congr rfl
+  intro y _
+  by_cases hy : 0 < (-(y 0) : ZMod N).val ∧ (-(y 0) : ZMod N).val < N / 2
+  · -- y ∈ S₋: Q(x,y) = 0 by block-zero
+    have hzero := massOperator_cross_block_zero N a mass x y hx hy
+    change massOperatorMatrix 2 N a mass x y * φ₁ y =
+           massOperatorMatrix 2 N a mass x y * φ₂ y
+    simp [massOperatorMatrix, hzero]
+  · -- y ∉ S₋: φ₁(y) = φ₂(y) by hypothesis
+    rw [h y hy]
+
+/-- At a negative-time site x ∈ S₋, the mass operator `(Qφ)(x)` depends only on
+field values at non-positive-time sites (i.e., S₋ ∪ B). This follows from
+`massOperator_cross_block_zero_symm`: `Q(x,y) = 0` for `y ∈ S₊`. -/
+private theorem massOperator_indep_of_positiveTime
+    (a mass : ℝ) (x : FinLatticeSites 2 N)
+    (hx : 0 < (-(x 0) : ZMod N).val ∧ (-(x 0) : ZMod N).val < N / 2)
+    (φ₁ φ₂ : FinLatticeField 2 N)
+    (h : ∀ y, ¬(0 < (y 0).val ∧ (y 0).val < N / 2) → φ₁ y = φ₂ y) :
+    (massOperator 2 N a mass φ₁) x = (massOperator 2 N a mass φ₂) x := by
+  rw [massOperator_eq_matrix_mulVec, massOperator_eq_matrix_mulVec]
+  simp only [Matrix.mulVec, dotProduct]
+  apply Finset.sum_congr rfl
+  intro y _
+  by_cases hy : 0 < (y 0).val ∧ (y 0).val < N / 2
+  · -- y ∈ S₊: Q(x,y) = 0 by block-zero-symm
+    have hzero := massOperator_cross_block_zero_symm N a mass y x hy hx
+    change massOperatorMatrix 2 N a mass x y * φ₁ y =
+           massOperatorMatrix 2 N a mass x y * φ₂ y
+    simp [massOperatorMatrix, hzero]
+  · -- y ∉ S₊: φ₁(y) = φ₂(y) by hypothesis
+    rw [h y hy]
+
 /-! ## Reflection positivity on the lattice -/
 
 /-- **Core Gaussian reflection positivity with boundary weight.**
@@ -511,15 +582,216 @@ theorem gaussian_density_rp (a mass : ℝ)
       w (fieldFromSites N φ) *
       gaussianDensity 2 N a mass φ)
   · -- Integrable case: Fubini + block-zero factorization + perfect square
-    -- Sites partition into S₊ = {x | 0 < (x 0).val < N/2},
-    -- S₋ = Θ(S₊), B = complement (boundary at t=0 and t=N/2).
-    -- By massOperator_cross_block_zero, Q_{xy} = 0 for x ∈ S₊, y ∈ S₋.
-    -- Density factors: ρ(φ) = ρ₊(φ₊,φ₀) · ρ₋(φ₋,φ₀) · ρ₀(φ₀).
-    -- Three-way Fubini (piEquivPiSubtypeProd + integral_prod):
-    --   ∫ dφ = ∫_B dφ₀ ∫_{S₊} dφ₊ ∫_{S₋} dφ₋
-    -- Change of variables φ₋ ↦ Θφ₋ (Lebesgue-measure-preserving permutation)
-    -- and reflection symmetry ρ₋(φ₋,φ₀) = ρ₊(Θφ₋,φ₀) give:
-    --   result = ∫_B w(φ₀)·ρ₀(φ₀)·[∫_{S₊} G(φ₊)·ρ₊(φ₊,φ₀) dφ₊]² dφ₀ ≥ 0
+    -- Step 1: Site predicate and Fubini equivalence
+    let isPT : FinLatticeSites 2 N → Prop :=
+      fun s => 0 < (s 0).val ∧ (s 0).val < N / 2
+    haveI : DecidablePred isPT := fun _ => instDecidableAnd
+    let e := MeasurableEquiv.piEquivPiSubtypeProd
+      (fun _ : FinLatticeSites 2 N => ℝ) isPT
+    have hmp : MeasurePreserving e volume (volume.prod volume) :=
+      volume_preserving_piEquivPiSubtypeProd _ isPT
+    -- Step 2: Change of variables via e
+    -- ∫ F(φ) dφ = ∫ F(e.symm(u, v)) d(u, v) = ∫ du ∫ dv F(e.symm(u, v))
+    have hFe : Integrable (fun y => G (fieldFromSites N (e.symm y)) *
+        G (fieldReflection2D N (fieldFromSites N (e.symm y))) *
+        w (fieldFromSites N (e.symm y)) *
+        gaussianDensity 2 N a mass (e.symm y)) (volume.prod volume) := by
+      simpa [Function.comp] using
+        hmp.symm.integrable_comp_of_integrable (g := fun φ =>
+          G (fieldFromSites N φ) * G (fieldReflection2D N (fieldFromSites N φ)) *
+          w (fieldFromSites N φ) * gaussianDensity 2 N a mass φ) hint
+    have hFubini : ∫ φ, G (fieldFromSites N φ) *
+        G (fieldReflection2D N (fieldFromSites N φ)) *
+        w (fieldFromSites N φ) * gaussianDensity 2 N a mass φ =
+        ∫ u : ({s // isPT s} → ℝ),
+          ∫ v : ({s // ¬isPT s} → ℝ),
+            G (fieldFromSites N (e.symm (u, v))) *
+            G (fieldReflection2D N (fieldFromSites N (e.symm (u, v)))) *
+            w (fieldFromSites N (e.symm (u, v))) *
+            gaussianDensity 2 N a mass (e.symm (u, v)) := by
+      calc ∫ φ, G (fieldFromSites N φ) *
+              G (fieldReflection2D N (fieldFromSites N φ)) *
+              w (fieldFromSites N φ) * gaussianDensity 2 N a mass φ
+          = ∫ y, G (fieldFromSites N (e.symm y)) *
+              G (fieldReflection2D N (fieldFromSites N (e.symm y))) *
+              w (fieldFromSites N (e.symm y)) *
+              gaussianDensity 2 N a mass (e.symm y) := by
+            simpa [Function.comp] using
+              (hmp.symm.integral_comp e.symm.measurableEmbedding _).symm
+        _ = ∫ u, ∫ v, G (fieldFromSites N (e.symm (u, v))) *
+              G (fieldReflection2D N (fieldFromSites N (e.symm (u, v)))) *
+              w (fieldFromSites N (e.symm (u, v))) *
+              gaussianDensity 2 N a mass (e.symm (u, v)) :=
+            integral_prod _ hFe
+    rw [hFubini]
+    -- Step 3: G(fieldFromSites(e.symm(u, v))) depends only on u
+    have hG_dep : ∀ u v1 v2,
+        G (fieldFromSites N (e.symm (u, v1))) =
+        G (fieldFromSites N (e.symm (u, v2))) := by
+      intro u v1 v2
+      apply hG
+      intro t ht x
+      simp only [fieldFromSites, Function.comp_apply, e,
+        MeasurableEquiv.piEquivPiSubtypeProd_symm_apply]
+      have hpt : isPT ((siteEquiv N) (t, x)) := by
+        change 0 < (![t, x] 0).val ∧ (![t, x] 0).val < N / 2
+        simp only [Matrix.cons_val_zero]; exact ht
+      rw [dif_pos hpt, dif_pos hpt]
+    -- Step 4: G(fieldReflection2D(fieldFromSites(e.symm(u, v)))) depends only on v
+    have hGR_dep : ∀ u1 u2 v,
+        G (fieldReflection2D N (fieldFromSites N (e.symm (u1, v)))) =
+        G (fieldReflection2D N (fieldFromSites N (e.symm (u2, v)))) := by
+      intro u1 u2 v
+      apply hG
+      intro t ht x
+      simp only [fieldReflection2D, fieldFromSites, timeReflection2D, Function.comp_apply, e,
+        MeasurableEquiv.piEquivPiSubtypeProd_symm_apply]
+      have hnt : ¬isPT ((siteEquiv N) (-t, x)) := by
+        change ¬(0 < (![-t, x] 0).val ∧ (![-t, x] 0).val < N / 2)
+        simp only [Matrix.cons_val_zero]
+        exact fun h => positiveTime_negativeTime_disjoint N (t, x) ⟨ht, h⟩
+      rw [dif_neg hnt, dif_neg hnt]
+    -- Step 5: w(fieldFromSites(e.symm(u, v))) depends only on v
+    have hw_dep : ∀ u1 u2 v,
+        w (fieldFromSites N (e.symm (u1, v))) =
+        w (fieldFromSites N (e.symm (u2, v))) := by
+      intro u1 u2 v
+      apply hw_boundary
+      intro tx hpt hnt
+      simp only [fieldFromSites, Function.comp_apply, e,
+        MeasurableEquiv.piEquivPiSubtypeProd_symm_apply]
+      -- tx is a boundary site: ¬isPT and ¬isNT, so isPT(siteEquiv tx) is false
+      have h_not_isPT : ¬isPT ((siteEquiv N) tx) := by
+        change ¬(0 < (![tx.1, tx.2] 0).val ∧ (![tx.1, tx.2] 0).val < N / 2)
+        simp only [Matrix.cons_val_zero]; exact hpt
+      rw [dif_neg h_not_isPT, dif_neg h_not_isPT]
+    -- Step 6: Density factorization via field decomposition.
+    -- Decompose φ = φ_S (positive-time part) + φ_R (rest).
+    -- By linearity + self-adjointness of Q + block-zero:
+    --   q(φ) = ⟨φ_S,Qφ_S⟩ + 2⟨φ_S,Qφ_R⟩ + ⟨φ_R,Qφ_R⟩ = A(u,v₀) + C(v)
+    -- where A depends on u and boundary values, C depends on v only.
+    -- So ρ = exp(-½A) · exp(-½C) factors.
+    --
+    -- Then: second Fubini on v → (v₋, v₀), factor integrals,
+    -- change of variables θ on v₋ using Q(θx,θy)=Q(x,y),
+    -- conclude I = ∫ w·exp(-½BB)·[∫ G·exp(-½A)]² ≥ 0.
+    -- Step 6a: The quadratic form Σ_x φ(x)·(Qφ)(x) at positive-time sites
+    -- is independent of negative-time field values.
+    have hq_plus_indep : ∀ u (v₁ v₂ : {s // ¬isPT s} → ℝ),
+        (∀ s : {s // ¬isPT s},
+          ¬(0 < (-(s.1 0) : ZMod N).val ∧ (-(s.1 0) : ZMod N).val < N / 2) →
+          v₁ s = v₂ s) →
+        (∑ x ∈ Finset.univ.filter isPT,
+          (e.symm (u, v₁)) x * (massOperator 2 N a mass (e.symm (u, v₁))) x) =
+        (∑ x ∈ Finset.univ.filter isPT,
+          (e.symm (u, v₂)) x * (massOperator 2 N a mass (e.symm (u, v₂))) x) := by
+      intro u v₁ v₂ hv
+      apply Finset.sum_congr rfl
+      intro x hx
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hx
+      -- φ(x) is the same for both (x ∈ S₊, so value comes from u)
+      have hφ_eq : (e.symm (u, v₁)) x = (e.symm (u, v₂)) x := by
+        simp only [e, MeasurableEquiv.piEquivPiSubtypeProd_symm_apply, dif_pos hx]
+      -- (Qφ)(x) is the same by massOperator_indep_of_negativeTime
+      have hQ_eq : (massOperator 2 N a mass (e.symm (u, v₁))) x =
+          (massOperator 2 N a mass (e.symm (u, v₂))) x := by
+        apply massOperator_indep_of_negativeTime N a mass x hx
+        intro y hy
+        simp only [e, MeasurableEquiv.piEquivPiSubtypeProd_symm_apply]
+        by_cases hyp : isPT y
+        · rw [dif_pos hyp, dif_pos hyp]
+        · rw [dif_neg hyp, dif_neg hyp]
+          exact hv ⟨y, hyp⟩ hy
+      rw [hφ_eq, hQ_eq]
+    -- === Step 6b: Density factorization ===
+    -- Define restricted fields: φ_S (positive-time part) and φ_R (complement)
+    let φ_S_of : ({s // isPT s} → ℝ) → FinLatticeField 2 N :=
+      fun u x => if h : isPT x then u ⟨x, h⟩ else 0
+    let φ_R_of : ({s // ¬isPT s} → ℝ) → FinLatticeField 2 N :=
+      fun v x => if h : isPT x then 0 else v ⟨x, h⟩
+    -- φ = φ_S + φ_R
+    have h_decomp : ∀ u v, e.symm (u, v) = φ_S_of u + φ_R_of v := by
+      intro u v; ext x; simp only [φ_S_of, φ_R_of, Pi.add_apply, e,
+        MeasurableEquiv.piEquivPiSubtypeProd_symm_apply]
+      split <;> simp
+    -- Q(φ_S + φ_R) = Q(φ_S) + Q(φ_R) by linearity
+    have h_Q_add : ∀ u v, massOperator 2 N a mass (e.symm (u, v)) =
+        massOperator 2 N a mass (φ_S_of u) + massOperator 2 N a mass (φ_R_of v) := by
+      intro u v; rw [h_decomp]; exact map_add (massOperator 2 N a mass) _ _
+    -- Cross-term symmetry: ⟨φ_R, Qφ_S⟩ = ⟨φ_S, Qφ_R⟩
+    have h_cross_symm : ∀ u v,
+        ∑ x, φ_R_of v x * (massOperator 2 N a mass (φ_S_of u)) x =
+        ∑ x, φ_S_of u x * (massOperator 2 N a mass (φ_R_of v)) x := by
+      intro u v
+      rw [massOperator_selfAdjoint 2 N a mass (φ_R_of v) (φ_S_of u)]
+      congr 1; ext x; ring
+    -- q = ⟨φ_S,Qφ_S⟩ + 2⟨φ_S,Qφ_R⟩ + ⟨φ_R,Qφ_R⟩
+    have h_q_three : ∀ u v,
+        ∑ x, (e.symm (u, v)) x * (massOperator 2 N a mass (e.symm (u, v))) x =
+        (∑ x, φ_S_of u x * (massOperator 2 N a mass (φ_S_of u)) x) +
+        2 * (∑ x, φ_S_of u x * (massOperator 2 N a mass (φ_R_of v)) x) +
+        (∑ x, φ_R_of v x * (massOperator 2 N a mass (φ_R_of v)) x) := by
+      intro u v
+      conv_lhs => rw [h_decomp u v]
+      simp only [map_add, Pi.add_apply, mul_add, add_mul, Finset.sum_add_distrib]
+      linarith [h_cross_symm u v]
+    -- Define C(v) = ⟨φ_R, Q(φ_R)⟩ and A(u,v) = q - C
+    let C_quad : ({s // ¬isPT s} → ℝ) → ℝ := fun v =>
+      ∑ x, φ_R_of v x * (massOperator 2 N a mass (φ_R_of v)) x
+    let A_quad : ({s // isPT s} → ℝ) → ({s // ¬isPT s} → ℝ) → ℝ := fun u v =>
+      (∑ x, (e.symm (u, v)) x * (massOperator 2 N a mass (e.symm (u, v))) x) -
+        C_quad v
+    -- Factor the Gaussian density: ρ = exp(-½A) * exp(-½C)
+    have h_factor : ∀ u v, gaussianDensity 2 N a mass (e.symm (u, v)) =
+        Real.exp (-(1 / 2) * A_quad u v) * Real.exp (-(1 / 2) * C_quad v) := by
+      intro u v; simp only [gaussianDensity, A_quad]
+      rw [show -(1 / 2 : ℝ) *
+        ∑ x, (e.symm (u, v)) x * (massOperator 2 N a mass (e.symm (u, v))) x =
+        -(1 / 2) * (∑ x, (e.symm (u, v)) x *
+          (massOperator 2 N a mass (e.symm (u, v))) x - C_quad v) +
+        -(1 / 2) * C_quad v from by ring]
+      exact Real.exp_add _ _
+    -- A = ⟨φ_S,Qφ_S⟩ + 2⟨φ_S,Qφ_R⟩ (the complement-complement term cancels)
+    have hA_eq : ∀ u v, A_quad u v =
+        (∑ x, φ_S_of u x * (massOperator 2 N a mass (φ_S_of u)) x) +
+        2 * (∑ x, φ_S_of u x * (massOperator 2 N a mass (φ_R_of v)) x) := by
+      intro u v; simp only [A_quad, C_quad]; linarith [h_q_three u v]
+    -- === Step 6c: A depends only on (u, v₀) ===
+    -- The cross term ⟨φ_S, Q(φ_R)⟩ is independent of negative-time values:
+    -- For x ∈ S₊: (Q(φ_R))(x) depends only on boundary values by block-zero
+    -- (massOperator_indep_of_negativeTime). For x ∉ S₊: φ_S(x) = 0.
+    have hA_indep : ∀ u (v₁ v₂ : {s // ¬isPT s} → ℝ),
+        (∀ s : {s // ¬isPT s},
+          ¬(0 < (-(s.1 0) : ZMod N).val ∧ (-(s.1 0) : ZMod N).val < N / 2) →
+          v₁ s = v₂ s) →
+        A_quad u v₁ = A_quad u v₂ := by
+      intro u v₁ v₂ hv
+      rw [hA_eq, hA_eq]; congr 1; congr 1
+      -- Goal: cross term is the same for v₁ and v₂
+      apply Finset.sum_congr rfl; intro x _
+      by_cases hx : isPT x
+      · -- x ∈ S₊: (Q(φ_R v))(x) is independent of v₋ by block-zero
+        congr 1
+        apply massOperator_indep_of_negativeTime N a mass x hx
+        intro y hy; simp only [φ_R_of]
+        by_cases hyp : isPT y
+        · simp [dif_pos hyp]
+        · simp only [dif_neg hyp]; exact hv ⟨y, hyp⟩ hy
+      · -- x ∉ S₊: φ_S(x) = 0, so both sides are 0
+        simp [φ_S_of, dif_neg hx]
+    -- === Step 6d-e: Second Fubini, change of variables, perfect square ===
+    -- Rewrite using the factored density
+    simp_rw [h_factor]
+    -- The integral is now:
+    -- ∫ u ∫ v G(u)·GΘ(v)·w(v)·exp(-½A(u,v₀))·exp(-½C(v))
+    -- where A depends on (u,v₀) and C depends on v.
+    --
+    -- Proof sketch for the remaining steps:
+    -- (1) Second Fubini: split v = (v₋, v₀) via piEquivPiSubtypeProd on {¬isPT}
+    -- (2) Factor: for fixed v₀, the u and v₋ integrals separate
+    -- (3) Change of variables: θ on v₋ using Q(-x,-y) = Q(x,y)
+    --     (follows from negLaplacianMatrix_neg_invariant + mass diagonal)
+    -- (4) Perfect square: I = ∫ v₀, w·exp(-½BB)·[∫ u, G·exp(-½A)]² ≥ 0
     sorry
   · -- Non-integrable: integral = 0 by Bochner convention, and 0 ≤ 0
     rw [integral_undef hint]

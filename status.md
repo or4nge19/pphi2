@@ -38,7 +38,7 @@ and `fourier_representation_convolution` (GaussianFourier).
 | 2 | `TransferMatrix/GaussianFourier.lean` | 1 private axiom (`fourier_representation_convolution`); `inner_convCLM_pos_of_fourier_pos` proved from axiom; `fourier_gaussian_pos` proved |
 | 2 | `TransferMatrix/Jentzsch.lean` | 0 axioms; Jentzsch + nontriviality + positivity-improving + strict PD all proved |
 | 2 | `TransferMatrix/Positivity.lean` | 0 axioms (energy levels, mass gap) |
-| 2 | `OSProofs/OS3_RP_Lattice.lean` | 1 axiom, 0 sorries |
+| 2 | `OSProofs/OS3_RP_Lattice.lean` | 0 axioms, 1 sorry (`gaussian_density_rp` integrable case) |
 | 2 | `OSProofs/OS3_RP_Inheritance.lean` | 0 axioms, 0 sorries |
 | 3 | `TransferMatrix/SpectralGap.lean` | 2 axioms |
 | 3 | `OSProofs/OS4_MassGap.lean` | 2 axioms, 0 sorries |
@@ -243,7 +243,7 @@ All Phase 1 axioms have been proved or removed. `wickConstant_log_divergence`
 | ~~`action_decomposition`~~ | OS3_RP_Lattice | ✅ **Proved** | S_plus = V/2, using sum-reindexing by site-reflection bijection (timeReflection2D is involution). |
 | ~~`lattice_rp`~~ | OS3_RP_Lattice | ✅ **Proved** | RP inequality for `interactingLatticeMeasure`. Proved from `gaussian_rp_with_boundary_weight` via time-slice decomposition V=V₊+V₀+V₋, reflection symmetry V₋(φ)=V₊(Θφ), and integrand factorization. |
 | ~~`gaussian_rp_with_boundary_weight`~~ | OS3_RP_Lattice | ✅ **Proved** | Derived from `gaussian_density_rp` via `evalMapMeasurableEquiv` density bridge: `∫ F(evalMap ω) dμ = (∫ F·ρ) / (∫ ρ)`, ratio ≥ 0. |
-| ~~`gaussian_density_rp`~~ | OS3_RP_Lattice | ✅ **Theorem** (1 sorry) | Core Gaussian RP at density level: ∫ G(φ)·G(Θφ)·w(φ)·ρ(φ) dφ ≥ 0. Non-integrable case proved (integral = 0); integrable case: Fubini + block-zero factorization (`massOperator_cross_block_zero` proved) + change of variables + perfect square. |
+| ~~`gaussian_density_rp`~~ | OS3_RP_Lattice | ✅ **Theorem** (1 sorry) | Core Gaussian RP at density level: ∫ G(φ)·G(Θφ)·w(φ)·ρ(φ) dφ ≥ 0. Non-integrable case proved; integrable case: density factorization ρ = exp(-½A)·exp(-½C) **proved** (linearity + self-adjointness + block-zero), A-independence of v₋ **proved**. Remaining sorry: second Fubini + change of variables (using `massOperatorMatrix_neg_invariant`, proved) + perfect square. |
 | ~~`lattice_rp_matrix`~~ | OS3_RP_Lattice | ✅ **Proved** | Matrix form of RP via cos(u-v) expansion + `lattice_rp`. |
 | ~~`rp_from_transfer_positivity`~~ | OS3_RP_Lattice | ✅ **Proved** | ⟨f, T^n f⟩ ≥ 0 via `transferOperatorCLM`. |
 
