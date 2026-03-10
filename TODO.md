@@ -2,19 +2,29 @@
 
 ## Infrastructure to eliminate axioms
 
-### 1. Lattice reflection positivity (eliminates 2 axioms)
+### 1. Lattice reflection positivity (eliminates 1 remaining axiom)
 
 Target axioms:
-- `gaussian_density_rp` (OSProofs/OS3_RP_Lattice) — Medium
+- ~~`gaussian_density_rp`~~ (OSProofs/OS3_RP_Lattice) — **Theorem** (1 sorry)
 - `torusLattice_rp` (TorusContinuumLimit/TorusOSAxioms) — Medium
 
-`lattice_rp` is now **proved** from `gaussian_rp_with_boundary_weight`,
-which itself is **proved** from `gaussian_density_rp` via the
-`evalMapMeasurableEquiv` density bridge (no measurability on integrands).
-The remaining axiom is the density-level RP:
-∫ G(φ)·G(Θφ)·w(φ)·ρ(φ) dφ ≥ 0, which follows from the Gaussian Markov
-property (conditional independence of positive/negative time fields given
-boundary) directly on Lebesgue integrals.
+`gaussian_density_rp` is now a **theorem** (no longer an axiom). The non-
+integrable case is proved (Bochner integral = 0 by convention). The
+integrable case has 1 sorry requiring: three-way Fubini decomposition
+(`piEquivPiSubtypeProd` + `integral_prod`), quadratic form factorization
+using `massOperator_cross_block_zero`, change of variables under Θ, and
+perfect square argument.
+
+**Proved infrastructure**:
+- `massOperator_cross_block_zero`: Q_{xy} = 0 for x ∈ S₊, y ∈ Θ(S₊)
+- `massOperator_cross_block_zero_symm`: symmetric version Q_{yx} = 0
+- Non-integrable case of `gaussian_density_rp`
+
+**Remaining sorry** (integrable case):
+- Quadratic form decomposition (follows from block-zero, algebraic)
+- Three-way Fubini via `piEquivPiSubtypeProd` + `integral_prod`
+- Change of variables under Θ (measure-preserving permutation)
+- Perfect square: ∫ w·ρ₀·F² ≥ 0 by `integral_nonneg`
 
 ### 2. ~~Transfer operator compactness~~ (DONE — proved `transferOperator_isCompact`)
 

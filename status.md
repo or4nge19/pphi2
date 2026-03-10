@@ -11,7 +11,7 @@ The proof architecture is: axiomatize key analytic/probabilistic results with
 detailed proof sketches, prove the logical structure connecting them, and
 progressively fill in the axioms with full proofs.
 
-**pphi2: 41 axioms, 0 sorries** | **gaussian-field (upstream): 6 axioms, 0 sorries**
+**pphi2: 40 axioms, 1 sorry** | **gaussian-field (upstream): 6 axioms, 4 sorries**
 
 Note: Two axioms are `private`: `schwartz_riemann_sum_bound` (PropagatorConvergence)
 and `fourier_representation_convolution` (GaussianFourier).
@@ -243,7 +243,7 @@ All Phase 1 axioms have been proved or removed. `wickConstant_log_divergence`
 | ~~`action_decomposition`~~ | OS3_RP_Lattice | ✅ **Proved** | S_plus = V/2, using sum-reindexing by site-reflection bijection (timeReflection2D is involution). |
 | ~~`lattice_rp`~~ | OS3_RP_Lattice | ✅ **Proved** | RP inequality for `interactingLatticeMeasure`. Proved from `gaussian_rp_with_boundary_weight` via time-slice decomposition V=V₊+V₀+V₋, reflection symmetry V₋(φ)=V₊(Θφ), and integrand factorization. |
 | ~~`gaussian_rp_with_boundary_weight`~~ | OS3_RP_Lattice | ✅ **Proved** | Derived from `gaussian_density_rp` via `evalMapMeasurableEquiv` density bridge: `∫ F(evalMap ω) dμ = (∫ F·ρ) / (∫ ρ)`, ratio ≥ 0. |
-| `gaussian_density_rp` | OS3_RP_Lattice | Medium | Core Gaussian RP at density level: ∫ G(φ)·G(Θφ)·w(φ)·ρ(φ) dφ ≥ 0. Gaussian Markov property + conditional independence factorization. |
+| ~~`gaussian_density_rp`~~ | OS3_RP_Lattice | ✅ **Theorem** (1 sorry) | Core Gaussian RP at density level: ∫ G(φ)·G(Θφ)·w(φ)·ρ(φ) dφ ≥ 0. Non-integrable case proved (integral = 0); integrable case: Fubini + block-zero factorization (`massOperator_cross_block_zero` proved) + change of variables + perfect square. |
 | ~~`lattice_rp_matrix`~~ | OS3_RP_Lattice | ✅ **Proved** | Matrix form of RP via cos(u-v) expansion + `lattice_rp`. |
 | ~~`rp_from_transfer_positivity`~~ | OS3_RP_Lattice | ✅ **Proved** | ⟨f, T^n f⟩ ≥ 0 via `transferOperatorCLM`. |
 

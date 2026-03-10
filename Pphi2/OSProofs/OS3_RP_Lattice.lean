@@ -390,27 +390,109 @@ private theorem mul_positiveTimeSupported
   change F φ₁ * G φ₁ = F φ₂ * G φ₂
   rw [hF φ₁ φ₂ hEq, hG φ₁ φ₂ hEq]
 
+/-! ## Precision matrix block structure -/
+
+/-- Sites in S₊ and Θ(S₊) have zero precision matrix coupling.
+
+The mass operator Q = -Δ_a + m² has nearest-neighbor structure:
+Q_{xy} ≠ 0 only if x and y differ by ±eᵢ in one coordinate.
+For x ∈ S₊ (0 < (x 0).val < N/2) and y ∈ Θ(S₊) ((y 0).val > N/2),
+their time coordinates differ by ≥ 2, so Q_{xy} = 0.
+
+This is the key combinatorial input for reflection positivity: the
+precision matrix has no coupling between the positive-time and
+negative-time field variables. -/
+theorem massOperator_cross_block_zero
+    (a mass : ℝ) (x y : FinLatticeSites 2 N)
+    (hx : 0 < (x 0).val ∧ (x 0).val < N / 2)
+    (hy : 0 < (-(y 0) : ZMod N).val ∧ (-(y 0) : ZMod N).val < N / 2) :
+    massOperatorEntry 2 N a mass x y = 0 := by
+  -- Derive (y 0).val > N/2
+  have hy0_ne : (y 0 : ZMod N) ≠ 0 := by
+    intro h; rw [h, neg_zero, ZMod.val_zero] at hy; omega
+  haveI : NeZero (y 0 : ZMod N) := ⟨hy0_ne⟩
+  have hy_val : (y 0).val > N / 2 := by
+    have := ZMod.val_neg_of_ne_zero (y 0); omega
+  -- x ≠ y
+  have hxy_ne : x ≠ y := by
+    intro h; have := congr_fun h 0; rw [this] at hx; omega
+  -- Reduce: massOperatorEntry = -(Δ(δ_y))(x) since m²·δ_y(x) = 0
+  simp only [massOperatorEntry, massOperator, ContinuousLinearMap.add_apply,
+    ContinuousLinearMap.neg_apply, ContinuousLinearMap.smul_apply,
+    ContinuousLinearMap.id_apply, Pi.add_apply, Pi.neg_apply, Pi.smul_apply, smul_eq_mul,
+    finLatticeDelta, if_neg hxy_ne, mul_zero, add_zero]
+  -- Need Fact (1 < N) for val_one
+  have hN : 1 < N := by have := ZMod.val_lt (x 0); omega
+  haveI : Fact (1 < N) := ⟨hN⟩
+  -- Show Laplacian at non-neighbor is 0
+  change -(finiteLaplacianFun 2 N a (finLatticeDelta 2 N y) x) = 0
+  rw [neg_eq_zero]; unfold finiteLaplacianFun
+  simp only [finLatticeDelta, if_neg hxy_ne, mul_zero, sub_zero]
+  -- Forward shifts x + eᵢ miss y (time coord stays ≤ N/2)
+  have h_fwd : ∀ i : Fin 2, (fun j => if j = i then x j + 1 else x j) ≠ y := by
+    intro i heq; fin_cases i
+    · have h0 : x 0 + 1 = y 0 := by have := congr_fun heq 0; simpa using this
+      have : (x 0 + 1).val ≤ N / 2 := by
+        rw [ZMod.val_add_of_lt (by rw [ZMod.val_one N]; omega), ZMod.val_one N]; omega
+      rw [h0] at this; omega
+    · have h0 : x 0 = y 0 := by have := congr_fun heq 0; simpa using this
+      rw [h0] at hx; omega
+  -- Backward shifts x - eᵢ miss y (time coord stays < N/2)
+  have h_bwd : ∀ i : Fin 2, (fun j => if j = i then x j - 1 else x j) ≠ y := by
+    intro i heq; fin_cases i
+    · have h0 : x 0 - 1 = y 0 := by have := congr_fun heq 0; simpa using this
+      have : (x 0 - 1).val < N / 2 := by
+        rw [ZMod.val_sub (by rw [ZMod.val_one N]; omega), ZMod.val_one N]; omega
+      rw [h0] at this; omega
+    · have h0 : x 0 = y 0 := by have := congr_fun heq 0; simpa using this
+      rw [h0] at hx; omega
+  -- All terms in the Laplacian sum are 0
+  have : ∀ i : Fin 2,
+      (if (fun j => if j = i then x j + 1 else x j) = y then (1 : ℝ) else 0) +
+      (if (fun j => if j = i then x j - 1 else x j) = y then (1 : ℝ) else 0) = 0 := by
+    intro i; rw [if_neg (h_fwd i), if_neg (h_bwd i), add_zero]
+  simp_rw [this, Finset.sum_const_zero, mul_zero]
+
+/-- The block-zero property is symmetric: Q_{yx} = 0 for y ∈ Θ(S₊), x ∈ S₊. -/
+theorem massOperator_cross_block_zero_symm
+    (a mass : ℝ) (x y : FinLatticeSites 2 N)
+    (hx : 0 < (x 0).val ∧ (x 0).val < N / 2)
+    (hy : 0 < (-(y 0) : ZMod N).val ∧ (-(y 0) : ZMod N).val < N / 2) :
+    massOperatorEntry 2 N a mass y x = 0 := by
+  have hsymm : massOperatorEntry 2 N a mass y x = massOperatorEntry 2 N a mass x y := by
+    change massOperatorMatrix 2 N a mass y x = massOperatorMatrix 2 N a mass x y
+    have h := massOperatorMatrix_isHermitian 2 N a mass
+    have := congr_fun (congr_fun h y) x
+    simp [Matrix.conjTranspose] at this; linarith
+  rw [hsymm]; exact massOperator_cross_block_zero N a mass x y hx hy
+
 /-! ## Reflection positivity on the lattice -/
 
 /-- **Core Gaussian reflection positivity with boundary weight.**
 
 For any G positive-time supported and w ≥ 0 boundary-supported:
 
-  `∫ G(φ) · G(Θφ) · w(φ) dμ_GFF ≥ 0`
+  `∫ G(φ) · G(Θφ) · w(φ) · ρ(φ) dφ ≥ 0`
 
-This follows from the Gaussian Markov property: the lattice Laplacian
-`-Δ + m²` couples only nearest-neighbor sites, so the precision matrix
-has `Q_{ij} = 0` for `i ∈ S₊` and `j ∈ Θ(S₊)` (they are separated by
-at least 2 in the time direction for N ≥ 4). This means the Gaussian
-measure conditioned on boundary sites makes the positive-time and
-negative-time fields conditionally independent. Combined with the
-reflection symmetry of the conditional distributions, the integral
-factors as
+where ρ is the Gaussian density.
 
-  `∫ w(φ₀) · [∫ G(φ₊,φ₀) dμ₊|φ₀]² dμ₀ ≥ 0`
+**Proof strategy** (partially formalized):
+1. **Block-zero** (proved: `massOperator_cross_block_zero`): The precision
+   matrix Q = -Δ_a + m² has Q_{xy} = 0 for x ∈ S₊, y ∈ Θ(S₊).
+2. **Quadratic form decomposition**: ⟨φ,Qφ⟩ = q₊(φ₊,φ₀) + q₀(φ₀) + q₋(φ₋,φ₀)
+   with no φ₊·φ₋ cross terms (follows from step 1).
+3. **Fubini**: Decompose ∫ dφ = ∫ dφ₊ ∫ dφ₀ ∫ dφ₋ using the product
+   structure of Lebesgue measure on the finite-dimensional space.
+4. **Change of variables**: φ₋ ↦ Θφ₋ in the inner integral, using the
+   reflection symmetry q₋(φ₋,φ₀) = q₊(Θφ₋,φ₀).
+5. **Perfect square**: The integral becomes ∫ w(φ₀)·ρ₀(φ₀)·[∫ G·ρ₊ dφ₊]² dφ₀ ≥ 0.
+
+Steps 3-5 require finite-dimensional Fubini (`Equiv.piEquivPiSubtypeProd`
++ `integral_prod`) which is available in Mathlib but needs significant
+infrastructure connecting it to the lattice field setup.
 
 Reference: Glimm-Jaffe Ch. 6.1, Osterwalder-Seiler (1978). -/
-axiom gaussian_density_rp (a mass : ℝ)
+theorem gaussian_density_rp (a mass : ℝ)
     (ha : 0 < a) (hmass : 0 < mass)
     (G : (ZMod N × ZMod N → ℝ) → ℝ)
     (hG : PositiveTimeSupported N G)
@@ -421,7 +503,26 @@ axiom gaussian_density_rp (a mass : ℝ)
       G (fieldFromSites N φ) *
       G (fieldReflection2D N (fieldFromSites N φ)) *
       w (fieldFromSites N φ) *
-      gaussianDensity 2 N a mass φ
+      gaussianDensity 2 N a mass φ := by
+  -- Handle non-integrable case: Bochner integral returns 0 by convention
+  by_cases hint : Integrable (fun φ : FinLatticeField 2 N =>
+      G (fieldFromSites N φ) *
+      G (fieldReflection2D N (fieldFromSites N φ)) *
+      w (fieldFromSites N φ) *
+      gaussianDensity 2 N a mass φ)
+  · -- Integrable case: Fubini + block-zero factorization + perfect square
+    -- Sites partition into S₊ = {x | 0 < (x 0).val < N/2},
+    -- S₋ = Θ(S₊), B = complement (boundary at t=0 and t=N/2).
+    -- By massOperator_cross_block_zero, Q_{xy} = 0 for x ∈ S₊, y ∈ S₋.
+    -- Density factors: ρ(φ) = ρ₊(φ₊,φ₀) · ρ₋(φ₋,φ₀) · ρ₀(φ₀).
+    -- Three-way Fubini (piEquivPiSubtypeProd + integral_prod):
+    --   ∫ dφ = ∫_B dφ₀ ∫_{S₊} dφ₊ ∫_{S₋} dφ₋
+    -- Change of variables φ₋ ↦ Θφ₋ (Lebesgue-measure-preserving permutation)
+    -- and reflection symmetry ρ₋(φ₋,φ₀) = ρ₊(Θφ₋,φ₀) give:
+    --   result = ∫_B w(φ₀)·ρ₀(φ₀)·[∫_{S₊} G(φ₊)·ρ₊(φ₊,φ₀) dφ₊]² dφ₀ ≥ 0
+    sorry
+  · -- Non-integrable: integral = 0 by Bochner convention, and 0 ≤ 0
+    rw [integral_undef hint]
 
 /-- **Core Gaussian RP as a measure integral.**
 
