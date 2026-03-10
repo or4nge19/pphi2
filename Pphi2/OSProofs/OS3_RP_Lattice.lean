@@ -492,6 +492,61 @@ private theorem massOperatorMatrix_neg_invariant
     congr 1; simp only [finLatticeDelta]
     simp only [neg_inj]
 
+/-- The mass operator matrix is invariant under time negation:
+`Q(timeNeg x, timeNeg y) = Q(x, y)` where `timeNeg` negates only coordinate 0.
+
+This follows from the Laplacian stencil being symmetric: for the time direction
+(i=0), the ±e₀ stencil terms swap under time negation (sum unchanged); for spatial
+directions, terms are unaffected. Combined with the mass diagonal being invariant
+under the injective map `timeNeg`. -/
+private theorem massOperatorMatrix_timeNeg_invariant
+    (a mass : ℝ) (x y : FinLatticeSites 2 N) :
+    massOperatorMatrix 2 N a mass
+      (fun i => if i = (0 : Fin 2) then -(x i) else x i)
+      (fun i => if i = (0 : Fin 2) then -(y i) else y i) =
+    massOperatorMatrix 2 N a mass x y := by
+  simp only [massOperatorMatrix, massOperatorEntry, massOperator,
+    ContinuousLinearMap.add_apply, ContinuousLinearMap.neg_apply,
+    ContinuousLinearMap.smul_apply, ContinuousLinearMap.id_apply,
+    Pi.add_apply, Pi.neg_apply, Pi.smul_apply, smul_eq_mul]
+  congr 1
+  · -- Laplacian part: stencil sum is invariant under time negation
+    simp only [finiteLaplacian, finiteLaplacianLM, ContinuousLinearMap.coe_mk',
+      LinearMap.coe_mk, AddHom.coe_mk, finiteLaplacianFun]
+    congr 1; congr 1
+    apply Finset.sum_congr rfl
+    intro i _
+    -- For each stencil direction i, the sum δ(x+eᵢ=y) + δ(x-eᵢ=y) is invariant:
+    -- i=0: the ±e₀ terms swap (sum unchanged by commutativity)
+    -- i=1: terms are identical
+    -- Unfold finLatticeDelta and convert function equalities to pointwise
+    simp only [finLatticeDelta, funext_iff, Fin.forall_fin_two]
+    -- Use fin_cases to split on stencil direction
+    fin_cases i
+    · -- i = 0 (time direction): ±e₀ terms swap (sum unchanged by commutativity)
+      simp only [Fin.isValue]
+      norm_num
+      -- Goal: (if -x₀+1=-y₀ ∧ ... then 1 else 0) + (if -x₀-1=-y₀ ∧ ... then 1 else 0)
+      --     = (if x₀+1=y₀ ∧ ... then 1 else 0) + (if x₀-1=y₀ ∧ ... then 1 else 0)
+      -- The conditions are equivalent with ±1 swapped:
+      -- -x₀+1 = -y₀ ↔ x₀-1 = y₀  and  -x₀-1 = -y₀ ↔ x₀+1 = y₀
+      have h1 : (-x 0 + 1 = -y 0 ∧ x 1 = y 1) ↔ (x 0 - 1 = y 0 ∧ x 1 = y 1) := by
+        constructor <;> intro ⟨ha, hb⟩ <;> exact ⟨by linear_combination -ha, hb⟩
+      have h2 : (-x 0 - 1 = -y 0 ∧ x 1 = y 1) ↔ (x 0 + 1 = y 0 ∧ x 1 = y 1) := by
+        constructor <;> intro ⟨ha, hb⟩ <;> exact ⟨by linear_combination -ha, hb⟩
+      simp only [h1, h2]
+      ring
+    · -- i = 1 (spatial direction): terms unchanged
+      simp only [Fin.isValue]
+      norm_num
+  · -- Mass diagonal: δ_{ty}(tx) = δ_y(x) by injectivity of time negation
+    congr 1; simp only [finLatticeDelta]
+    split_ifs with h1 h2 h2
+    · rfl
+    · exact absurd (by ext i; have := congr_fun h1 i; fin_cases i <;> simp_all) h2
+    · exact absurd (by subst h2; rfl) h1
+    · rfl
+
 /-- At a positive-time site x ∈ S₊, the mass operator `(Qφ)(x)` depends only on
 field values at non-negative-time sites (i.e., S₊ ∪ B). This follows from
 `massOperator_cross_block_zero`: `Q(x,y) = 0` for `y ∈ S₋`. -/
