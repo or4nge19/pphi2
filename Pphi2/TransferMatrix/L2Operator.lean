@@ -488,15 +488,120 @@ theorem transferOperator_isSelfAdjoint (P : InteractionPolynomial) (a mass : ℝ
     _ = @inner ℝ _ _ (A f) (B (A g)) := hB' _ _
     _ = @inner ℝ _ _ f (A (B (A g))) := hA' _ _
 
+/-- Convolution-form integral operators with square-integrable kernels are compact
+(Hilbert-Schmidt theorem).
+
+If `K ∈ L²(μ ⊗ μ)` and `T` is a continuous linear map on `L²(μ)` satisfying
+`(Tf)(x) = ∫ K(x,t) f(x-t) dμ(t)` a.e., then `T` is compact.
+
+This is the convolution-kernel form of the Hilbert-Schmidt compactness theorem.
+The standard-kernel form uses `∫ K(x,y) f(y) dy`; the two are related by the
+substitution `y = x - t`, which preserves `‖K‖_{L²}` on Haar-measure spaces.
+
+The proof approximates `K` by finite-rank kernels `Kₙ → K` in `L²`, shows the
+corresponding operators `T_{Kₙ}` are finite-rank (hence compact), and proves
+`T_{Kₙ} → T` in operator norm via `isCompactOperator_of_tendsto`.
+
+**Reference**: Reed-Simon I, Theorem VI.23; Simon §III.2. -/
+axiom integral_operator_l2_kernel_compact
+    {G : Type*} [NormedAddCommGroup G] [NormedSpace ℝ G]
+    [MeasurableSpace G] [BorelSpace G] [T2Space G]
+    [LocallyCompactSpace G] [SecondCountableTopology G]
+    {μ : Measure G} [μ.IsAddHaarMeasure]
+    (K : G → G → ℝ)
+    (hK : MemLp (Function.uncurry K) 2 (μ.prod μ))
+    (T : (Lp ℝ 2 μ) →L[ℝ] (Lp ℝ 2 μ))
+    (hT : ∀ f : Lp ℝ 2 μ,
+      (T f : G → ℝ) =ᵐ[μ] fun x => ∫ t, K x t * (f : G → ℝ) (x - t) ∂μ) :
+    IsCompactOperator T
+
+/-- The tensor product kernel `K(x,t) = w(x) · g(t)` is in `L²(μ ⊗ μ)` when
+`w ∈ L²` and `g ∈ L²`.
+
+By Fubini: `‖K‖₂² = ∫∫ w(x)² g(t)² dx dt = ‖w‖₂² · ‖g‖₂²`.
+Since `|g| ≤ 1` and `g ∈ L¹`, we have `g ∈ L²` with `‖g‖₂² ≤ ‖g‖₁`. -/
+private theorem tensor_kernel_memLp
+    {n : ℕ} [NeZero n]
+    (w : (Fin n → ℝ) → ℝ) (hw_l2 : MemLp w 2 (volume : Measure (Fin n → ℝ)))
+    (g : (Fin n → ℝ) → ℝ) (hg_l1 : MemLp g 1 (volume : Measure (Fin n → ℝ)))
+    (hg_le_one : ∀ x, ‖g x‖ ≤ 1) :
+    MemLp (Function.uncurry (fun x t => w x * g t))
+      2 ((volume : Measure (Fin n → ℝ)).prod volume) := by
+  refine ⟨?_, ?_⟩
+  · -- AEStronglyMeasurable on product via pullback + multiplication
+    exact (hw_l2.aestronglyMeasurable.comp_quasiMeasurePreserving
+      Measure.quasiMeasurePreserving_fst).mul
+      (hg_l1.aestronglyMeasurable.comp_quasiMeasurePreserving
+      Measure.quasiMeasurePreserving_snd)
+  · -- eLpNorm < ⊤: bound ‖w(x)g(t)‖ₑ² ≤ ‖w(x)‖ₑ² · ‖g(t)‖ₑ, then Tonelli
+    rw [eLpNorm_lt_top_iff_lintegral_rpow_enorm_lt_top (by norm_num) (by norm_num)]
+    -- ∫⁻ ‖g‖ₑ < ⊤ from g ∈ L¹
+    have hg_lint : ∫⁻ t, ‖g t‖ₑ ∂volume < ⊤ := by
+      rw [← eLpNorm_one_eq_lintegral_enorm]; exact hg_l1.eLpNorm_lt_top
+    -- ∫⁻ ‖w‖ₑ² < ⊤ from w ∈ L²
+    have hw_lint : ∫⁻ x, ‖w x‖ₑ ^ (2:ℝ) ∂volume < ⊤ :=
+      lintegral_rpow_enorm_lt_top_of_eLpNorm_lt_top (by norm_num) (by norm_num)
+        hw_l2.eLpNorm_lt_top
+    -- ‖g(t)‖ₑ ≤ 1 for all t
+    have hg_enorm_le : ∀ t, ‖g t‖ₑ ≤ 1 := fun t => by
+      simp only [enorm]; exact_mod_cast hg_le_one t
+    calc ∫⁻ p, ‖Function.uncurry (fun x t => w x * g t) p‖ₑ ^ (2:ℝ)
+            ∂(volume : Measure (Fin n → ℝ)).prod volume
+        ≤ ∫⁻ p, (‖w p.1‖ₑ ^ (2:ℝ) * ‖g p.2‖ₑ)
+            ∂(volume : Measure (Fin n → ℝ)).prod volume := by
+          apply lintegral_mono; intro ⟨x, t⟩
+          change ‖w x * g t‖ₑ ^ (2:ℝ) ≤ ‖w x‖ₑ ^ (2:ℝ) * ‖g t‖ₑ
+          rw [enorm_mul, ENNReal.mul_rpow_of_nonneg _ _ (by norm_num : (0:ℝ) ≤ 2)]
+          gcongr
+          calc ‖g t‖ₑ ^ (2:ℝ) ≤ ‖g t‖ₑ ^ (1:ℝ) :=
+                ENNReal.rpow_le_rpow_of_exponent_ge (hg_enorm_le t) (by norm_num : (1:ℝ) ≤ 2)
+            _ = ‖g t‖ₑ := ENNReal.rpow_one _
+      _ ≤ ∫⁻ x, ∫⁻ t, ‖w x‖ₑ ^ (2:ℝ) * ‖g t‖ₑ ∂volume ∂volume :=
+          lintegral_prod_le _
+      _ = ∫⁻ x, ‖w x‖ₑ ^ (2:ℝ) * (∫⁻ t, ‖g t‖ₑ ∂volume) ∂volume := by
+          congr 1; ext x
+          exact lintegral_const_mul' _ _
+            (ENNReal.rpow_ne_top_of_nonneg (by norm_num) enorm_ne_top)
+      _ = (∫⁻ x, ‖w x‖ₑ ^ (2:ℝ) ∂volume) * (∫⁻ t, ‖g t‖ₑ ∂volume) :=
+          lintegral_mul_const' _ _ (ne_of_lt hg_lint)
+      _ < ⊤ := ENNReal.mul_lt_top hw_lint hg_lint
+
+/-- The operator `M_w ∘ Conv_g` acts as a convolution integral operator with
+tensor kernel `K(x,t) = w(x) · g(t)`:
+
+  `(M_w (Conv_g f))(x) = w(x) · ∫ g(t) f(x-t) dt = ∫ w(x) · g(t) · f(x-t) dt`
+
+Uses `mulCLM_spec` (pointwise multiplication a.e.), `convCLM_spec` (convolution
+a.e.), and `integral_const_mul` (pulling w(x) into the integral). -/
+private theorem mul_conv_integral_rep
+    {n : ℕ} [NeZero n]
+    (w : (Fin n → ℝ) → ℝ) (hw_meas : Measurable w) (C : ℝ) (hC : 0 < C)
+    (hw_bound : ∀ᵐ x ∂(volume : Measure (Fin n → ℝ)), ‖w x‖ ≤ C)
+    (g : (Fin n → ℝ) → ℝ) (hg_l1 : MemLp g 1 (volume : Measure (Fin n → ℝ)))
+    (f : Lp ℝ 2 (volume : Measure (Fin n → ℝ))) :
+    ((mulCLM w hw_meas C hC hw_bound ∘L convCLM g hg_l1) f : (Fin n → ℝ) → ℝ)
+      =ᵐ[volume] fun x =>
+        ∫ t, (w x * g t) * (f : (Fin n → ℝ) → ℝ) (x - t) := by
+  have h1 := mulCLM_spec w hw_meas C hC hw_bound (convCLM g hg_l1 f)
+  have h2 := convCLM_spec g hg_l1 f
+  filter_upwards [h1, h2] with x hx1 hx2
+  simp only [ContinuousLinearMap.comp_apply] at hx1 ⊢
+  rw [hx1, hx2]
+  simp only [realConv, convolution, ContinuousLinearMap.lsmul_apply, smul_eq_mul]
+  rw [← integral_const_mul]
+  congr 1; ext t; ring
+
 /-- Hilbert-Schmidt operators are compact: if `w ∈ L² ∩ L∞` and `g ∈ L¹` with
 `‖g‖_∞ ≤ 1`, then `M_w ∘ Conv_g ∘ M_w` is compact on `L²`.
 
-The kernel `K(x,y) = w(x) · g(x-y) · w(y)` satisfies
-`∫∫ |K(x,y)|² dx dy ≤ (∫ w²)² < ∞` (since `|g| ≤ 1`),
-so the operator is Hilbert-Schmidt, hence compact.
+**Proof**: Factor as `(M_w ∘ Conv_g) ∘ M_w`. The operator `M_w ∘ Conv_g` has
+convolution kernel `K(x,t) = w(x) · g(t)` with `K ∈ L²(μ ⊗ μ)` (tensor product
+of L² functions), so it is Hilbert-Schmidt, hence compact by
+`integral_operator_l2_kernel_compact`. The final `M_w` factor is a bounded CLM,
+so the composition is compact by `IsCompactOperator.comp_clm`.
 
 **Reference**: Reed-Simon I, Theorem VI.23. -/
-axiom hilbert_schmidt_isCompact
+theorem hilbert_schmidt_isCompact
     {n : ℕ} [NeZero n]
     (w : (Fin n → ℝ) → ℝ) (hw_meas : Measurable w) (C : ℝ) (hC : 0 < C)
     (hw_bound : ∀ᵐ x ∂(volume : Measure (Fin n → ℝ)), ‖w x‖ ≤ C)
@@ -505,7 +610,18 @@ axiom hilbert_schmidt_isCompact
     (hg_le_one : ∀ x, ‖g x‖ ≤ 1) :
     IsCompactOperator (mulCLM w hw_meas C hC hw_bound
       ∘L convCLM g hg_l1
-      ∘L mulCLM w hw_meas C hC hw_bound)
+      ∘L mulCLM w hw_meas C hC hw_bound) := by
+  -- Factor: M_w ∘ Conv_g ∘ M_w = (M_w ∘ Conv_g) ∘ M_w
+  -- Step 1: M_w ∘ Conv_g is compact (Hilbert-Schmidt with L² kernel)
+  have hMC : IsCompactOperator
+      (mulCLM w hw_meas C hC hw_bound ∘L convCLM g hg_l1) :=
+    integral_operator_l2_kernel_compact
+      (fun x t => w x * g t)
+      (tensor_kernel_memLp w hw_l2 g hg_l1 hg_le_one)
+      (mulCLM w hw_meas C hC hw_bound ∘L convCLM g hg_l1)
+      (fun f => mul_conv_integral_rep w hw_meas C hC hw_bound g hg_l1 f)
+  -- Step 2: Compose with M_w (bounded CLM) on the right
+  exact hMC.comp_clm (mulCLM w hw_meas C hC hw_bound)
 
 /-- The transfer operator is compact on L²(ℝ^Ns).
 
