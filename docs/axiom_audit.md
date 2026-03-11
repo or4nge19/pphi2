@@ -241,7 +241,8 @@ meaningful mathematical types.
 - ~~`gaussian_hypercontractivity_continuum`~~ — **PROVED** from `gaussian_hypercontractive` via pushforward + `latticeEmbedLift_eval_eq`
 - `exponential_moment_bound` — Deep stability estimate: $∫ e^{-2V_a} dμ_{GFF} ≤ K$ uniformly in $a$ (axiom)
 - ~~`interacting_moment_bound`~~ — **PROVED** from `exponential_moment_bound`, `partitionFunction_ge_one`, `pairing_memLp`, and Hölder/Cauchy-Schwarz density transfer
-- `partitionFunction_ge_one` — $Z_a = ∫ e^{-V} dμ_{GFF} ≥ 1$. Jensen's inequality + Wick ordering mean zero (axiom)
+- ~~`partitionFunction_ge_one`~~ — **PROVED** from Jensen's inequality (`ConvexOn.map_integral_le`) + `interactionFunctional_mean_nonpos`
+- `interactionFunctional_mean_nonpos` — $∫ V dμ_{GFF} ≤ 0$: Wick ordering mean property + integrability of V (axiom)
 - `os4_inheritance` — Exponential clustering of connected 2-point functions (sorry)
 - `schwinger2_convergence` — 2-point Schwinger function convergence along subsequence (sorry)
 - `schwinger_n_convergence` — n-point Schwinger function convergence along subsequence (sorry)

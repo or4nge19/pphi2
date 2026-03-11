@@ -58,6 +58,7 @@ infrastructure for extensions beyond Wick monomials.
 
 import Pphi2.ContinuumLimit.Embedding
 import GaussianField.HypercontractiveNat
+import Mathlib.Analysis.Convex.Integral
 
 noncomputable section
 
@@ -213,27 +214,62 @@ axiom exponential_moment_bound (P : InteractionPolynomial)
 
 /-! ## Step A3: Cauchy-Schwarz density transfer -/
 
-/-- **Partition function lower bound**: Z_a ≥ 1 for all a.
+/-- **Wick ordering mean property**: the mean of the interaction functional
+under the GFF is nonpositive.
 
-This follows from Jensen's inequality applied to the convex function exp:
+Mathematically, `∫ V dμ_{GFF} = a^d · |Λ| · P.coeff₀` where `P.coeff₀` is
+the constant coefficient. For standard P(φ)₂ polynomials (quartic + mass
+term), `P.coeff₀ = 0` so the mean is exactly zero.
 
-  Z = ∫ exp(-V) dμ_{GFF} ≥ exp(-∫ V dμ_{GFF}) = exp(0) = 1
-
-The key fact is that E_{GFF}[V_a] = 0. This holds because the Wick-ordered
-interaction :P(φ(x)):_c is a sum of Hermite polynomials H_{2k}(φ(x); c) of
-degree ≥ 2, and by the defining property of Hermite polynomials:
-
-  ∫ H_{2k}(t; c) dN(0,c)(t) = 0  for k ≥ 1
-
-**Proof strategy**: By Mathlib's `ConvexOn.map_integral_le` (Jensen for probability
-measures), `exp(∫ -V dμ) ≤ ∫ exp(-V) dμ = Z`. The Wick ordering property gives
-`∫ V dμ_GFF = 0`, so `exp(0) = 1 ≤ Z`. The Wick ordering proof requires Hermite
-polynomial orthogonality under Gaussian measures.
+The proof uses three ingredients:
+1. The pushforward of μ_{GFF} by `ω ↦ ω(δ_x)` is `gaussianReal 0 c`
+   (from `pairing_is_gaussian`), where `c = wickConstant`.
+2. Wick monomials have zero mean: `∫ :x^n:_c dN(0,c) = 0` for `n ≥ 1`.
+   This is the defining property of Wick ordering / Hermite polynomial
+   orthogonality under the Gaussian weight.
+3. Linearity of integration + finite lattice sum.
 
 Reference: Simon (1974), §I.3; Glimm-Jaffe (1987), §1.3. -/
-axiom partitionFunction_ge_one (d N : ℕ) [NeZero N] (P : InteractionPolynomial)
+axiom interactionFunctional_mean_nonpos (d N : ℕ) [NeZero N]
+    (P : InteractionPolynomial) (a mass : ℝ) (ha : 0 < a) (hmass : 0 < mass) :
+    Integrable (interactionFunctional d N P a mass)
+      (latticeGaussianMeasure d N a mass ha hmass) ∧
+    ∫ ω, interactionFunctional d N P a mass ω
+      ∂(latticeGaussianMeasure d N a mass ha hmass) ≤ 0
+
+/-- **Partition function lower bound**: Z_a ≥ 1 for all a.
+
+Proved from Jensen's inequality (`ConvexOn.map_integral_le`) applied to
+the convex function `exp` and `f = -V`:
+
+  Z = ∫ exp(-V) dμ_{GFF} ≥ exp(-∫ V dμ_{GFF}) ≥ exp(0) = 1
+
+The second inequality uses `interactionFunctional_mean_nonpos`. -/
+private theorem partitionFunction_ge_one (P : InteractionPolynomial)
     (mass : ℝ) (hmass : 0 < mass) (a : ℝ) (ha : 0 < a) :
-    1 ≤ partitionFunction d N P a mass ha hmass
+    1 ≤ partitionFunction d N P a mass ha hmass := by
+  set μ := latticeGaussianMeasure d N a mass ha hmass
+  set V := interactionFunctional d N P a mass
+  haveI : IsProbabilityMeasure μ := latticeGaussianMeasure_isProbability d N a mass ha hmass
+  obtain ⟨hV_int, hV_mean⟩ := interactionFunctional_mean_nonpos d N P a mass ha hmass
+  -- Jensen's inequality: exp(∫ -V dμ) ≤ ∫ exp(-V) dμ = Z
+  have h_jensen : Real.exp (∫ ω, (-V ω) ∂μ) ≤ ∫ ω, Real.exp (-V ω) ∂μ := by
+    have h_conv := convexOn_exp
+    have h_cont := Real.continuous_exp.continuousOn (s := Set.univ)
+    have h_closed := isClosed_univ (X := ℝ)
+    have h_mem : ∀ᵐ ω ∂μ, (-V ω) ∈ Set.univ := ae_of_all _ (fun _ => Set.mem_univ _)
+    have h_neg_int : Integrable (fun ω => -V ω) μ := hV_int.neg
+    have h_exp_int : Integrable (fun ω => Real.exp (-V ω)) μ :=
+      boltzmannWeight_integrable d N P a mass ha hmass
+    exact h_conv.map_integral_le h_cont h_closed h_mem h_neg_int h_exp_int
+  -- ∫ -V dμ = -(∫ V dμ) ≥ 0
+  have h_neg_mean : 0 ≤ ∫ ω, (-V ω) ∂μ := by
+    rw [integral_neg]; linarith
+  -- Chain: 1 = exp(0) ≤ exp(∫ -V) ≤ Z
+  calc (1 : ℝ) = Real.exp 0 := (Real.exp_zero).symm
+    _ ≤ Real.exp (∫ ω, (-V ω) ∂μ) := Real.exp_le_exp_of_le h_neg_mean
+    _ ≤ ∫ ω, Real.exp (-V ω) ∂μ := h_jensen
+    _ = partitionFunction d N P a mass ha hmass := rfl
 
 /-- **Cauchy-Schwarz density transfer bound**: any nonneg integrable function F
 satisfies ∫ F dμ_int ≤ K^{1/2} · (∫ F² dμ_GFF)^{1/2}, where K is the

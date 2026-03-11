@@ -280,7 +280,8 @@ refactoring (functionality consolidated into L2Operator axioms).
 | ~~`gaussian_hypercontractivity_continuum`~~ | Hypercontractivity | **Proved** | Gaussian hypercontractivity in continuum-embedded form. Proved from `gaussian_hypercontractive` (gaussian-field) via pushforward + `latticeEmbedLift_eval_eq`. |
 | `exponential_moment_bound` | Hypercontractivity | Hard | ∫ exp(-2V_a) dμ_{GFF} ≤ K uniformly in a. Deep stability estimate (cluster expansions, Glimm-Jaffe Thm 8.6.1). |
 | ~~`interacting_moment_bound`~~ | Hypercontractivity | **Proved** | Bounds interacting L^{pn} moments in terms of FREE Gaussian L^{2n} moments via Cauchy-Schwarz density transfer. Proved from `exponential_moment_bound`, `partitionFunction_ge_one`, `pairing_memLp`, and Hölder/Cauchy-Schwarz. |
-| `partitionFunction_ge_one` | Hypercontractivity | Medium | Z_a = ∫ exp(-V) dμ_GFF ≥ 1 for all a. Jensen's inequality + Wick ordering mean zero (Hermite polynomial orthogonality). Simon §I.3, Glimm-Jaffe §1.3. |
+| ~~`partitionFunction_ge_one`~~ | Hypercontractivity | **Proved** | Z_a ≥ 1 by Jensen's inequality (`ConvexOn.map_integral_le`) + `interactionFunctional_mean_nonpos`. |
+| `interactionFunctional_mean_nonpos` | Hypercontractivity | Medium | ∫ V dμ_GFF ≤ 0: Wick ordering mean property. Wick monomials have zero mean under the reference Gaussian (Hermite polynomial orthogonality). Simon §I.3, Glimm-Jaffe §1.3. |
 | `prokhorov_configuration_sequential` | Convergence | Infrastructure | Sequential extraction axiom directly on `Configuration (ContinuumTestFunction d)`; avoids global Polish/Borel assumptions on full weak-* dual. |
 | ~~`prokhorov_sequential`~~ | Convergence | ~~Infrastructure~~ | **Proved** — generic Polish-space sequential Prokhorov theorem (kept as theorem, not used by `continuumLimit`). |
 | ~~`schwinger2_convergence`~~ | Convergence | **PROVED** | 2-point Schwinger functions converge. Proved from `schwinger_n_convergence`. |
@@ -470,7 +471,7 @@ Note: `os1_inheritance` is a theorem (not axiom) — OS1 transfers trivially sin
 
 ### Tier 2: Core analytic results (the hard axioms)
 
-5. **Hypercontractivity axioms** (`exponential_moment_bound`, `partitionFunction_ge_one`) — Cauchy-Schwarz density transfer approach. `gaussian_hypercontractivity_continuum` proved from gaussian-field. `interacting_moment_bound` proved from these two axioms + Hölder/Cauchy-Schwarz + `pairing_memLp`.
+5. **Hypercontractivity axioms** (`exponential_moment_bound`, `interactionFunctional_mean_nonpos`) — Cauchy-Schwarz density transfer approach. `gaussian_hypercontractivity_continuum` proved from gaussian-field. `partitionFunction_ge_one` proved from Jensen + Wick ordering mean. `interacting_moment_bound` proved from these + Hölder/Cauchy-Schwarz + `pairing_memLp`.
 6. **`second_moment_uniform` + `continuumMeasures_tight`** — Tightness argument. Depends on Nelson.
 7. **`spectral_gap_uniform`** — Uniform mass gap. Kato-Rellich perturbation theory.
 8. **`ward_identity_lattice` + `anomaly_vanishes`** — Ward identity + power counting for rotation invariance.
@@ -618,7 +619,7 @@ infrastructure. Assessment date: 2026-03-04.
 | `anomaly_bound_from_superrenormalizability` | OS2_WardIdentity | Super-renormalizability gives a² Ward identity bound. No log corrections in d=2. |
 | `continuum_exponential_moments` | OS2_WardIdentity | Fernique + Nelson hypercontractive estimate transferred to limit. |
 | `exponential_moment_bound` | Hypercontractivity | `∫ exp(-2V_a) dμ_{GFF} ≤ K` uniformly. Deep stability (cluster expansions, Glimm-Jaffe 8.6.1). |
-| `partitionFunction_ge_one` | Hypercontractivity | Z_a ≥ 1 by Jensen + Wick ordering mean zero. |
+| `interactionFunctional_mean_nonpos` | Hypercontractivity | ∫ V dμ_GFF ≤ 0 by Wick ordering (Hermite orthogonality). |
 | `rotation_invariance_continuum` | OS2_WardIdentity | Ward identity + anomaly irrelevance for O(2). |
 | `continuum_exponential_clustering` | OS2_WardIdentity | Spectral gap → exponential clustering in continuum. |
 
