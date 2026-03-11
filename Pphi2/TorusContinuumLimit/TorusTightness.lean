@@ -10,7 +10,8 @@ Shows that the family of continuum-embedded Gaussian measures
 ## Main results
 
 - `torus_second_moment_uniform` — `∫ (ω f)² dν_{GFF,N} ≤ C` uniformly in N
-- `torusContinuumMeasures_tight` — (axiom) tightness via Mitoma criterion on torus
+- `configuration_tight_of_uniform_second_moments` — (axiom) Mitoma-Chebyshev criterion
+- `torusContinuumMeasures_tight` — (proved) tightness from uniform second moments
 
 ## Mathematical background
 
@@ -61,32 +62,76 @@ theorem torus_second_moment_uniform (mass : ℝ) (hmass : 0 < mass)
   rw [this]
   exact hC_bound N
 
+/-! ## Mitoma-Chebyshev tightness criterion -/
+
+/-- **Tightness from uniform second moments on nuclear duals (Mitoma-Chebyshev).**
+
+On the weak dual of a nuclear Fréchet space (encoded by `DyninMityaginSpace`),
+a family of probability measures is tight if the second moments of all 1D
+marginals are uniformly bounded.
+
+This combines two classical results:
+
+1. **Mitoma's criterion** (1983): For nuclear E, tightness on E' (= Configuration E)
+   reduces to tightness of 1D marginals `(ev_f)_* μ_i` for each `f ∈ E`.
+
+2. **Chebyshev's inequality**: Uniform variance bounds `sup_i E_i[(ω f)²] ≤ C(f)`
+   give `P_i(|ω(f)| > R) ≤ C(f)/R²`, hence 1D tightness.
+
+The nuclearity of E (encoded by `DyninMityaginSpace`) is essential: the
+counterexample E = ℓ² (non-nuclear, but E' = ℓ² is Polish) shows that
+uniform second moment bounds alone do NOT imply tightness without nuclearity.
+
+**References**: Mitoma (1983), Simon §V.1, Gel'fand-Vilenkin Vol. 4 Ch. IV,
+Bogachev *Gaussian Measures* Ch. 3. -/
+axiom configuration_tight_of_uniform_second_moments
+    {E : Type*} [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
+    [IsTopologicalAddGroup E] [ContinuousSMul ℝ E]
+    [DyninMityaginSpace E]
+    [PolishSpace (Configuration E)] [BorelSpace (Configuration E)]
+    {ι : Type*}
+    (μ : ι → Measure (Configuration E))
+    (hprob : ∀ i, IsProbabilityMeasure (μ i))
+    (h_moments : ∀ f : E, ∃ C : ℝ, ∀ i,
+      ∫ ω : Configuration E, (ω f) ^ 2 ∂(μ i) ≤ C) :
+    ∀ ε : ℝ, 0 < ε →
+    ∃ K : Set (Configuration E),
+      IsCompact K ∧ ∀ i, 1 - ε ≤ (μ i K).toReal
+
 /-! ## Tightness of torus Gaussian measures -/
 
 /-- **Tightness of the torus-embedded Gaussian measures.**
 
 The family `{ν_{GFF,N}}_{N ≥ 1}` is tight on Configuration(TorusTestFunction L).
 
-Proof outline:
-1. **1D marginals**: For each f ∈ C∞(T²_L), the pushforward `(ev_f)_* ν_{GFF,N}`
-   is N(0, σ²_N) on ℝ. By `torus_second_moment_uniform`, σ²_N ≤ C uniformly.
-   Chebyshev gives `P(|Φ_N(f)| > R) ≤ C/R²` for all N.
-
-2. **Equicontinuity**: For f, g ∈ C∞(T²_L), `E[|Φ_N(f) - Φ_N(g)|²]` is
-   controlled by seminorms of f - g, uniformly in N. This is cleaner than
-   on S'(ℝ^d) because the torus has finite volume.
-
-3. **Mitoma criterion**: 1D tightness + equicontinuity ⟹ tightness on the
-   dual of the nuclear Fréchet space C∞(T²_L).
+**Proof**: Apply `configuration_tight_of_uniform_second_moments` with
+`ι = {N : ℕ // 0 < N}` and the uniform second moment bounds from
+`torus_second_moment_uniform`. The nuclearity hypothesis is satisfied by
+`DyninMityaginSpace (TorusTestFunction L)` (from `NuclearTensorProduct`),
+and the Polish/Borel instances by `configuration_torus_polish`/`borelSpace`.
 
 Reference: Mitoma (1983), Simon §V.1. -/
-axiom torusContinuumMeasures_tight
+theorem torusContinuumMeasures_tight
     (mass : ℝ) (hmass : 0 < mass) :
     ∀ ε : ℝ, 0 < ε →
     ∃ (K : Set (Configuration (TorusTestFunction L))),
       IsCompact K ∧
       ∀ (N : ℕ) [NeZero N],
-      1 - ε ≤ (torusContinuumMeasure L N mass hmass K).toReal
+      1 - ε ≤ (torusContinuumMeasure L N mass hmass K).toReal := by
+  haveI := configuration_torus_polish L
+  haveI := configuration_torus_borelSpace L
+  intro ε hε
+  -- Apply Mitoma-Chebyshev with ι = {N : ℕ // 0 < N}
+  obtain ⟨K, hK_compact, hK_bound⟩ := configuration_tight_of_uniform_second_moments
+    (ι := {N : ℕ // 0 < N})
+    (fun ⟨N, hN⟩ => haveI : NeZero N := ⟨by omega⟩;
+      torusContinuumMeasure L N mass hmass)
+    (fun ⟨N, hN⟩ => by haveI : NeZero N := ⟨by omega⟩; exact inferInstance)
+    (fun f => by
+      obtain ⟨C, _, hC_bound⟩ := torus_second_moment_uniform L mass hmass f
+      exact ⟨C, fun ⟨N, hN⟩ => by haveI : NeZero N := ⟨by omega⟩; exact hC_bound N⟩)
+    ε hε
+  exact ⟨K, hK_compact, fun N inst => hK_bound ⟨N, Nat.pos_of_ne_zero (NeZero.ne N)⟩⟩
 
 end Pphi2
 
