@@ -610,11 +610,16 @@ COV v₋ → θ(v₋) using `massOperatorMatrix_timeNeg_invariant` transforms
 the second factor into a copy of the first, giving:
   ∫ v₀, w(v₀)·exp(-½C₀₀(v₀))·[∫ u, G(u)·exp(-½A(u,v₀))]² ≥ 0
 
+The hypotheses `hC_def` and `hAC_sum` connect the abstract quadratic forms
+A_quad, C_quad to the mass operator, enabling the COV identity:
+  C(θ⁻¹(u'), v₀) = A(u', v₀) + C_BB(v₀)
+which follows from `massOperatorMatrix_timeNeg_invariant` and block-zero.
+
 Reference: Glimm-Jaffe Ch. 6.1, Osterwalder-Seiler (1978) §3. -/
 private axiom gaussian_rp_perfect_square
-    -- The conclusion is stated in terms of the specific types from the proof.
-    -- All parameters are universally quantified to match the proof context.
+    (a mass : ℝ) (ha : 0 < a) (hmass : 0 < mass)
     (isPT : FinLatticeSites 2 N → Prop) [DecidablePred isPT]
+    (hisPT : isPT = fun s => 0 < (s 0).val ∧ (s 0).val < N / 2)
     (e : (FinLatticeSites 2 N → ℝ) ≃ᵐ
       ({s // isPT s} → ℝ) × ({s // ¬isPT s} → ℝ))
     (G w : (ZMod N × ZMod N → ℝ) → ℝ)
@@ -635,7 +640,15 @@ private axiom gaussian_rp_perfect_square
       (∀ s : {s // ¬isPT s},
         ¬(0 < (-(s.1 0) : ZMod N).val ∧ (-(s.1 0) : ZMod N).val < N / 2) →
         v₁ s = v₂ s) →
-      A_quad u v₁ = A_quad u v₂) :
+      A_quad u v₁ = A_quad u v₂)
+    -- Connection to mass operator (enables COV proof via Q-invariance under θ)
+    (hC_def : ∀ v, C_quad v =
+      ∑ x, (fun x => if h : isPT x then (0 : ℝ) else v ⟨x, h⟩) x *
+        (massOperator 2 N a mass
+          (fun x => if h : isPT x then (0 : ℝ) else v ⟨x, h⟩)) x)
+    (hAC_sum : ∀ u v, A_quad u v + C_quad v =
+      ∑ x, (e.symm (u, v)) x *
+        (massOperator 2 N a mass (e.symm (u, v))) x) :
     0 ≤ ∫ u, ∫ v,
       G (fieldFromSites N (e.symm (u, v))) *
       G (fieldReflection2D N (fieldFromSites N (e.symm (u, v)))) *
@@ -884,8 +897,9 @@ theorem gaussian_density_rp (a mass : ℝ)
         simp [φ_S_of, dif_neg hx]
     -- === Step 6d-e: Second Fubini, change of variables, perfect square ===
     simp_rw [h_factor]
-    exact gaussian_rp_perfect_square N isPT e G w A_quad C_quad
+    exact gaussian_rp_perfect_square N a mass ha hmass isPT rfl e G w A_quad C_quad
       hG_dep hGR_dep hw_dep hw_nonneg hw_boundary hA_indep
+      (fun v => rfl) (fun u v => sub_add_cancel _ _)
   · -- Non-integrable: integral = 0 by Bochner convention, and 0 ≤ 0
     rw [integral_undef hint]
 
