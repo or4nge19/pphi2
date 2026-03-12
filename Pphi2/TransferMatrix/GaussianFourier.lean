@@ -163,6 +163,7 @@ private abbrev fHat (f : L2SpatialField Ns) :
   Lp.fourierTransformₗᵢ (EuclideanSpace ℝ (Fin Ns)) ℂ (toEuclideanComplexL2 Ns f)
 
 -- The convolution quadratic form is continuous
+omit [NeZero Ns] in
 private theorem convQuadForm_continuous
     (g : SpatialField Ns → ℝ) (hg : MemLp g 1 volume) :
     Continuous (fun f : L2SpatialField Ns => @inner ℝ _ _ f (convCLM g hg f)) :=
@@ -173,12 +174,15 @@ private theorem convQuadForm_continuous
 -- is dominated by ‖g‖₁ · ‖f‖₂², giving continuity.
 -- The map f ↦ fHat(f) is continuous (composition of CLM, isometry, isometry)
 set_option maxHeartbeats 800000 in
+-- Gaussian Fourier integral convergence
+omit [NeZero Ns] in
 private theorem fHat_continuous :
     Continuous (fun f : L2SpatialField Ns => fHat Ns f) :=
   (Lp.fourierTransformₗᵢ (EuclideanSpace ℝ (Fin Ns)) ℂ).continuous.comp
     ((pullToEuclideanL2 Ns).continuous.comp (toComplexSpatialL2CLM Ns).continuous)
 
 set_option maxHeartbeats 800000 in
+-- Gaussian Fourier integral convergence
 /-- The Fourier representation of the convolution quadratic form:
   `⟨f, g⋆f⟩_ℝ = ∫ Re(ĝ_ℂ(w)) · ‖f̂_ℂ(w)‖² dw`
 
@@ -209,6 +213,8 @@ private axiom fourier_representation_convolution
       ‖(fHat Ns f : Lp (α := EuclideanSpace ℝ (Fin Ns)) ℂ 2) w‖ ^ 2
 
 set_option maxHeartbeats 800000 in
+-- Gaussian Fourier integral convergence
+omit [NeZero Ns] in
 /-- The Fourier transform of g_C (the complex-valued lift of g) is continuous.
 Needed for measurability of the Fourier representation integrand. -/
 private theorem ghat_continuous
@@ -229,6 +235,7 @@ private theorem ghat_continuous
   exact VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
     continuous_inner h_g_int
 
+omit [NeZero Ns] in
 /-- The integrand `Re(ĝ(w)) * ‖f̂(w)‖²` in the Fourier representation is integrable.
 
 Since `g ∈ L¹` implies `|Re(ĝ(w))| ≤ ‖ĝ(w)‖ ≤ ‖g‖₁` (bounded pointwise),
@@ -279,6 +286,22 @@ where
       _ ≤ C * ‖(h : EuclideanSpace ℝ (Fin Ns) → ℂ) w‖ ^ 2 :=
           mul_le_mul_of_nonneg_right (h_bound w) h2
 
+set_option maxHeartbeats 400000 in
+-- Plancherel support measure positivity
+omit [NeZero Ns] in
+private theorem support_pos_of_ae_nonzero
+    (h : Lp (α := EuclideanSpace ℝ (Fin Ns)) ℂ 2)
+    (h_nz : ¬ ∀ᵐ w : EuclideanSpace ℝ (Fin Ns) ∂volume,
+      (h : Lp (α := EuclideanSpace ℝ (Fin Ns)) ℂ 2) w = 0) :
+    0 < volume (Function.support fun w =>
+      (h : Lp (α := EuclideanSpace ℝ (Fin Ns)) ℂ 2) w) := by
+  rw [pos_iff_ne_zero]
+  intro h_zero
+  apply h_nz
+  rw [ae_iff]
+  exact h_zero
+
+omit [NeZero Ns] in
 theorem inner_convCLM_pos_of_fourier_pos
     (g : SpatialField Ns → ℝ) (hg : MemLp g 1 volume)
     (hg_cont : Continuous g)
@@ -307,18 +330,10 @@ theorem inner_convCLM_pos_of_fourier_pos
   -- Step 3: f != 0 implies f-hat not ae zero (Plancherel injectivity)
   have h_ft_nz := fourier_ae_nonzero_of_spatial_nonzero Ns f hf
   -- Convert "not ae zero" to "support has positive measure"
-  set_option maxHeartbeats 400000 in
   have h_support_pos :
       0 < volume (Function.support fun w =>
-        (fhat : Lp (α := EuclideanSpace ℝ (Fin Ns)) ℂ 2) w) := by
-    rw [pos_iff_ne_zero]
-    intro h_zero
-    apply h_ft_nz
-    -- volume(support fhat) = 0 means fhat = 0 ae
-    rw [ae_iff]
-    -- Goal: volume {w | fhat(w) ≠ 0} = 0
-    -- This is exactly volume(support fhat) = 0
-    exact h_zero
+        (fhat : Lp (α := EuclideanSpace ℝ (Fin Ns)) ℂ 2) w) :=
+    support_pos_of_ae_nonzero Ns fhat h_ft_nz
   -- Step 4: The support of the integrand equals the support of f-hat
   -- (since Re(g-hat(w)) > 0, the product vanishes iff ||f-hat(w)||^2 = 0)
   have h_support_eq : Function.support integrand =

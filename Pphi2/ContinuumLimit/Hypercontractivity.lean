@@ -314,11 +314,11 @@ private lemma wickPolynomial_integral_eq_coeff_zero
     integrable_finset_sum _ fun m _ => h_term_int m
   constructor
   · -- Integrability of wickPolynomial = leading + sum
-    show Integrable (fun ω => (1 / P.n : ℝ) * wickMonomial P.n c (ω δx) +
+    change Integrable (fun ω => (1 / P.n : ℝ) * wickMonomial P.n c (ω δx) +
       ∑ m : Fin P.n, P.coeff m * wickMonomial (m : ℕ) c (ω δx)) μ
     exact h_lead_int.add h_sum_int
   · -- Integral = P.coeff 0
-    show ∫ ω, ((1 / P.n : ℝ) * wickMonomial P.n c (ω δx) +
+    change ∫ ω, ((1 / P.n : ℝ) * wickMonomial P.n c (ω δx) +
       ∑ m : Fin P.n, P.coeff m * wickMonomial (m : ℕ) c (ω δx)) ∂μ = _
     rw [integral_add h_lead_int h_sum_int,
         integral_const_mul,

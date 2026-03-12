@@ -599,8 +599,7 @@ theorem convCLM_isSelfAdjoint_of_even {μ : Measure G} [μ.IsAddHaarMeasure] [μ
     IsSelfAdjoint (convCLM g hg) := by
   rw [ContinuousLinearMap.isSelfAdjoint_iff_isSymmetric]
   intro f₀ h₀
-  simp only [MeasureTheory.L2.inner_def, ContinuousLinearMap.coe_coe,
-             RCLike.inner_apply, RCLike.conj_to_real]
+  simp only [MeasureTheory.L2.inner_def, ContinuousLinearMap.coe_coe]
   -- Replace convCLM by realConv using convCLM_spec
   have hfspec := convCLM_spec g hg f₀
   have hhspec := convCLM_spec g hg h₀

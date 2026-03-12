@@ -415,8 +415,8 @@ theorem wickPolynomial_bounded_below (P : InteractionPolynomial) (c : ℝ) :
 /-- Wick monomials are jointly continuous in (c, x). -/
 theorem wickMonomial_continuous₂ : ∀ (n : ℕ),
     Continuous (fun p : ℝ × ℝ => wickMonomial n p.1 p.2)
-  | 0 => by simp [wickMonomial]; exact continuous_const
-  | 1 => by simp [wickMonomial]; exact continuous_snd
+  | 0 => by simp only [wickMonomial]; exact continuous_const
+  | 1 => by simp only [wickMonomial]; exact continuous_snd
   | n + 2 => by
     change Continuous (fun p : ℝ × ℝ =>
       p.2 * wickMonomial (n + 1) p.1 p.2 -
@@ -439,8 +439,8 @@ theorem wickPolynomial_continuous₂ (P : InteractionPolynomial) :
 This is because the recurrence involves only polynomial operations in `c`. -/
 private theorem wickMonomialPoly_coeff_continuous : ∀ (n i : ℕ),
     Continuous (fun c : ℝ => (wickMonomialPoly n c).coeff i)
-  | 0, i => by simp [wickMonomialPoly]; exact continuous_const
-  | 1, i => by simp [wickMonomialPoly]; exact continuous_const
+  | 0, i => by simp only [wickMonomialPoly]; exact continuous_const
+  | 1, i => by simp only [wickMonomialPoly]; exact continuous_const
   | n + 2, i => by
     simp only [wickMonomialPoly, Polynomial.coeff_sub, Polynomial.coeff_C_mul]
     apply Continuous.sub
