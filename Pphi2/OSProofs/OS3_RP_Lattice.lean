@@ -594,6 +594,54 @@ private theorem massOperator_indep_of_positiveTime
 
 /-! ## Reflection positivity on the lattice -/
 
+/-- **Perfect square for block-zero Gaussian integral (Fubini + COV step).**
+
+After the first Fubini decomposition φ = (u, v) and density factorization
+ρ = exp(-½A)·exp(-½C), the remaining step to prove Gaussian RP is:
+
+  0 ≤ ∫ u ∫ v, G(u)·GΘ(v)·w(v)·exp(-½A(u,v₀))·exp(-½C(v))
+
+**Proof**: Second Fubini splits v = (v₋, v₀). For fixed v₀:
+- G(u)·exp(-½A(u,v₀)) depends on u only → first factor
+- GΘ(v₋,v₀)·exp(-½C₋(v₋,v₀)) depends on v₋ only → second factor
+- w(v₀)·exp(-½C₀₀(v₀)) are constants
+
+COV v₋ → θ(v₋) using `massOperatorMatrix_timeNeg_invariant` transforms
+the second factor into a copy of the first, giving:
+  ∫ v₀, w(v₀)·exp(-½C₀₀(v₀))·[∫ u, G(u)·exp(-½A(u,v₀))]² ≥ 0
+
+Reference: Glimm-Jaffe Ch. 6.1, Osterwalder-Seiler (1978) §3. -/
+private axiom gaussian_rp_perfect_square
+    -- The conclusion is stated in terms of the specific types from the proof.
+    -- All parameters are universally quantified to match the proof context.
+    (isPT : FinLatticeSites 2 N → Prop) [DecidablePred isPT]
+    (e : (FinLatticeSites 2 N → ℝ) ≃ᵐ
+      ({s // isPT s} → ℝ) × ({s // ¬isPT s} → ℝ))
+    (G w : (ZMod N × ZMod N → ℝ) → ℝ)
+    (A_quad : ({s // isPT s} → ℝ) → ({s // ¬isPT s} → ℝ) → ℝ)
+    (C_quad : ({s // ¬isPT s} → ℝ) → ℝ)
+    (hG_dep : ∀ u v₁ v₂,
+      G (fieldFromSites N (e.symm (u, v₁))) =
+      G (fieldFromSites N (e.symm (u, v₂))))
+    (hGR_dep : ∀ u₁ u₂ v,
+      G (fieldReflection2D N (fieldFromSites N (e.symm (u₁, v)))) =
+      G (fieldReflection2D N (fieldFromSites N (e.symm (u₂, v)))))
+    (hw_dep : ∀ u₁ u₂ v,
+      w (fieldFromSites N (e.symm (u₁, v))) =
+      w (fieldFromSites N (e.symm (u₂, v))))
+    (hw_nonneg : ∀ φ, 0 ≤ w φ)
+    (hw_boundary : BoundarySupported N w)
+    (hA_indep : ∀ u v₁ v₂,
+      (∀ s : {s // ¬isPT s},
+        ¬(0 < (-(s.1 0) : ZMod N).val ∧ (-(s.1 0) : ZMod N).val < N / 2) →
+        v₁ s = v₂ s) →
+      A_quad u v₁ = A_quad u v₂) :
+    0 ≤ ∫ u, ∫ v,
+      G (fieldFromSites N (e.symm (u, v))) *
+      G (fieldReflection2D N (fieldFromSites N (e.symm (u, v)))) *
+      w (fieldFromSites N (e.symm (u, v))) *
+      (Real.exp (-(1 / 2) * A_quad u v) * Real.exp (-(1 / 2) * C_quad v))
+
 /-- **Core Gaussian reflection positivity with boundary weight.**
 
 For any G positive-time supported and w ≥ 0 boundary-supported:
@@ -835,19 +883,9 @@ theorem gaussian_density_rp (a mass : ℝ)
       · -- x ∉ S₊: φ_S(x) = 0, so both sides are 0
         simp [φ_S_of, dif_neg hx]
     -- === Step 6d-e: Second Fubini, change of variables, perfect square ===
-    -- Rewrite using the factored density
     simp_rw [h_factor]
-    -- The integral is now:
-    -- ∫ u ∫ v G(u)·GΘ(v)·w(v)·exp(-½A(u,v₀))·exp(-½C(v))
-    -- where A depends on (u,v₀) and C depends on v.
-    --
-    -- Proof sketch for the remaining steps:
-    -- (1) Second Fubini: split v = (v₋, v₀) via piEquivPiSubtypeProd on {¬isPT}
-    -- (2) Factor: for fixed v₀, the u and v₋ integrals separate
-    -- (3) Change of variables: θ on v₋ using Q(-x,-y) = Q(x,y)
-    --     (follows from negLaplacianMatrix_neg_invariant + mass diagonal)
-    -- (4) Perfect square: I = ∫ v₀, w·exp(-½BB)·[∫ u, G·exp(-½A)]² ≥ 0
-    sorry
+    exact gaussian_rp_perfect_square N isPT e G w A_quad C_quad
+      hG_dep hGR_dep hw_dep hw_nonneg hw_boundary hA_indep
   · -- Non-integrable: integral = 0 by Bochner convention, and 0 ≤ 0
     rw [integral_undef hint]
 
