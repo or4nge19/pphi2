@@ -428,8 +428,8 @@ theorem schwartz_timeTranslation_lipschitz_seminorm
     apply DifferentiableAt.differentiableWithinAt
     -- g = (iteratedFDeriv ℝ n f) ∘ (fun t => x + t • y)
     apply DifferentiableAt.comp
-    · exact (f.smooth (n + 1)).differentiable_iteratedFDeriv (by exact mod_cast Nat.lt_succ_self n)
-        |>.differentiableAt
+    · exact (f.smooth (n + 1)).differentiable_iteratedFDeriv
+        (WithTop.coe_lt_coe.mpr ENat.natCast_lt_succ) |>.differentiableAt
     · exact (differentiableAt_const _).add (differentiableAt_id.smul_const y)
   -- Goal: ‖x‖^k * ‖g(1) - g(0)‖ ≤ |h| * (1+|h|)^k * seminorm k (n+1) f
   -- We show this by bounding the derivative of g along [0,1]
@@ -470,7 +470,7 @@ theorem schwartz_timeTranslation_lipschitz_seminorm
       intro t
       apply DifferentiableAt.comp
       · exact (f.smooth (n + 1)).differentiable_iteratedFDeriv
-          (by exact mod_cast Nat.lt_succ_self n) |>.differentiableAt
+          (WithTop.coe_lt_coe.mpr ENat.natCast_lt_succ) |>.differentiableAt
       · exact (differentiableAt_const _).add (differentiableAt_id.smul_const y)
     -- Key: bound on deriv g at each point
     have h_deriv_bound : ∀ t ∈ Set.Icc (0 : ℝ) 1, ‖deriv g t‖ ≤ C := by
@@ -492,7 +492,7 @@ theorem schwartz_timeTranslation_lipschitz_seminorm
           (differentiableAt_const x).add (differentiableAt_id.smul_const y)
         have h_iter_diff : DifferentiableAt ℝ iter (path t) :=
           (f.smooth (n + 1)).differentiable_iteratedFDeriv
-            (by exact mod_cast Nat.lt_succ_self n) |>.differentiableAt
+            (WithTop.coe_lt_coe.mpr ENat.natCast_lt_succ) |>.differentiableAt
         have h_fderiv_path : fderiv ℝ path t = ContinuousLinearMap.smulRight
             (ContinuousLinearMap.id ℝ ℝ) y := by
           -- path s = x + s • y = x + (smulRight id y) s
@@ -785,8 +785,9 @@ lemma continuous_timeTranslationSchwartz (f : TestFunction d) :
   rw [nhds_iInf, Filter.tendsto_iInf]
   intro i
   -- For each seminorm i = (k, n), show T_h f → f in the seminorm topology
-  letI : PseudoMetricSpace (TestFunction d) :=
-    (schwartzSeminormFamily ℝ (SpaceTime d) ℝ i).toSeminormedAddCommGroup.toPseudoMetricSpace
+  letI inst_snacg : SeminormedAddCommGroup (TestFunction d) :=
+    (schwartzSeminormFamily ℝ (SpaceTime d) ℝ i).toSeminormedAddCommGroup
+  letI : PseudoMetricSpace (TestFunction d) := inst_snacg.toPseudoMetricSpace
   rw [Metric.tendsto_nhds]
   intro ε hε
   -- Mean Value estimate: ‖T_h f - f‖_{k,n} ≤ |h| · L where L depends on f's seminorms
@@ -807,13 +808,8 @@ lemma continuous_timeTranslationSchwartz (f : TestFunction d) :
   intro h hh
   -- Goal: dist (T_h f) f < ε
   -- Distance = seminorm(T_h f - f) in the induced metric
-  have hdist : dist (timeTranslationSchwartz h f) f =
-      (schwartzSeminormFamily ℝ (SpaceTime d) ℝ i) (timeTranslationSchwartz h f - f) := rfl
-  rw [hdist]
-  -- Apply the Lipschitz bound
-  have h_seminorm_eq : schwartzSeminormFamily ℝ (SpaceTime d) ℝ i =
-      SchwartzMap.seminorm ℝ i.1 i.2 := rfl
-  rw [h_seminorm_eq]
+  suffices h_suff : (SchwartzMap.seminorm ℝ i.1 i.2) (timeTranslationSchwartz h f - f) < ε by
+    rw [dist_eq_norm]; exact h_suff
   have h_lip := schwartz_timeTranslation_lipschitz_seminorm k n f h
   -- From hh: dist h 0 < min 1 (ε / L), so |h| < 1 and |h| < ε / L
   rw [Real.dist_eq, sub_zero] at hh

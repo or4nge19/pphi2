@@ -156,8 +156,8 @@ theorem mulCLM_isSelfAdjoint {μ : Measure α}
   have hf := mulCLM_spec w hw_meas C hC hw_bound f
   have hg := mulCLM_spec w hw_meas C hC hw_bound g
   filter_upwards [hf, hg] with x hfx hgx
-  simp only [RCLike.inner_apply, RCLike.conj_to_real]
   erw [hfx, hgx]
-  ring
+  simp only [inner, starRingEnd_apply, star_trivial]
+  ring_nf
 
 end
