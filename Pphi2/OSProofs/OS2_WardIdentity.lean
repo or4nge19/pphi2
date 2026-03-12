@@ -1266,8 +1266,8 @@ theorem pphi2_generating_functional_real (P : InteractionPolynomial)
     simp only [g]
     rw [← Complex.exp_conj]
     congr 1
-    rw [map_mul, Complex.conj_I, Complex.conj_ofReal,
-        ContinuousLinearMap.neg_apply, Complex.ofReal_neg]
+    rw [map_mul, Complex.conj_I, Complex.conj_ofReal]
+    simp only [show (-ω) f = -(ω f) from rfl, Complex.ofReal_neg]
     ring
   -- Step 3: ∫ exp(i(-ω)f) dμ = ∫ exp(iωf) d(map(-) μ) by change of variables
   -- Then use h_sym to get = ∫ exp(iωf) dμ

@@ -382,8 +382,7 @@ theorem pphi2_limit_exists (P : InteractionPolynomial)
               Configuration (ContinuumTestFunction 2)) := by
         exact configuration_measurable_of_eval_measurable _
           (fun f => (configuration_eval_measurable f).neg)
-      simpa [μ] using
-        (Measure.map_dirac hneg_meas (0 : Configuration (ContinuumTestFunction 2)))
+      simp only [μ, Measure.map_dirac' hneg_meas, neg_zero]
     · -- Characteristic functional convergence: constant sequence → trivial
       intro f; exact tendsto_const_nhds
     · -- Lattice translation invariance: trivial for Dirac at 0
@@ -404,8 +403,8 @@ theorem pphi2_limit_exists (P : InteractionPolynomial)
               ((Complex.measurable_ofReal.comp
                 (configuration_eval_measurable g)).const_mul
                 Complex.I)).stronglyMeasurable
-          rw [integral_dirac' _ _ hmeas, ContinuousLinearMap.zero_apply,
-              Complex.ofReal_zero, mul_zero, Complex.exp_zero]
+          rw [integral_dirac' _ _ hmeas]
+          norm_num [show (0 : Configuration (ContinuumTestFunction 2)) g = 0 from rfl]
         rw [this f, this (schwartzTranslate 2 v f)]
 
 end Pphi2

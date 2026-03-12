@@ -169,18 +169,15 @@ private theorem weakLimit_cos_conv
       (ae_of_all _ fun x => by
         rw [show (↑t : ℂ) * ↑x * I = ↑(t * x) * I from by push_cast; ring,
           Complex.norm_exp_ofReal_mul_I])
-  -- (∫ cexp).re = ∫ Re(cexp) = ∫ cos(tx)
-  simp only [← RCLike.re_to_complex] at h_re_cf
-  rw [← integral_re h_int] at h_re_cf
-  -- Now h_re_cf : ∫ RCLike.re(cexp ...) = exp(...)
-  -- Show RCLike.re(cexp(t*x*I)) = cos(t*x) for all x
-  have h_re_eq : (fun (x : ℝ) => RCLike.re (cexp (↑t * ↑x * I))) =
-      fun x => Real.cos (t * x) := by
-    funext x
-    simp only [RCLike.re_to_complex]
-    rw [show (↑t : ℂ) * ↑x * I = ↑(t * x) * I from by push_cast; ring]
-    exact exp_ofReal_mul_I_re _
-  rwa [h_re_eq] at h_re_cf
+  -- ∫ cos(tx) = (∫ cexp(itx)).re, which equals exp(-v*t²/2) by h_re_cf
+  rw [← h_re_cf]
+  trans ∫ x : ℝ, (cexp (↑t * ↑x * I)).re ∂(ν_seq n)
+  · exact integral_congr_ae (ae_of_all _ fun x => by
+      change Real.cos (t * x) = (cexp (↑t * ↑x * I)).re
+      rw [show (↑t : ℂ) * ↑x * I = ↑(t * x) * I from by push_cast; ring]
+      exact (exp_ofReal_mul_I_re _).symm)
+  · have h := integral_re h_int
+    simp only [RCLike.re_to_complex] at h; exact h
 
 private theorem weakLimit_sin_zero
     (ν_seq : ℕ → Measure ℝ) (v_seq : ℕ → ℝ≥0)
@@ -224,16 +221,15 @@ private theorem weakLimit_sin_zero
       (ae_of_all _ fun x => by
         rw [show (↑t : ℂ) * ↑x * I = ↑(t * x) * I from by push_cast; ring,
           Complex.norm_exp_ofReal_mul_I])
-  simp only [← RCLike.im_to_complex] at h_im_cf
-  rw [← integral_im h_int] at h_im_cf
-  -- Show RCLike.im(cexp(t*x*I)) = sin(t*x) for all x
-  have h_im_eq : (fun (x : ℝ) => RCLike.im (cexp (↑t * ↑x * I))) =
-      fun x => Real.sin (t * x) := by
-    funext x
-    simp only [RCLike.im_to_complex]
-    rw [show (↑t : ℂ) * ↑x * I = ↑(t * x) * I from by push_cast; ring]
-    exact exp_ofReal_mul_I_im _
-  rwa [h_im_eq] at h_im_cf
+  -- ∫ sin(tx) = (∫ cexp(itx)).im, which equals 0 by h_im_cf
+  rw [← h_im_cf]
+  trans ∫ x : ℝ, (cexp (↑t * ↑x * I)).im ∂(ν_seq n)
+  · exact integral_congr_ae (ae_of_all _ fun x => by
+      change Real.sin (t * x) = (cexp (↑t * ↑x * I)).im
+      rw [show (↑t : ℂ) * ↑x * I = ↑(t * x) * I from by push_cast; ring]
+      exact (exp_ofReal_mul_I_im _).symm)
+  · have h := integral_im h_int
+    simp only [RCLike.im_to_complex] at h; exact h
 
 theorem weakLimit_centered_gaussianReal
     (ν_seq : ℕ → Measure ℝ) (v_seq : ℕ → ℝ≥0)
@@ -336,23 +332,23 @@ theorem weakLimit_centered_gaussianReal
     rw [charFun_apply_real]
     have h_re : (∫ x : ℝ, cexp (↑t * ↑x * I) ∂ν).re =
         Real.exp (-(↑(v_lim : ℝ) * t ^ 2 / 2)) := by
-      simp only [← RCLike.re_to_complex]
-      rw [← integral_re h_int]
-      have : (fun (x : ℝ) => RCLike.re (cexp (↑t * ↑x * I))) =
-          fun x => Real.cos (t * x) := by
-        funext x; simp only [RCLike.re_to_complex]
-        rw [show (↑t : ℂ) * ↑x * I = ↑(t * x) * I from by push_cast; ring]
-        exact exp_ofReal_mul_I_re _
-      rw [this, h_cos_eq]
+      trans ∫ x : ℝ, (cexp (↑t * ↑x * I)).re ∂ν
+      · have h := integral_re h_int
+        simp only [RCLike.re_to_complex] at h; exact h.symm
+      · rw [show (fun x : ℝ => (cexp (↑t * ↑x * I)).re) =
+            fun x => Real.cos (t * x) from funext fun x => by
+          rw [show (↑t : ℂ) * ↑x * I = ↑(t * x) * I from by push_cast; ring]
+          exact exp_ofReal_mul_I_re _]
+        exact h_cos_eq t
     have h_im : (∫ x : ℝ, cexp (↑t * ↑x * I) ∂ν).im = 0 := by
-      simp only [← RCLike.im_to_complex]
-      rw [← integral_im h_int]
-      have : (fun (x : ℝ) => RCLike.im (cexp (↑t * ↑x * I))) =
-          fun x => Real.sin (t * x) := by
-        funext x; simp only [RCLike.im_to_complex]
-        rw [show (↑t : ℂ) * ↑x * I = ↑(t * x) * I from by push_cast; ring]
-        exact exp_ofReal_mul_I_im _
-      rw [this, h_sin_zero]
+      trans ∫ x : ℝ, (cexp (↑t * ↑x * I)).im ∂ν
+      · have h := integral_im h_int
+        simp only [RCLike.im_to_complex] at h; exact h.symm
+      · rw [show (fun x : ℝ => (cexp (↑t * ↑x * I)).im) =
+            fun x => Real.sin (t * x) from funext fun x => by
+          rw [show (↑t : ℂ) * ↑x * I = ↑(t * x) * I from by push_cast; ring]
+          exact exp_ofReal_mul_I_im _]
+        exact h_sin_zero t
     -- Reconstruct the complex number from re and im
     have h_lhs : (∫ x : ℝ, cexp (↑t * ↑x * I) ∂ν) =
         ↑(Real.exp (-(↑(v_lim : ℝ) * t ^ 2 / 2))) := by

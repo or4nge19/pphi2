@@ -145,7 +145,6 @@ private theorem inner_nonneg_of_nonneg_L2 {n : ℕ}
   rw [MeasureTheory.L2.inner_def]
   apply integral_nonneg_of_ae
   filter_upwards [(Lp.coeFn_nonneg f).mpr hf, (Lp.coeFn_nonneg g).mpr hg] with x hfx hgx
-  simp only [RCLike.inner_apply, starRingEnd_apply, star_trivial]
   exact mul_nonneg hgx hfx
 
 /-- Inner product is monotone in the right argument when the left argument is nonneg.
@@ -172,8 +171,8 @@ private theorem abs_inner_le_inner_abs_abs {n : ℕ}
     _ = ∫ x, @inner ℝ _ _ (|f| x) (|g| x) ∂volume := by
         apply integral_congr_ae
         filter_upwards [Lp.coeFn_abs f, Lp.coeFn_abs g] with x hf_abs hg_abs
-        simp only [RCLike.inner_apply, starRingEnd_apply, star_trivial]
-        rw [hf_abs, hg_abs, Real.norm_eq_abs, abs_mul]
+        simp only [inner, Inner.inner, starRingEnd_apply, star_trivial, RCLike.re_to_real]
+        rw [hf_abs, hg_abs, Real.norm_eq_abs, abs_mul, mul_comm]
 
 /-- Phase 2: Inner product inequality. -/
 theorem abs_inner_le_inner_abs {n : ℕ}
@@ -414,7 +413,7 @@ theorem top_eigenvalue_simple {n : ℕ}
         ((g : (Fin n → ℝ) → ℝ) x)) =ᵐ[volume]
         (fun x => (g : (Fin n → ℝ) → ℝ) x * (f : (Fin n → ℝ) → ℝ) x) := by
       filter_upwards with x
-      simp [RCLike.inner_apply]
+      simp only [inner, Inner.inner, starRingEnd_apply, star_trivial, RCLike.re_to_real]
     rw [integral_congr_ae h_eq]
     have h_nn : (0 : (Fin n → ℝ) → ℝ) ≤ᶠ[ae volume]
         (fun x => (g : (Fin n → ℝ) → ℝ) x * (f : (Fin n → ℝ) → ℝ) x) := by
@@ -906,7 +905,6 @@ theorem jentzsch_theorem_proved {n : ℕ}
       apply integral_nonneg_of_ae
       filter_upwards [(Lp.coeFn_nonneg (|b j|)).mpr habs_nn,
         (Lp.coeFn_nonneg (T (|b j|))).mpr h_Tnn] with x hf hg
-      simp only [RCLike.inner_apply, starRingEnd_apply, star_trivial]
       exact mul_nonneg hg hf
     -- So inner = 0, but T|bj| > 0 a.e. and |bj| ≠ 0
     have h_eq : @inner ℝ _ _ (|b j| : Lp ℝ 2 _) (T (|b j|)) = 0 :=
@@ -935,8 +933,7 @@ theorem jentzsch_theorem_proved {n : ℕ}
           (((T (|b j|) : Lp ℝ 2 _) : _ → ℝ) x)) := by
       filter_upwards [(Lp.coeFn_nonneg (|b j|)).mpr habs_nn,
         (Lp.coeFn_nonneg (T (|b j|))).mpr h_Tnn] with x hf hg
-      simp only [Pi.zero_apply, RCLike.inner_apply,
-        starRingEnd_apply, star_trivial]
+      simp only [Pi.zero_apply]
       exact mul_nonneg hg hf
     have h_int := MeasureTheory.L2.integrable_inner (𝕜 := ℝ) (|b j|) (T (|b j|))
     have h_ae := (integral_eq_zero_iff_of_nonneg_ae h_nn h_int).mp h_eq
@@ -944,8 +941,7 @@ theorem jentzsch_theorem_proved {n : ℕ}
     have h_abs_ae : ∀ᵐ x ∂(volume : Measure (Fin n → ℝ)),
         (|b j| : Lp ℝ 2 (volume : Measure (Fin n → ℝ))).1 x = 0 := by
       filter_upwards [h_ae, hT_pos] with x hp hTp
-      simp only [RCLike.inner_apply, starRingEnd_apply,
-        star_trivial, Pi.zero_apply] at hp
+      simp only [Pi.zero_apply] at hp
       exact (mul_eq_zero.mp hp).resolve_left (ne_of_gt hTp)
     -- |bj| = 0 in Lp: f =ᵐ 0 → eLpNorm = 0 → ‖f‖ = 0 → f = 0
     have h_snorm : MeasureTheory.eLpNorm
@@ -1014,7 +1010,7 @@ theorem jentzsch_theorem_proved {n : ℕ}
       (by rw [h_eigen, hi]) (h_eigen i₀)
       (by rw [MeasureTheory.L2.inner_def]
           have := b.orthonormal.2 h_ne
-          simp only [RCLike.inner_apply, starRingEnd_apply, star_trivial] at this ⊢
+          dsimp only at this ⊢
           convert this using 1)
   -- Basis elements are nonzero
   have h_ne_zero : ∀ i, b i ≠ 0 := by

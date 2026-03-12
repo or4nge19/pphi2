@@ -177,8 +177,8 @@ theorem transferOperator_positivityImproving (P : InteractionPolynomial) (a mass
       refine (L2.integrable_inner (𝕜 := ℝ) G' gx').congr ?_
       filter_upwards [hG2.coeFn_toLp, hgx.coeFn_toLp] with t hGt hgxt
       -- Goal: ⟪G'(t), gx'(t)⟫_ℝ = G t * g(x-t)
-      -- For ℝ: ⟪a, b⟫ = b * conj a = b * a
-      rw [RCLike.inner_apply, starRingEnd_apply, star_trivial]
+      -- For ℝ: inner unfolds via star/re to plain multiplication
+      simp only [inner, Inner.inner, starRingEnd_apply, star_trivial, RCLike.re_to_real]
       simp only [Function.comp_apply] at hgxt
       rw [hGt, hgxt, mul_comm]
     -- Step 2c: the support of the integrand has positive measure
