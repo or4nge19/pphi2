@@ -596,23 +596,22 @@ private theorem massOperator_indep_of_positiveTime
 
 /-- **Second Fubini + COV + perfect square for Gaussian RP (factored form).**
 
-After factoring `G(u)` out of the inner integral (using that G is positive-time
-supported), the remaining step is to show:
+After factoring `G(u)` out of the inner integral, shows the result is ≥ 0.
 
-  `0 ≤ ∫ u, G(u) * ∫ v, GΘ(v) · w(v) · exp(-½A(u,v)) · exp(-½C(v))`
+**Proof decomposition** (for future formalization):
+1. **Second Fubini**: Split `v = (v₋, v₀)` via `MeasurableEquiv.piEquivPiSubtypeProd`
+   where `v₋` ranges over S₋ (negative time) and `v₀` over B (boundary).
+2. **Factor out**: `w(v₀)` and `exp(-½A(u,v₀))` don't depend on `v₋`
+   (by `hw_boundary` and `hA_indep`), so pull them out of the `v₋`-integral.
+3. **COV identity**: Time-reflection bijects S₋ ≃ S₊ (volume-preserving),
+   and `massOperatorMatrix_timeNeg_invariant` gives Q(θx,θy) = Q(x,y).
+   After substitution: `∫ v₋, GΘ(v₋,v₀)·exp(-½C(v₋,v₀))`
+   `= exp(-½C_BB(v₀)) · ∫ u', G(u')·exp(-½A(u',v₀))`.
+4. **Fubini swap**: Exchange `u ↔ v₀` integration order.
+5. **Perfect square**: `∫ v₀, w(v₀)·exp(-½C_BB(v₀))·[∫ u, G(u)·exp(-½A(u,v₀))]² ≥ 0`
+   by `integral_nonneg` + `mul_nonneg` + `sq_nonneg`.
 
-**Proof sketch**: Split `v = (v₋, v₀)` via second Fubini. For fixed `v₀`:
-- `w(v₀)`, `exp(-½A(u,v₀))` don't depend on `v₋` → pull out
-- Apply COV `v₋ → θ(v₋)` to `∫ v₋, GΘ(v₋,v₀) · exp(-½C(v₋,v₀))`
-- After COV, `GΘ → G` and `C → A + C_BB`, giving
-  `exp(-½C_BB(v₀)) · ∫ u', G(u') · exp(-½A(u',v₀))`
-- Result: `∫ v₀, w(v₀) · exp(-½C_BB(v₀)) · [∫ u, G(u) · exp(-½A(u,v₀))]² ≥ 0`
-
-The mathematical content:
-- Second `MeasurableEquiv.piEquivPiSubtypeProd` splits `{s // ¬isPT s}` into S₋ and B
-- Time negation bijects S₋ ≃ S₊ (volume-preserving on finite-dim space)
-- `massOperatorMatrix_timeNeg_invariant`: Q(θx, θy) = Q(x, y)
-- Block-zero `massOperator_cross_block_zero`: no S₊-S₋ coupling
+The hardest step is (3), the COV identity. Steps (1,2,4,5) are Fubini plumbing.
 
 Reference: Glimm-Jaffe Ch. 6.1, Osterwalder-Seiler (1978) §3. -/
 private axiom gaussian_rp_cov_perfect_square
@@ -624,6 +623,9 @@ private axiom gaussian_rp_cov_perfect_square
     (G w : (ZMod N × ZMod N → ℝ) → ℝ)
     (A_quad : ({s // isPT s} → ℝ) → ({s // ¬isPT s} → ℝ) → ℝ)
     (C_quad : ({s // ¬isPT s} → ℝ) → ℝ)
+    (hG_dep : ∀ u v₁ v₂,
+      G (fieldFromSites N (e.symm (u, v₁))) =
+      G (fieldFromSites N (e.symm (u, v₂))))
     (hGR_dep : ∀ u₁ u₂ v,
       G (fieldReflection2D N (fieldFromSites N (e.symm (u₁, v)))) =
       G (fieldReflection2D N (fieldFromSites N (e.symm (u₂, v)))))
@@ -726,7 +728,7 @@ private theorem gaussian_rp_perfect_square
   -- Goal is: 0 ≤ ∫ u, G(u,0) * ∫ v, GΘ(0,v) * w(0,v) * exp(-½A(u,v)) * exp(-½C(v))
   -- This is exactly the conclusion of gaussian_rp_cov_perfect_square.
   exact gaussian_rp_cov_perfect_square N a mass ha hmass isPT hisPT e G w A_quad C_quad
-    hGR_dep hw_dep hw_nonneg hw_boundary hA_indep hC_def hAC_sum
+    hG_dep hGR_dep hw_dep hw_nonneg hw_boundary hA_indep hC_def hAC_sum
 
 /-- **Core Gaussian reflection positivity with boundary weight.**
 

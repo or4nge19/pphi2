@@ -247,6 +247,7 @@ All Phase 1 axioms have been proved or removed. `wickConstant_log_divergence`
 | ~~`gaussian_density_rp`~~ | OS3_RP_Lattice | ✅ **Proved** | Core Gaussian RP at density level: ∫ G(φ)·G(Θφ)·w(φ)·ρ(φ) dφ ≥ 0. Non-integrable case proved; integrable case: density factorization ρ = exp(-½A)·exp(-½C) proved (linearity + self-adjointness + block-zero), A-independence of v₋ proved. Final step via `gaussian_rp_perfect_square` theorem (factors G out) + `gaussian_rp_cov_perfect_square` axiom (COV + perfect square). |
 | ~~`lattice_rp_matrix`~~ | OS3_RP_Lattice | ✅ **Proved** | Matrix form of RP via cos(u-v) expansion + `lattice_rp`. |
 | ~~`rp_from_transfer_positivity`~~ | OS3_RP_Lattice | ✅ **Proved** | ⟨f, T^n f⟩ ≥ 0 via `transferOperatorCLM`. |
+| `gaussian_rp_cov_perfect_square` | OS3_RP_Lattice | Medium | Second Fubini + COV + perfect square for Gaussian RP. Decomposes into: (1) second Fubini splitting v=(v₋,v₀), (2) factoring out boundary terms, (3) COV identity (the hard part: time-reflection on S₋ using `massOperatorMatrix_timeNeg_invariant`), (4) Fubini swap u↔v₀, (5) perfect square `∫ w·exp·[∫ G·exp]² ≥ 0`. Private axiom. |
 
 ### Phase 3: Spectral gap and clustering
 
