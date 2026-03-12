@@ -235,8 +235,9 @@ meaningful mathematical types.
 ### OS3: Reflection Positivity
 - `lattice_rp` — **PROVED** from `gaussian_rp_with_boundary_weight` via time-slice decomposition
 - `gaussian_rp_with_boundary_weight` — **PROVED** from `gaussian_density_rp` via `evalMapMeasurableEquiv` density bridge
-- `gaussian_density_rp` — **PROVED** from `gaussian_rp_perfect_square` (density factorization + A-independence + axiom for Fubini/COV/perfect-square)
-- `gaussian_rp_perfect_square` — **AXIOM** (private): second Fubini + COV + perfect square (Glimm-Jaffe Ch. 6.1)
+- `gaussian_density_rp` — **PROVED** from `gaussian_rp_perfect_square` (density factorization + A-independence + factoring G(u) out via `integral_const_mul`)
+- `gaussian_rp_perfect_square` — **PROVED** from `gaussian_rp_cov_perfect_square`: factors G(u) out of inner integral using `hG_dep` + `integral_const_mul`
+- `gaussian_rp_cov_perfect_square` — **AXIOM** (private): second Fubini + COV + perfect square in factored form (Glimm-Jaffe Ch. 6.1)
 - `rp_from_transfer_positivity` — **PROVED** $⟨f, T^n f⟩_{L²} ≥ 0$ via `transferOperatorCLM`
 
 ### OS4: Clustering & Ergodicity
@@ -325,8 +326,9 @@ The following were previously axioms and are now theorems:
 | 41 | `schwinger_n_convergence` | Convergence | ⚠️ Likely correct | Diagonal subsequence extraction for n-pt functions. Standard. |
 | 42 | `continuumLimit_nontrivial` | Convergence | ⚠️ Likely correct | ∃ f with ∫(ω f)² > 0. Free field gives lower bound via Griffiths inequalities. |
 | 43 | `continuumLimit_nonGaussian` | Convergence | ⚠️ Likely correct | Nonzero 4th cumulant. InteractionPolynomial requires degree ≥ 4 with lead coeff 1/n, so interaction is always nontrivial. O(λ) perturbative bound. |
-| 44 | ~~`gaussian_density_rp`~~ | OS3_RP_Lattice | ✅ **PROVED** | Core Gaussian RP at density level. Non-integrable case proved; integrable case: density factorization + A-independence proved. Final step uses `gaussian_rp_perfect_square` axiom. |
-| 44b | `gaussian_rp_perfect_square` | OS3_RP_Lattice | ✅ Standard | SA 2026-03-11 | Second Fubini + COV (time-reflection on S₋→S₊) + perfect square for Gaussian RP. Factors integrand into [∫ G·exp(-½A)]². Private axiom. Glimm-Jaffe Ch. 6.1, Osterwalder-Seiler §3. |
+| 44 | ~~`gaussian_density_rp`~~ | OS3_RP_Lattice | ✅ **PROVED** | Core Gaussian RP at density level. Non-integrable case proved; integrable case: density factorization + A-independence proved. Final step uses `gaussian_rp_perfect_square` theorem. |
+| 44a | ~~`gaussian_rp_perfect_square`~~ | OS3_RP_Lattice | ✅ **PROVED** | SA 2026-03-11 | Factors G(u) out of inner integral using `hG_dep` + `integral_const_mul`, then applies `gaussian_rp_cov_perfect_square`. |
+| 44b | `gaussian_rp_cov_perfect_square` | OS3_RP_Lattice | ✅ Standard | SA 2026-03-11 | Second Fubini + COV (time-reflection on S₋→S₊) + perfect square for Gaussian RP (factored form: G(u) already pulled out). Private axiom. Glimm-Jaffe Ch. 6.1, Osterwalder-Seiler §3. |
 | 45 | `schwinger_agreement` | Bridge | ⚠️ Likely correct | Cluster expansion uniqueness at weak coupling. Properly constrained with `isPhi4`, `IsWeakCoupling` hypotheses. Very deep result (Guerra-Rosen-Simon 1975). |
 | 46 | `pphi2_nontriviality` | Main | ⚠️ Likely correct | ∃ μ, ∀ f ≠ 0, ∫(ω f)² > 0. Griffiths/FKG correlation inequality. The ∃ μ is existential (finds a good measure, not Measure.dirac 0). |
 | 47 | `pphi2_nonGaussianity` | Main | ⚠️ Likely correct | ∃ μ with nonzero 4th cumulant. Same ∃ μ pattern. |

@@ -594,29 +594,74 @@ private theorem massOperator_indep_of_positiveTime
 
 /-! ## Reflection positivity on the lattice -/
 
-/-- **Perfect square for block-zero Gaussian integral (Fubini + COV step).**
+/-- **Second Fubini + COV + perfect square for Gaussian RP (factored form).**
 
-After the first Fubini decomposition φ = (u, v) and density factorization
-ρ = exp(-½A)·exp(-½C), the remaining step to prove Gaussian RP is:
+After factoring `G(u)` out of the inner integral (using that G is positive-time
+supported), the remaining step is to show:
 
-  0 ≤ ∫ u ∫ v, G(u)·GΘ(v)·w(v)·exp(-½A(u,v₀))·exp(-½C(v))
+  `0 ≤ ∫ u, G(u) * ∫ v, GΘ(v) · w(v) · exp(-½A(u,v)) · exp(-½C(v))`
 
-**Proof**: Second Fubini splits v = (v₋, v₀). For fixed v₀:
-- G(u)·exp(-½A(u,v₀)) depends on u only → first factor
-- GΘ(v₋,v₀)·exp(-½C₋(v₋,v₀)) depends on v₋ only → second factor
-- w(v₀)·exp(-½C₀₀(v₀)) are constants
+**Proof sketch**: Split `v = (v₋, v₀)` via second Fubini. For fixed `v₀`:
+- `w(v₀)`, `exp(-½A(u,v₀))` don't depend on `v₋` → pull out
+- Apply COV `v₋ → θ(v₋)` to `∫ v₋, GΘ(v₋,v₀) · exp(-½C(v₋,v₀))`
+- After COV, `GΘ → G` and `C → A + C_BB`, giving
+  `exp(-½C_BB(v₀)) · ∫ u', G(u') · exp(-½A(u',v₀))`
+- Result: `∫ v₀, w(v₀) · exp(-½C_BB(v₀)) · [∫ u, G(u) · exp(-½A(u,v₀))]² ≥ 0`
 
-COV v₋ → θ(v₋) using `massOperatorMatrix_timeNeg_invariant` transforms
-the second factor into a copy of the first, giving:
-  ∫ v₀, w(v₀)·exp(-½C₀₀(v₀))·[∫ u, G(u)·exp(-½A(u,v₀))]² ≥ 0
-
-The hypotheses `hC_def` and `hAC_sum` connect the abstract quadratic forms
-A_quad, C_quad to the mass operator, enabling the COV identity:
-  C(θ⁻¹(u'), v₀) = A(u', v₀) + C_BB(v₀)
-which follows from `massOperatorMatrix_timeNeg_invariant` and block-zero.
+The mathematical content:
+- Second `MeasurableEquiv.piEquivPiSubtypeProd` splits `{s // ¬isPT s}` into S₋ and B
+- Time negation bijects S₋ ≃ S₊ (volume-preserving on finite-dim space)
+- `massOperatorMatrix_timeNeg_invariant`: Q(θx, θy) = Q(x, y)
+- Block-zero `massOperator_cross_block_zero`: no S₊-S₋ coupling
 
 Reference: Glimm-Jaffe Ch. 6.1, Osterwalder-Seiler (1978) §3. -/
-private axiom gaussian_rp_perfect_square
+private axiom gaussian_rp_cov_perfect_square
+    (a mass : ℝ) (ha : 0 < a) (hmass : 0 < mass)
+    (isPT : FinLatticeSites 2 N → Prop) [DecidablePred isPT]
+    (hisPT : isPT = fun s => 0 < (s 0).val ∧ (s 0).val < N / 2)
+    (e : (FinLatticeSites 2 N → ℝ) ≃ᵐ
+      ({s // isPT s} → ℝ) × ({s // ¬isPT s} → ℝ))
+    (G w : (ZMod N × ZMod N → ℝ) → ℝ)
+    (A_quad : ({s // isPT s} → ℝ) → ({s // ¬isPT s} → ℝ) → ℝ)
+    (C_quad : ({s // ¬isPT s} → ℝ) → ℝ)
+    (hGR_dep : ∀ u₁ u₂ v,
+      G (fieldReflection2D N (fieldFromSites N (e.symm (u₁, v)))) =
+      G (fieldReflection2D N (fieldFromSites N (e.symm (u₂, v)))))
+    (hw_dep : ∀ u₁ u₂ v,
+      w (fieldFromSites N (e.symm (u₁, v))) =
+      w (fieldFromSites N (e.symm (u₂, v))))
+    (hw_nonneg : ∀ φ, 0 ≤ w φ)
+    (hw_boundary : BoundarySupported N w)
+    (hA_indep : ∀ u v₁ v₂,
+      (∀ s : {s // ¬isPT s},
+        ¬(0 < (-(s.1 0) : ZMod N).val ∧ (-(s.1 0) : ZMod N).val < N / 2) →
+        v₁ s = v₂ s) →
+      A_quad u v₁ = A_quad u v₂)
+    (hC_def : ∀ v, C_quad v =
+      ∑ x, (fun x => if h : isPT x then (0 : ℝ) else v ⟨x, h⟩) x *
+        (massOperator 2 N a mass
+          (fun x => if h : isPT x then (0 : ℝ) else v ⟨x, h⟩)) x)
+    (hAC_sum : ∀ u v, A_quad u v + C_quad v =
+      ∑ x, (e.symm (u, v)) x *
+        (massOperator 2 N a mass (e.symm (u, v))) x) :
+    0 ≤ ∫ u, G (fieldFromSites N (e.symm (u, (0 : {s // ¬isPT s} → ℝ)))) *
+      ∫ v, G (fieldReflection2D N (fieldFromSites N (e.symm ((0 : {s // isPT s} → ℝ), v)))) *
+        w (fieldFromSites N (e.symm ((0 : {s // isPT s} → ℝ), v))) *
+        Real.exp (-(1 / 2) * A_quad u v) *
+        Real.exp (-(1 / 2) * C_quad v)
+
+/-- **Perfect square for block-zero Gaussian integral (Fubini + COV step).**
+
+After the first Fubini decomposition `φ = (u, v)` and density factorization
+`ρ = exp(-½A) · exp(-½C)`, this theorem proves Gaussian RP:
+
+  `0 ≤ ∫ u ∫ v, G(u) · GΘ(v) · w(v) · exp(-½A(u,v)) · exp(-½C(v))`
+
+**Proof**: Uses `hG_dep` to factor `G(u)` out of the inner integral via
+`integral_const_mul`, then applies `gaussian_rp_cov_perfect_square`.
+
+Reference: Glimm-Jaffe Ch. 6.1, Osterwalder-Seiler (1978) §3. -/
+private theorem gaussian_rp_perfect_square
     (a mass : ℝ) (ha : 0 < a) (hmass : 0 < mass)
     (isPT : FinLatticeSites 2 N → Prop) [DecidablePred isPT]
     (hisPT : isPT = fun s => 0 < (s 0).val ∧ (s 0).val < N / 2)
@@ -653,7 +698,35 @@ private axiom gaussian_rp_perfect_square
       G (fieldFromSites N (e.symm (u, v))) *
       G (fieldReflection2D N (fieldFromSites N (e.symm (u, v)))) *
       w (fieldFromSites N (e.symm (u, v))) *
-      (Real.exp (-(1 / 2) * A_quad u v) * Real.exp (-(1 / 2) * C_quad v))
+      (Real.exp (-(1 / 2) * A_quad u v) * Real.exp (-(1 / 2) * C_quad v)) := by
+  -- === Step 1: Simplify using dependency hypotheses ===
+  -- G(u,v) depends only on u, GΘ(u,v) depends only on v, w(u,v) depends only on v
+  have hG_rw : ∀ u v, G (fieldFromSites N (e.symm (u, v))) =
+      G (fieldFromSites N (e.symm (u, 0))) := fun u v => hG_dep u v 0
+  have hGR_rw : ∀ u v, G (fieldReflection2D N (fieldFromSites N (e.symm (u, v)))) =
+      G (fieldReflection2D N (fieldFromSites N (e.symm (0, v)))) := fun u v => hGR_dep u 0 v
+  have hw_rw : ∀ u v, w (fieldFromSites N (e.symm (u, v))) =
+      w (fieldFromSites N (e.symm (0, v))) := fun u v => hw_dep u 0 v
+  simp_rw [hG_rw, hGR_rw, hw_rw]
+  -- === Step 2: Factor G(u) out of inner integral ===
+  -- The integrand is: G(u,0) * GΘ(0,v) * w(0,v) * exp(-½A(u,v)) * exp(-½C(v))
+  -- Rearrange to: G(u,0) * (GΘ(0,v) * w(0,v) * exp(-½A(u,v)) * exp(-½C(v)))
+  have hrw : ∀ u v,
+      G (fieldFromSites N (e.symm (u, (0 : {s // ¬isPT s} → ℝ)))) *
+      G (fieldReflection2D N (fieldFromSites N (e.symm ((0 : {s // isPT s} → ℝ), v)))) *
+      w (fieldFromSites N (e.symm ((0 : {s // isPT s} → ℝ), v))) *
+      (Real.exp (-(1 / 2) * A_quad u v) * Real.exp (-(1 / 2) * C_quad v)) =
+    G (fieldFromSites N (e.symm (u, (0 : {s // ¬isPT s} → ℝ)))) *
+      (G (fieldReflection2D N (fieldFromSites N (e.symm ((0 : {s // isPT s} → ℝ), v)))) *
+       w (fieldFromSites N (e.symm ((0 : {s // isPT s} → ℝ), v))) *
+       Real.exp (-(1 / 2) * A_quad u v) *
+       Real.exp (-(1 / 2) * C_quad v)) := fun u v => by ring
+  simp_rw [hrw, integral_const_mul]
+  -- === Step 3: Apply the COV + perfect square axiom ===
+  -- Goal is: 0 ≤ ∫ u, G(u,0) * ∫ v, GΘ(0,v) * w(0,v) * exp(-½A(u,v)) * exp(-½C(v))
+  -- This is exactly the conclusion of gaussian_rp_cov_perfect_square.
+  exact gaussian_rp_cov_perfect_square N a mass ha hmass isPT hisPT e G w A_quad C_quad
+    hGR_dep hw_dep hw_nonneg hw_boundary hA_indep hC_def hAC_sum
 
 /-- **Core Gaussian reflection positivity with boundary weight.**
 
