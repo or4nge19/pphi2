@@ -9,7 +9,8 @@ import Pphi2.Polynomial
 import Pphi2.WickOrdering.WickPolynomial
 import Pphi2.WickOrdering.Counterterm
 
--- Phase 1: Interacting lattice measure
+-- Phase 1: Interacting measure (general + lattice)
+import Pphi2.InteractingMeasure.General
 import Pphi2.InteractingMeasure.LatticeAction
 import Pphi2.InteractingMeasure.LatticeMeasure
 import Pphi2.InteractingMeasure.Normalization
@@ -41,6 +42,10 @@ import Pphi2.TorusContinuumLimit.TorusConvergence
 import Pphi2.TorusContinuumLimit.TorusGaussianLimit
 import Pphi2.TorusContinuumLimit.TorusInteractingLimit
 import Pphi2.TorusContinuumLimit.TorusOSAxioms
+
+-- Phase 4c: Cylinder continuum limit (Gaussian + interacting)
+import Pphi2.CylinderContinuumLimit.CylinderInteraction
+import Pphi2.CylinderContinuumLimit.CylinderOSAxioms
 
 -- Phase 5: Euclidean invariance (OS2)
 import Pphi2.OSProofs.OS2_WardIdentity

@@ -249,7 +249,7 @@ Gaussian expectations reweighted by exp(-V)/Z. -/
 
 This should be compared with the free two-point function
 `G_a(x,y) = lattice_cross_moment ... (δ_x) (δ_y)` from gaussian-field. -/
-def schwinger2 (P : InteractionPolynomial) (a mass : ℝ)
+def latticeSchwinger2 (P : InteractionPolynomial) (a mass : ℝ)
     (ha : 0 < a) (hmass : 0 < mass)
     (x y : FinLatticeSites d N) : ℝ :=
   ∫ ω : Configuration (FinLatticeField d N),

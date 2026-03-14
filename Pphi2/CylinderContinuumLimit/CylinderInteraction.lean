@@ -4,17 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 
 # P(φ)₂ Interaction on the Cylinder S¹_L × ℝ
 
-Defines the Wick-ordered interaction potential, Boltzmann weight, partition
-function, and interacting measure for P(φ)₂ theory on the cylinder.
+Defines the Wick-ordered interaction potential on the cylinder and instantiates
+the general interacting measure framework from `InteractingMeasure.General`.
 
 ## Main definitions
 
 - `cylinderWickConstant L mass Λ` — UV-regularized single-point variance
 - `cylinderInteractionFunctional` — interaction V_{Λ,T} on field configurations
-- `cylinderBoltzmannWeight` — Boltzmann weight `exp(-V)`
-- `cylinderPartitionFunction` — partition function `Z = ∫ exp(-V) dμ`
-- `cylinderInteractingMeasure` — interacting measure `(1/Z) exp(-V) dμ`
-- `cylinderSchwinger2` — two-point Schwinger function ⟨ω(f)ω(g)⟩_V
+- `cylinderInteractingMeasure` — interacting measure via general framework
+- `cylinderSchwinger2` — two-point Schwinger function via general framework
 
 ## Mathematical background
 
@@ -53,6 +51,7 @@ The interaction is bounded below: `V_{Λ,T}(ω) ≥ -B`. This ensures
 -/
 
 import Pphi2.WickOrdering.WickPolynomial
+import Pphi2.InteractingMeasure.General
 import Cylinder.GreenFunction
 
 open GaussianField MeasureTheory
@@ -149,165 +148,80 @@ axiom cylinderInteractionFunctional_bounded_below
     ∃ B : ℝ, ∀ ω : Configuration (CylinderTestFunction L),
     cylinderInteractionFunctional L P Λ T mass hT hmass ω ≥ -B
 
-/-! ## Boltzmann weight and partition function -/
+/-! ## Cylinder-specific abbreviations
 
-/-- **Boltzmann weight** `exp(-V_{Λ,T})` for the P(φ)₂ interaction. -/
-def cylinderBoltzmannWeight
-    (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
-    (hT : 0 < T) (hmass : 0 < mass) :
-    Configuration (CylinderTestFunction L) → ℝ :=
-  fun ω => Real.exp (-(cylinderInteractionFunctional L P Λ T mass hT hmass ω))
+The cylinder interacting measure, Schwinger functions, etc. are instances
+of the general framework in `Pphi2.InteractingMeasure.General`, applied
+to the cylinder interaction functional and free Gaussian measure. -/
 
-/-- The Boltzmann weight is strictly positive everywhere. -/
-theorem cylinderBoltzmannWeight_pos
-    (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
-    (hT : 0 < T) (hmass : 0 < mass)
-    (ω : Configuration (CylinderTestFunction L)) :
-    0 < cylinderBoltzmannWeight L P Λ T mass hT hmass ω :=
-  Real.exp_pos _
+/-- The cylinder interaction as a `Configuration → ℝ` function (for use
+with the general interacting measure framework). -/
+abbrev cylinderV (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
+    (hT : 0 < T) (hmass : 0 < mass) :=
+  cylinderInteractionFunctional L P Λ T mass hT hmass
 
-/-- **Integrability of the Boltzmann weight** with respect to the free
-Gaussian measure on the cylinder.
-
-Follows from V bounded below (so exp(-V) ≤ exp(B)) and the Gaussian
-measure being a probability measure (finite total mass). -/
-theorem cylinderBoltzmannWeight_integrable
-    (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
-    (hT : 0 < T) (hmass : 0 < mass) :
-    Integrable
-      (cylinderBoltzmannWeight L P Λ T mass hT hmass)
-      (GaussianField.measure (cylinderMassOperator L mass hmass)) := by
-  obtain ⟨B, hB⟩ := cylinderInteractionFunctional_bounded_below L P Λ T mass hT hmass
-  have hmeas : Measurable (cylinderBoltzmannWeight L P Λ T mass hT hmass) :=
-    (cylinderInteractionFunctional_measurable L P Λ T mass hT hmass).neg.exp
-  apply (memLp_of_bounded (a := 0) (b := Real.exp B)
-    (ae_of_all _ (fun ω => ?_)) hmeas.aestronglyMeasurable (p := 1)).integrable le_rfl
-  exact ⟨le_of_lt (cylinderBoltzmannWeight_pos L P Λ T mass hT hmass ω),
-    Real.exp_le_exp_of_le (by linarith [hB ω])⟩
-
-/-- **Partition function** `Z_{Λ,T}` for P(φ)₂ on the cylinder.
-
-  `Z = ∫ exp(-V_{Λ,T}(ω)) dμ_free(ω)` -/
-def cylinderPartitionFunction
-    (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
-    (hT : 0 < T) (hmass : 0 < mass) : ℝ :=
-  ∫ ω, cylinderBoltzmannWeight L P Λ T mass hT hmass ω
-    ∂(GaussianField.measure (cylinderMassOperator L mass hmass))
-
-/-- The partition function is strictly positive.
-
-Proof: `exp(-V) > 0` everywhere, so its support is `univ`. The Gaussian
-measure is a probability measure with `μ(univ) = 1 > 0`. By
-`integral_pos_iff_support_of_nonneg`, the integral is positive. -/
-theorem cylinderPartitionFunction_pos
-    (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
-    (hT : 0 < T) (hmass : 0 < mass) :
-    0 < cylinderPartitionFunction L P Λ T mass hT hmass := by
-  unfold cylinderPartitionFunction
-  rw [integral_pos_iff_support_of_nonneg
-    (fun ω => le_of_lt (cylinderBoltzmannWeight_pos L P Λ T mass hT hmass ω))
-    (cylinderBoltzmannWeight_integrable L P Λ T mass hT hmass)]
-  have h_support : Function.support (cylinderBoltzmannWeight L P Λ T mass hT hmass) = Set.univ := by
-    ext ω
-    simp [Function.mem_support,
-      ne_of_gt (cylinderBoltzmannWeight_pos L P Λ T mass hT hmass ω)]
-  rw [h_support, measure_univ]
-  norm_num
-
-/-! ## Interacting measure and Schwinger functions -/
+/-- The free Gaussian measure on the cylinder. -/
+abbrev cylinderFreeMeasure (mass : ℝ) (hmass : 0 < mass) :=
+  GaussianField.measure (cylinderMassOperator L mass hmass)
 
 /-- **P(φ)₂ interacting measure** on the cylinder.
 
   `dμ_V = (1/Z) · exp(-V) · dμ_free`
 
-In the limits Λ → ∞ (UV) and T → ∞ (IR), the resulting theory should
-converge to the full P(φ)₂ QFT on S¹_L × ℝ. -/
-def cylinderInteractingMeasure
+Instance of `interactingMeasure` from the general framework. -/
+abbrev cylinderInteractingMeasure
     (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
-    (hT : 0 < T) (hmass : 0 < mass) :
-    @Measure (Configuration (CylinderTestFunction L)) instMeasurableSpaceConfiguration :=
-  (ENNReal.ofReal (cylinderPartitionFunction L P Λ T mass hT hmass))⁻¹ •
-    (GaussianField.measure (cylinderMassOperator L mass hmass)).withDensity
-      (fun ω => ENNReal.ofReal (cylinderBoltzmannWeight L P Λ T mass hT hmass ω))
+    (hT : 0 < T) (hmass : 0 < mass) :=
+  interactingMeasure (cylinderV L P Λ T mass hT hmass)
+    (cylinderFreeMeasure L mass hmass)
 
-/-- The Boltzmann weight is measurable (as an ENNReal-valued function). -/
-theorem cylinderBoltzmannWeight_ennreal_measurable
-    (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
-    (hT : 0 < T) (hmass : 0 < mass) :
-    @Measurable _ _ instMeasurableSpaceConfiguration _
-      (fun ω => ENNReal.ofReal (cylinderBoltzmannWeight L P Λ T mass hT hmass ω)) :=
-  (cylinderInteractionFunctional_measurable L P Λ T mass hT hmass).neg.exp.ennreal_ofReal
-
-/-- The withDensity measure for the Boltzmann weight has finite mass equal to Z. -/
-theorem cylinderWithDensity_mass
-    (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
-    (hT : 0 < T) (hmass : 0 < mass) :
-    (GaussianField.measure (cylinderMassOperator L mass hmass)).withDensity
-      (fun ω => ENNReal.ofReal (cylinderBoltzmannWeight L P Λ T mass hT hmass ω))
-      Set.univ =
-    ENNReal.ofReal (cylinderPartitionFunction L P Λ T mass hT hmass) := by
-  rw [MeasureTheory.withDensity_apply _ MeasurableSet.univ, MeasureTheory.setLIntegral_univ]
-  exact (MeasureTheory.ofReal_integral_eq_lintegral_ofReal
-    (cylinderBoltzmannWeight_integrable L P Λ T mass hT hmass)
-    (ae_of_all _ fun ω =>
-      le_of_lt (cylinderBoltzmannWeight_pos L P Λ T mass hT hmass ω))).symm
-
-/-- **The interacting measure is a probability measure.**
-
-  `μ_V(univ) = (1/Z) · Z = 1` -/
+/-- The interacting measure is a probability measure (from general framework). -/
 instance cylinderInteractingMeasure_isProbabilityMeasure
     (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
     (hT : 0 < T) (hmass : 0 < mass) :
-    @IsProbabilityMeasure _ instMeasurableSpaceConfiguration
-      (cylinderInteractingMeasure L P Λ T mass hT hmass) := by
-  constructor
-  show (cylinderInteractingMeasure L P Λ T mass hT hmass) Set.univ = 1
-  simp only [cylinderInteractingMeasure, Measure.smul_apply, smul_eq_mul]
-  rw [cylinderWithDensity_mass]
-  exact ENNReal.inv_mul_cancel
-    (ENNReal.ofReal_ne_zero_iff.mpr (cylinderPartitionFunction_pos L P Λ T mass hT hmass))
-    ENNReal.ofReal_ne_top
+    IsProbabilityMeasure (cylinderInteractingMeasure L P Λ T mass hT hmass) :=
+  interactingMeasure_isProbabilityMeasure
+    (cylinderV L P Λ T mass hT hmass)
+    (cylinderFreeMeasure L mass hmass)
+    (cylinderInteractionFunctional_measurable L P Λ T mass hT hmass)
+    (cylinderInteractionFunctional_bounded_below L P Λ T mass hT hmass)
 
 /-- **Two-point Schwinger function** for the interacting theory.
 
   `S₂(f, g) = ∫ ω(f) · ω(g) dμ_V(ω)` -/
-def cylinderSchwinger2
+abbrev cylinderSchwinger2
     (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
     (hT : 0 < T) (hmass : 0 < mass)
     (f g : CylinderTestFunction L) : ℝ :=
-  ∫ ω : Configuration (CylinderTestFunction L),
-    ω f * ω g ∂(cylinderInteractingMeasure L P Λ T mass hT hmass)
+  schwinger2 (cylinderV L P Λ T mass hT hmass)
+    (cylinderFreeMeasure L mass hmass) f g
 
-/-- The two-point Schwinger function is symmetric. -/
+/-- The two-point Schwinger function is symmetric (from general framework). -/
 theorem cylinderSchwinger2_symm
     (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
     (hT : 0 < T) (hmass : 0 < mass)
     (f g : CylinderTestFunction L) :
     cylinderSchwinger2 L P Λ T mass hT hmass f g =
-    cylinderSchwinger2 L P Λ T mass hT hmass g f := by
-  simp only [cylinderSchwinger2]
-  congr 1 with ω
-  ring
+    cylinderSchwinger2 L P Λ T mass hT hmass g f :=
+  schwinger2_symm _ _ f g
 
 /-- The **one-point Schwinger function** (expectation value of the field). -/
-def cylinderSchwinger1
+abbrev cylinderSchwinger1
     (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
     (hT : 0 < T) (hmass : 0 < mass)
     (f : CylinderTestFunction L) : ℝ :=
-  ∫ ω : Configuration (CylinderTestFunction L),
-    ω f ∂(cylinderInteractingMeasure L P Λ T mass hT hmass)
+  schwinger1 (cylinderV L P Λ T mass hT hmass)
+    (cylinderFreeMeasure L mass hmass) f
 
-/-- The **interacting generating functional** (moment generating function).
-
-  `Z_V(f) = ∫ exp(ω(f)) dμ_V(ω)` -/
-def cylinderInteractingGeneratingFunctional
+/-- The **interacting generating functional** (moment generating function). -/
+abbrev cylinderInteractingGeneratingFunctional
     (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
     (hT : 0 < T) (hmass : 0 < mass)
     (f : CylinderTestFunction L) : ℝ :=
-  ∫ ω : Configuration (CylinderTestFunction L),
-    Real.exp (ω f) ∂(cylinderInteractingMeasure L P Λ T mass hT hmass)
+  interactingGeneratingFunctional (cylinderV L P Λ T mass hT hmass)
+    (cylinderFreeMeasure L mass hmass) f
 
-/-- The Schwinger function formula via the free measure.
+/-- The Schwinger function formula via the free measure (from general framework).
 
   `S₂(f, g) = (1/Z) ∫ ω(f) · ω(g) · exp(-V(ω)) dμ_free(ω)` -/
 theorem cylinderSchwinger2_eq_free_expectation
@@ -315,20 +229,13 @@ theorem cylinderSchwinger2_eq_free_expectation
     (hT : 0 < T) (hmass : 0 < mass)
     (f g : CylinderTestFunction L) :
     cylinderSchwinger2 L P Λ T mass hT hmass f g =
-    (cylinderPartitionFunction L P Λ T mass hT hmass)⁻¹ *
-    ∫ ω, ω f * ω g * cylinderBoltzmannWeight L P Λ T mass hT hmass ω
-      ∂(GaussianField.measure (cylinderMassOperator L mass hmass)) := by
-  simp only [cylinderSchwinger2, cylinderInteractingMeasure]
-  rw [integral_smul_measure]
-  congr 1
-  · simp [ENNReal.toReal_inv, ENNReal.toReal_ofReal
-      (le_of_lt (cylinderPartitionFunction_pos L P Λ T mass hT hmass))]
-  · rw [integral_withDensity_eq_integral_toReal_smul₀
-        (cylinderBoltzmannWeight_ennreal_measurable L P Λ T mass hT hmass).aemeasurable
-        (ae_of_all _ fun _ => ENNReal.ofReal_lt_top)]
-    congr 1 with ω
-    rw [ENNReal.toReal_ofReal
-      (le_of_lt (cylinderBoltzmannWeight_pos L P Λ T mass hT hmass ω)),
-      smul_eq_mul, mul_comm]
+    (interactingPartitionFunction (cylinderV L P Λ T mass hT hmass)
+      (cylinderFreeMeasure L mass hmass))⁻¹ *
+    ∫ ω, ω f * ω g * interactingBoltzmannWeight
+      (cylinderV L P Λ T mass hT hmass) ω
+      ∂(cylinderFreeMeasure L mass hmass) :=
+  schwinger2_eq_free_expectation _ _
+    (cylinderInteractionFunctional_measurable L P Λ T mass hT hmass)
+    (cylinderInteractionFunctional_bounded_below L P Λ T mass hT hmass) f g
 
 end Pphi2
