@@ -53,8 +53,9 @@ The interaction is bounded below: `V_{Λ,T}(ω) ≥ -B`. This ensures
 import Pphi2.WickOrdering.WickPolynomial
 import Pphi2.InteractingMeasure.General
 import Cylinder.GreenFunction
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 
-open GaussianField MeasureTheory
+open GaussianField MeasureTheory intervalIntegral
 
 noncomputable section
 
@@ -101,35 +102,64 @@ theorem cylinderWickConstant_pos (mass : ℝ) (hmass : 0 < mass) (Λ : ℕ) :
     · exact hL.out
   · exact ⟨0, Finset.mem_range.mpr (by omega)⟩
 
+/-! ## UV-regularized field evaluation
+
+The UV-regularized field `φ_Λ(θ, t)` at spacetime point `(θ, t) ∈ S¹_L × ℝ`
+is the finite Fourier sum:
+
+  `φ_Λ(θ, t)(ω) = Σ_{|k| ≤ Λ} a_k(t, ω) · e^{2πikθ/L} / √L`
+
+where `a_k(t, ω)` is the temporal field amplitude for spatial Fourier mode `k`.
+In d = 1+1, each `a_k(·, ω)` is an Ornstein-Uhlenbeck process with parameter
+`ω_k = resolventFreq L mass k`, which is a.s. continuous by Kolmogorov's
+continuity criterion. -/
+
+/-- **UV-regularized field** at spacetime point `(θ, t)`.
+
+Evaluates the field with spatial mode cutoff Λ at the point (θ, t) ∈ S¹_L × ℝ.
+This is a finite sum of spatial Fourier modes, each an Ornstein-Uhlenbeck
+process in the temporal variable. -/
+axiom cylinderRegularizedFieldEval
+    (Λ : ℕ) (mass : ℝ) (hmass : 0 < mass) (θ t : ℝ) :
+    Configuration (CylinderTestFunction L) → ℝ
+
+/-- The UV-regularized field evaluation is measurable in ω for each fixed (θ, t).
+
+Each spatial mode amplitude `a_k(t, ω)` is a measurable linear functional
+of ω (evaluation against a test function), and a finite sum of measurable
+functions is measurable. -/
+axiom cylinderRegularizedFieldEval_measurable
+    (Λ : ℕ) (mass : ℝ) (hmass : 0 < mass) (θ t : ℝ) :
+    Measurable (cylinderRegularizedFieldEval L Λ mass hmass θ t)
+
 /-! ## Cylinder interaction functional
 
-The interaction functional `V_{Λ,T}` maps a field configuration
-`ω ∈ Configuration(CylinderTestFunction L)` to the integrated Wick-ordered
-interaction energy:
+The interaction functional `V_{Λ,T}` is defined concretely as:
 
-  `V_{Λ,T}(ω) = ∫_{S¹_L × [-T,T]} :P(φ_Λ(θ,t)(ω)):_{c_Λ} dθ dt`
+  `V_{Λ,T}(ω) = ∫₀ᴸ ∫₋ᵀᵀ :P(φ_Λ(θ,t)(ω)):_{c_Λ} dt dθ`
 
-where `φ_Λ` is the UV-regularized field with spatial mode cutoff Λ and
-`c_Λ = cylinderWickConstant L mass Λ` is the Wick constant.
-
-This uses `wickPolynomial P c_Λ` from `Pphi2.WickOrdering.WickPolynomial`
-for the Wick-ordered polynomial evaluation. -/
+where `φ_Λ` is `cylinderRegularizedFieldEval` and
+`c_Λ = cylinderWickConstant L mass Λ` is the Wick constant. -/
 
 /-- **Cylinder interaction functional** `V_{Λ,T}`.
 
 The integrated Wick-ordered interaction with UV cutoff Λ (spatial mode
 truncation) and IR cutoff T (temporal extent [-T, T]):
 
-  `V_{Λ,T}(ω) = ∫_{S¹_L × [-T,T]} :P(φ_Λ(x)):_{c_Λ} dx`
-
-**Future proof target**: Define concretely via spatial Fourier mode projection
-and integration over the compact domain S¹_L × [-T, T]. -/
-axiom cylinderInteractionFunctional
+  `V_{Λ,T}(ω) = ∫₀ᴸ ∫₋ᵀᵀ :P(φ_Λ(θ,t)(ω)):_{c_Λ} dt dθ` -/
+def cylinderInteractionFunctional
     (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
-    (hT : 0 < T) (hmass : 0 < mass) :
-    Configuration (CylinderTestFunction L) → ℝ
+    (_hT : 0 < T) (hmass : 0 < mass)
+    (ω : Configuration (CylinderTestFunction L)) : ℝ :=
+  ∫ θ in (0 : ℝ)..L, ∫ t in (-T)..T,
+    wickPolynomial P (cylinderWickConstant L mass Λ)
+      (cylinderRegularizedFieldEval L Λ mass hmass θ t ω)
 
-/-- The interaction functional is measurable. -/
+/-- The interaction functional is measurable.
+
+This requires joint measurability of the field evaluation in `(θ, t, ω)`,
+which follows from the explicit Fourier mode construction but needs
+product measurable space infrastructure. -/
 axiom cylinderInteractionFunctional_measurable
     (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
     (hT : 0 < T) (hmass : 0 < mass) :
@@ -137,16 +167,58 @@ axiom cylinderInteractionFunctional_measurable
 
 /-- **Nelson's bound**: the interaction functional is bounded below.
 
-  `∃ B, ∀ ω, V_{Λ,T}(ω) ≥ -B`
+  `V_{Λ,T}(ω) ≥ -A · L · 2T`
 
-For fixed UV cutoff Λ and IR cutoff T, the bound follows from
-`wickPolynomial_bounded_below` applied pointwise and integrated over
-the compact domain S¹_L × [-T,T]. -/
-axiom cylinderInteractionFunctional_bounded_below
+where `A` is the pointwise lower bound from `wickPolynomial_bounded_below`.
+Since `:P(x):_c ≥ -A` for all `x`, integrating over the compact domain
+`[0,L] × [-T,T]` of volume `L · 2T` gives the result.
+
+The proof handles the case where the integrand may not be interval integrable
+(as a function of the spacetime variables): in that case the interval integral
+is zero by convention, and 0 ≥ -B holds since B > 0. -/
+theorem cylinderInteractionFunctional_bounded_below
     (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
     (hT : 0 < T) (hmass : 0 < mass) :
     ∃ B : ℝ, ∀ ω : Configuration (CylinderTestFunction L),
-    cylinderInteractionFunctional L P Λ T mass hT hmass ω ≥ -B
+    cylinderInteractionFunctional L P Λ T mass hT hmass ω ≥ -B := by
+  obtain ⟨A, hA_pos, hA_bound⟩ := wickPolynomial_bounded_below P (cylinderWickConstant L mass Λ)
+  refine ⟨A * L * (2 * T), fun ω => ?_⟩
+  unfold cylinderInteractionFunctional
+  have h2T_pos : (0 : ℝ) < 2 * T := by linarith
+  have hALT_nonneg : 0 ≤ A * L * (2 * T) :=
+    mul_nonneg (mul_nonneg (le_of_lt hA_pos) (le_of_lt hL.out)) (le_of_lt h2T_pos)
+  -- Inner integral bound: for all θ, ∫ t in (-T)..T, :P(φ(θ,t)):_c ≥ -(A·2T)
+  -- Uses case split: if integrable, by integral_mono; if not, integral = 0 ≥ -(A·2T)
+  have h_inner : ∀ θ, ∫ t in (-T)..T,
+      wickPolynomial P (cylinderWickConstant L mass Λ)
+        (cylinderRegularizedFieldEval L Λ mass hmass θ t ω) ≥ -(A * (2 * T)) := by
+    intro θ
+    by_cases hint : IntervalIntegrable (fun t =>
+        wickPolynomial P (cylinderWickConstant L mass Λ)
+          (cylinderRegularizedFieldEval L Λ mass hmass θ t ω)) volume (-T) T
+    · calc ∫ t in (-T)..T, wickPolynomial P (cylinderWickConstant L mass Λ)
+              (cylinderRegularizedFieldEval L Λ mass hmass θ t ω)
+          ≥ ∫ t in (-T)..T, (-A : ℝ) :=
+            intervalIntegral.integral_mono (by linarith : -T ≤ T)
+              (_root_.intervalIntegrable_const) hint
+              (fun t => by linarith [hA_bound (cylinderRegularizedFieldEval L Λ mass hmass θ t ω)])
+        _ = -(A * (2 * T)) := by
+            simp only [intervalIntegral.integral_const, smul_eq_mul]; ring
+    · rw [intervalIntegral.integral_undef hint]; linarith [mul_pos hA_pos h2T_pos]
+  -- Outer integral bound: ∫ θ in 0..L, (inner) ≥ -(A·L·2T)
+  by_cases hout : IntervalIntegrable (fun θ => ∫ t in (-T)..T,
+      wickPolynomial P (cylinderWickConstant L mass Λ)
+        (cylinderRegularizedFieldEval L Λ mass hmass θ t ω)) volume (0 : ℝ) L
+  · calc ∫ θ in (0 : ℝ)..L, ∫ t in (-T)..T,
+          wickPolynomial P (cylinderWickConstant L mass Λ)
+            (cylinderRegularizedFieldEval L Λ mass hmass θ t ω)
+        ≥ ∫ θ in (0 : ℝ)..L, (-(A * (2 * T)) : ℝ) :=
+          intervalIntegral.integral_mono (le_of_lt hL.out)
+            (_root_.intervalIntegrable_const) hout
+            (fun θ => by linarith [h_inner θ])
+      _ = -(A * L * (2 * T)) := by
+          simp only [intervalIntegral.integral_const, smul_eq_mul]; ring
+  · rw [intervalIntegral.integral_undef hout]; linarith
 
 /-! ## Cylinder-specific abbreviations
 
