@@ -393,7 +393,7 @@ the convex function `exp` and `f = -V`:
   Z = ∫ exp(-V) dμ_{GFF} ≥ exp(-∫ V dμ_{GFF}) ≥ exp(0) = 1
 
 The second inequality uses `interactionFunctional_mean_nonpos`. -/
-private theorem partitionFunction_ge_one (P : InteractionPolynomial)
+theorem partitionFunction_ge_one (P : InteractionPolynomial)
     (mass : ℝ) (hmass : 0 < mass) (a : ℝ) (ha : 0 < a) :
     1 ≤ partitionFunction d N P a mass ha hmass := by
   set μ := latticeGaussianMeasure d N a mass ha hmass
@@ -427,7 +427,7 @@ This combines three facts:
 1. Density transfer: ∫ F dμ_int = Z⁻¹ ∫ F·bw dμ_GFF
 2. Cauchy-Schwarz:   ∫ F·bw ≤ (∫ F²)^{1/2} · (∫ bw²)^{1/2}
 3. Z ≥ 1 and ∫ bw² ≤ K give Z⁻¹·(∫ bw²)^{1/2} ≤ K^{1/2} -/
-private lemma density_transfer_bound
+lemma density_transfer_bound
     (P : InteractionPolynomial) (a mass : ℝ) (ha : 0 < a) (hmass : 0 < mass)
     (K : ℝ) (_hK_pos : 0 < K)
     (hK : ∫ ω : Configuration (FinLatticeField d N),

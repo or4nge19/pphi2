@@ -153,13 +153,175 @@ theorem torus_interacting_second_moment_uniform
   refine ⟨3 * Real.sqrt K * Cg,
     mul_pos (mul_pos (by norm_num : (0:ℝ) < 3) (Real.sqrt_pos_of_pos hK_pos)) hCg_pos,
     fun N _ => ?_⟩
-  -- The proof combines:
-  -- (a) integral_map: push ∫ (ω f)² through torus embedding
-  -- (b) Cauchy-Schwarz density transfer with Z⁻¹ ≤ 1
-  -- (c) Nelson: ∫ exp(-2V) dμ_GFF ≤ K
-  -- (d) Gaussian hypercontractivity: ∫ X⁴ ≤ 9·(∫ X²)²
-  -- (e) Uniform Gaussian bound: ∫ (ω f)² dμ_GFF ≤ Cg
-  sorry
+  -- Step 1: Push integral through torus embedding
+  -- torusInteractingMeasure = Measure.map (torusEmbedLift L N) (interactingLatticeMeasure ...)
+  set μ_int := interactingLatticeMeasure 2 N P (circleSpacing L N) mass
+    (circleSpacing_pos L N) hmass
+  set μ_GFF := latticeGaussianMeasure 2 N (circleSpacing L N) mass
+    (circleSpacing_pos L N) hmass
+  set ι := torusEmbedLift L N
+  set g := latticeTestFn L N f
+  have hι_meas : AEMeasurable ι μ_int :=
+    (torusEmbedLift_measurable L N).aemeasurable
+  -- ∫ (ω f)² d(map ι μ_int) = ∫ ((ι ω) f)² dμ_int = ∫ (ω g)² dμ_int
+  change ∫ ω, (ω f) ^ 2 ∂(Measure.map ι μ_int) ≤ 3 * Real.sqrt K * Cg
+  rw [integral_map hι_meas
+    ((configuration_eval_measurable f).pow_const 2).aestronglyMeasurable]
+  -- Rewrite (ι ω) f = ω g using torusEmbedLift_eval_eq
+  have h_eval : ∀ ω : Configuration (FinLatticeField 2 N),
+      (ι ω) f = ω g := fun ω => torusEmbedLift_eval_eq L N f ω
+  simp_rw [h_eval]
+  -- Now goal: ∫ (ω g)² dμ_int ≤ 3 * √K * Cg
+  -- Step 2: Apply density_transfer_bound with F(ω) = (ω g)²
+  have hZ_ge_one := partitionFunction_ge_one 2 N P mass hmass
+    (circleSpacing L N) (circleSpacing_pos L N)
+  -- F is nonneg, measurable, and has finite Gaussian L²
+  have hF_nn : ∀ ω : Configuration (FinLatticeField 2 N), 0 ≤ (ω g) ^ 2 :=
+    fun ω => sq_nonneg _
+  have hF_meas : AEStronglyMeasurable (fun ω : Configuration (FinLatticeField 2 N) =>
+      (ω g) ^ 2) μ_GFF :=
+    ((configuration_eval_measurable g).pow_const 2).aestronglyMeasurable
+  -- F² = (ω g)⁴ is integrable under μ_GFF (all Gaussian moments are finite)
+  have hF_sq_int : Integrable (fun ω : Configuration (FinLatticeField 2 N) =>
+      ((ω g) ^ 2) ^ 2) μ_GFF := by
+    have h4 : MemLp (fun ω : Configuration (FinLatticeField 2 N) => ω g)
+        4 μ_GFF := by
+      exact_mod_cast pairing_memLp (latticeCovariance 2 N (circleSpacing L N) mass
+        (circleSpacing_pos L N) hmass) g 4
+    have hmem := h4.norm_rpow (p := (4 : ENNReal))
+      (by norm_num : (4 : ENNReal) ≠ 0) (by norm_num : (4 : ENNReal) ≠ ⊤)
+    rw [memLp_one_iff_integrable] at hmem
+    have h_int : Integrable (fun ω : Configuration (FinLatticeField 2 N) =>
+        ‖ω g‖ ^ (4 : ℕ)) μ_GFF := by
+      refine hmem.congr (Filter.Eventually.of_forall fun ω => ?_)
+      simp [ENNReal.toReal_ofNat]
+    exact h_int.congr (Filter.Eventually.of_forall fun ω => by
+      dsimp only
+      rw [Real.norm_eq_abs]
+      conv_rhs => rw [show ω g ^ 2 = |ω g| ^ 2 from (sq_abs _).symm]
+      ring)
+  -- Apply density_transfer_bound
+  have h_dt := density_transfer_bound 2 N P (circleSpacing L N) mass
+    (circleSpacing_pos L N) hmass K hK_pos (hK_bound N)
+    hZ_ge_one (fun ω => (ω g) ^ 2) hF_nn hF_meas hF_sq_int
+  -- h_dt: ∫ (ω g)² dμ_int ≤ K^{1/2} * (∫ F^{(2:ℝ)} dμ_GFF)^{1/2}
+  -- where F ω = (ω g) ^ 2
+  -- Step 3: Convert rpow to nat pow in h_dt and bound
+  -- ((ω g)^2) ^ (2:ℝ) = ((ω g)^2) ^ 2 since (ω g)^2 ≥ 0
+  have h_rpow_to_npow : ∀ ω : Configuration (FinLatticeField 2 N),
+      (fun ω => (ω g) ^ 2) ω ^ (2:ℝ) = ((ω g) ^ 2) ^ 2 := by
+    intro ω
+    exact Real.rpow_natCast ((ω g) ^ 2) 2
+  -- Rewrite the integral in h_dt from rpow to nat pow
+  have h_int_rpow_eq : ∫ ω, (fun ω => (ω g) ^ 2) ω ^ (2:ℝ) ∂μ_GFF =
+      ∫ ω, ((ω g) ^ 2) ^ 2 ∂μ_GFF := by
+    congr 1; ext ω; exact h_rpow_to_npow ω
+  -- Step 4: Bound ∫ ((ω g)²)² dμ_GFF using hypercontractivity
+  -- ∫ (ω g)⁴ dμ_GFF ≤ 9 * (∫ (ω g)² dμ_GFF)²
+  -- We use gaussian_hypercontractive via nat-pow 1D form
+  -- hypercontractive_1d_p4 with n=1:
+  --   ∫ |x|^4 dN(0,v) ≤ 3^2 * (∫ |x|^2 dN(0,v))^2
+  -- Applied via pairing_is_gaussian to get:
+  --   ∫ (ω g)⁴ dμ_GFF ≤ 9 * (∫ (ω g)² dμ_GFF)²
+  -- But we use the direct bound: ∫ ((ω g)²)² = ∫ (ω g)⁴
+  -- torusEmbeddedTwoPoint ≤ Cg, so ∫ (ω g)² ≤ Cg, so ∫ (ω g)⁴ ≤ 9 * Cg²
+  have h_second_moment_eq : ∫ ω, (ω g) ^ 2 ∂μ_GFF =
+      torusEmbeddedTwoPoint L N mass hmass f f :=
+    (torusEmbeddedTwoPoint_eq_lattice_second_moment L N mass hmass f).symm
+  have h_second_le : ∫ ω, (ω g) ^ 2 ∂μ_GFF ≤ Cg := by
+    rw [h_second_moment_eq]; exact hCg_bound N
+  have h_second_nn : 0 ≤ ∫ ω, (ω g) ^ 2 ∂μ_GFF :=
+    integral_nonneg fun ω => sq_nonneg _
+  -- ∫ ((ω g)²)² ≤ 9 * Cg² via hypercontractivity
+  -- Use gaussian_hypercontractive from GaussianField
+  set T := latticeCovariance 2 N (circleSpacing L N) mass (circleSpacing_pos L N) hmass
+  have hμ_eq : μ_GFF = GaussianField.measure T := rfl
+  -- Apply hypercontractive_1d_p4 via pairing_is_gaussian
+  have h_fourth_le : ∫ ω, ((ω g) ^ 2) ^ 2 ∂μ_GFF ≤ 9 * Cg ^ 2 := by
+    -- First convert to |ω g|^4
+    have h_eq4 : ∀ ω : Configuration (FinLatticeField 2 N),
+        ((ω g) ^ 2) ^ 2 = |ω g| ^ 4 := by
+      intro ω; rw [show ω g ^ 2 = |ω g| ^ 2 from (sq_abs _).symm]; ring
+    simp_rw [h_eq4]
+    -- Use gaussian_hypercontractive with p=4, n=1, m=2
+    have h_hyper := gaussian_hypercontractive T g 1 4
+      (by norm_num : (2:ℝ) ≤ 4) 2 (by norm_num : 1 ≤ 2)
+      (by norm_num : (4:ℝ) = 2 * ↑2)
+    -- h_hyper : ∫ |ω g| ^ (4 * ↑1) dμ ≤ (4-1)^(4*1/2) * (∫ |ω g|^(2*1) dμ)^(4/2)
+    -- Convert |ω g| ^ 4 (nat pow) to |ω g| ^ (4 * ↑1) (rpow)
+    have h_lhs_eq : ∫ ω, |ω g| ^ 4 ∂μ_GFF =
+        ∫ ω, |ω g| ^ ((4:ℝ) * ↑(1:ℕ)) ∂(GaussianField.measure T) := by
+      rw [hμ_eq]
+      congr 1; ext ω
+      simp only [Nat.cast_one, mul_one]
+      exact (Real.rpow_natCast _ 4).symm
+    rw [h_lhs_eq]
+    -- The RHS of h_hyper: (4-1)^(4*1/2) * (∫ |ω g|^(2*1))^(4/2)
+    -- Simplify the coefficient: (4-1)^(4*1/2) = 3^2 = 9
+    have h_coeff : ((4:ℝ) - 1) ^ ((4:ℝ) * ↑(1:ℕ) / 2) = 9 := by
+      simp only [Nat.cast_one, mul_one]
+      rw [show (4:ℝ) / 2 = ↑(2:ℕ) from by norm_num, Real.rpow_natCast]
+      norm_num
+    -- Simplify the exponent: (4/2) = 2
+    have h_exp_eq : (∫ ω, |ω g| ^ ((2:ℝ) * ↑(1:ℕ)) ∂(GaussianField.measure T)) ^ ((4:ℝ) / 2) =
+        (∫ ω, |ω g| ^ ((2:ℝ) * ↑(1:ℕ)) ∂(GaussianField.measure T)) ^ 2 := by
+      rw [show (4:ℝ) / 2 = ↑(2:ℕ) from by norm_num, Real.rpow_natCast]
+    -- Convert the RHS integral to nat pow form
+    have h_rhs_int_eq : ∫ ω, |ω g| ^ ((2:ℝ) * ↑(1:ℕ)) ∂(GaussianField.measure T) =
+        ∫ ω, (ω g) ^ 2 ∂μ_GFF := by
+      rw [hμ_eq]; congr 1; ext ω
+      simp only [Nat.cast_one, mul_one]
+      rw [show |ω g| ^ (2:ℝ) = (|ω g| ^ 2 : ℝ) from Real.rpow_natCast _ 2]
+      exact sq_abs _
+    -- h_hyper has |ω g| ^ ((2:ℕ)*1) in the RHS integral (nat pow),
+    -- while we need (ω g) ^ 2. Show they give the same integral.
+    have h_int_2_eq : ∫ ω, |ω g| ^ (2 * 1) ∂(GaussianField.measure T) =
+        ∫ ω, (ω g) ^ 2 ∂μ_GFF := by
+      rw [hμ_eq]; congr 1; ext ω; simp [sq_abs]
+    -- Combine h_hyper with the integral identity
+    have h_hyper' : ∫ ω, |ω g| ^ ((4:ℝ) * ↑(1:ℕ)) ∂(GaussianField.measure T) ≤
+        ((4:ℝ) - 1) ^ ((4:ℝ) * ↑(1:ℕ) / 2) *
+        (∫ ω, (ω g) ^ 2 ∂μ_GFF) ^ ((4:ℝ) / 2) := by
+      have := h_hyper
+      rwa [h_int_2_eq] at this
+    -- rpow-to-nat conversion for the integral exponent
+    have h_exp_eq' : (∫ ω, (ω g) ^ 2 ∂μ_GFF) ^ ((4:ℝ) / 2) =
+        (∫ ω, (ω g) ^ 2 ∂μ_GFF) ^ 2 := by
+      rw [show (4:ℝ) / 2 = ↑(2:ℕ) from by norm_num, Real.rpow_natCast]
+    -- Chain: ∫ |ω g|^{4*1} ≤ 9 * (∫ (ω g)² dμ_GFF)² ≤ 9 * Cg²
+    calc ∫ ω, |ω g| ^ ((4:ℝ) * ↑(1:ℕ)) ∂(GaussianField.measure T)
+        ≤ ((4:ℝ) - 1) ^ ((4:ℝ) * ↑(1:ℕ) / 2) *
+          (∫ ω, (ω g) ^ 2 ∂μ_GFF) ^ ((4:ℝ) / 2) := h_hyper'
+      _ = 9 * (∫ ω, (ω g) ^ 2 ∂μ_GFF) ^ 2 := by
+          rw [h_coeff, h_exp_eq']
+      _ ≤ 9 * Cg ^ 2 := by
+          apply mul_le_mul_of_nonneg_left
+          · exact pow_le_pow_left₀ h_second_nn h_second_le 2
+          · norm_num
+  -- Step 5: Convert back to rpow form and combine
+  -- h_dt uses rpow, h_fourth_le uses nat pow; connect them
+  have h_fourth_nn : (0:ℝ) ≤ ∫ ω, ((ω g) ^ 2) ^ 2 ∂μ_GFF :=
+    integral_nonneg fun ω => by positivity
+  have h_4th_bound : (∫ ω, (fun ω => (ω g) ^ 2) ω ^ (2:ℝ) ∂μ_GFF) ^ (1/2:ℝ) ≤
+      3 * Cg := by
+    rw [h_int_rpow_eq]
+    -- (∫ ((ω g)²)²)^{1/2} ≤ (9 * Cg²)^{1/2} = 3 * Cg
+    calc (∫ ω, ((ω g) ^ 2) ^ 2 ∂μ_GFF) ^ (1/2:ℝ)
+        ≤ (9 * Cg ^ 2) ^ (1/2:ℝ) :=
+          Real.rpow_le_rpow h_fourth_nn h_fourth_le (by norm_num : (0:ℝ) ≤ 1/2)
+      _ = 3 * Cg := by
+          rw [show (9:ℝ) = 3 ^ 2 from by norm_num, ← mul_pow]
+          rw [← Real.sqrt_eq_rpow, Real.sqrt_sq
+            (mul_nonneg (by norm_num : (0:ℝ) ≤ 3) hCg_pos.le)]
+  -- Final combination
+  have hK_sqrt : K ^ (1/2:ℝ) = Real.sqrt K :=
+    (Real.sqrt_eq_rpow K).symm
+  calc ∫ ω, (ω g) ^ 2 ∂μ_int
+      ≤ K ^ (1/2:ℝ) * (∫ ω, (fun ω => (ω g) ^ 2) ω ^ (2:ℝ) ∂μ_GFF) ^ (1/2:ℝ) := h_dt
+    _ ≤ K ^ (1/2:ℝ) * (3 * Cg) :=
+        mul_le_mul_of_nonneg_left h_4th_bound (Real.rpow_nonneg hK_pos.le _)
+    _ = Real.sqrt K * (3 * Cg) := by rw [hK_sqrt]
+    _ = 3 * Real.sqrt K * Cg := by ring
 
 /-! ## Tightness of interacting measures -/
 
