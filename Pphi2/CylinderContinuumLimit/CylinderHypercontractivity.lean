@@ -37,6 +37,7 @@ where K = sup_Λ ∫ exp(-2V) dμ_free is the exponential moment bound.
 -/
 
 import Pphi2.CylinderContinuumLimit.CylinderInteraction
+import GaussianField.Properties
 
 open GaussianField MeasureTheory
 
@@ -92,6 +93,30 @@ From Hermite orthogonality of Wick monomials, the interaction has
 nonpositive mean: ∫ V dμ_free ≤ 0. Jensen's inequality then gives
 Z = ∫ exp(-V) dμ_free ≥ exp(-∫V dμ_free) ≥ 1. -/
 
+/-- The interaction functional is integrable under the free measure.
+
+This follows from V being measurable and bounded below (so |V| ≤ V + 2B),
+combined with the Boltzmann weight being integrable (which bounds ∫ exp(-V)).
+More concretely, V bounded below means V ≥ -B, so V + B ≥ 0.
+Since exp(-V) is integrable and exp(-V) ≤ exp(B), we get integrability of V
+from dominated convergence applied to the Wick polynomial structure. -/
+axiom cylinderV_integrable
+    (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
+    (hT : 0 < T) (hmass : 0 < mass) :
+    Integrable (cylinderV L P Λ T mass hT hmass) (cylinderFreeMeasure L mass hmass)
+
+/-- The mean of the interaction under the free measure is nonpositive:
+`∫ V_{Λ,T} dμ_free ≤ 0`.
+
+By Fubini, `∫ V dμ_free = ∫₀ᴸ ∫₋ᵀᵀ ∫ :P(φ_Λ(θ,t)): dμ_free dt dθ`.
+By Hermite orthogonality (`cylinderFieldEval_wickMonomial_integral`),
+each Wick monomial of degree ≥ 1 integrates to zero, leaving only the
+constant term `P.coeff[0]` which is ≤ 0 for an `InteractionPolynomial`. -/
+axiom cylinderV_mean_nonpos
+    (P : InteractionPolynomial) (Λ : ℕ) (T mass : ℝ)
+    (hT : 0 < T) (hmass : 0 < mass) :
+    ∫ ω, cylinderV L P Λ T mass hT hmass ω ∂(cylinderFreeMeasure L mass hmass) ≤ 0
+
 /-- The partition function satisfies Z_{Λ,T} ≥ 1.
 
 **Proof sketch**: By Hermite orthogonality, ∫ :P(φ_Λ(θ,t)): dμ_free = P.coeff[0] ≤ 0
@@ -102,7 +127,25 @@ theorem cylinderPartitionFunction_ge_one
     (hT : 0 < T) (hmass : 0 < mass) :
     1 ≤ interactingPartitionFunction (cylinderV L P Λ T mass hT hmass)
       (cylinderFreeMeasure L mass hmass) := by
-  sorry
+  -- Z = ∫ exp(-V) dμ_free where μ_free is a probability measure
+  set V := cylinderV L P Λ T mass hT hmass
+  set μ := cylinderFreeMeasure L mass hmass
+  -- Step 1: Use exp(-x) ≥ 1 - x to get Z ≥ ∫ (1 - V) dμ
+  have h_exp_lb : ∀ ω, 1 - V ω ≤ interactingBoltzmannWeight V ω := fun ω => by
+    simp only [interactingBoltzmannWeight]
+    linarith [Real.add_one_le_exp (-(V ω))]
+  -- Step 2: Integrate both sides
+  have h_int_lb : ∫ ω, (1 - V ω) ∂μ ≤ interactingPartitionFunction V μ := by
+    apply integral_mono
+    · exact (integrable_const 1).sub (cylinderV_integrable L P Λ T mass hT hmass)
+    · exact interactingBoltzmannWeight_integrable V μ
+        (cylinderInteractionFunctional_measurable L P Λ T mass hT hmass)
+        (cylinderInteractionFunctional_bounded_below L P Λ T mass hT hmass)
+    · exact h_exp_lb
+  -- Step 3: Simplify ∫ (1 - V) dμ = 1 - ∫ V dμ ≥ 1
+  rw [integral_sub (integrable_const 1) (cylinderV_integrable L P Λ T mass hT hmass),
+    integral_const, probReal_univ, one_smul] at h_int_lb
+  linarith [cylinderV_mean_nonpos L P Λ T mass hT hmass]
 
 /-! ## Density transfer
 
@@ -134,7 +177,89 @@ theorem cylinderDensityTransfer
     ∫ ω, F ω ∂(cylinderInteractingMeasure L P Λ T mass hT hmass) ≤
     K ^ (1/2 : ℝ) * (∫ ω, F ω ^ 2
       ∂(cylinderFreeMeasure L mass hmass)) ^ (1/2 : ℝ) := by
-  sorry
+  -- Abbreviations for the key objects
+  set V := cylinderV L P Λ T mass hT hmass with hV_def
+  set μ := cylinderFreeMeasure L mass hmass with hμ_def
+  set Z := interactingPartitionFunction V μ with hZ_def
+  -- Key properties of V
+  have hV_meas : Measurable V := cylinderInteractionFunctional_measurable L P Λ T mass hT hmass
+  have hV_below : ∃ B : ℝ, ∀ ω, V ω ≥ -B :=
+    cylinderInteractionFunctional_bounded_below L P Λ T mass hT hmass
+  -- Z > 0 and Z ≥ 1
+  have hZ_pos : 0 < Z := interactingPartitionFunction_pos V μ hV_meas hV_below
+  have hZ_ge_one : 1 ≤ Z := cylinderPartitionFunction_ge_one L P Λ T mass hT hmass
+  -- Step 1: Expand the interacting measure integral
+  -- cylinderInteractingMeasure = (1/Z) • μ.withDensity(exp(-V))
+  show ∫ ω, F ω ∂(interactingMeasure V μ) ≤ _
+  simp only [interactingMeasure]
+  rw [integral_smul_measure]
+  -- Now the LHS is: (ENNReal.ofReal Z)⁻¹.toReal • ∫ F dμ.withDensity(...)
+  -- Step 2: Convert withDensity integral
+  rw [integral_withDensity_eq_integral_toReal_smul₀
+      (interactingBoltzmannWeight_ennreal_measurable V hV_meas).aemeasurable
+      (ae_of_all _ fun _ => ENNReal.ofReal_lt_top)]
+  -- Simplify toReal ∘ ofReal since exp(-V) > 0
+  have h_toReal : ∀ ω, (ENNReal.ofReal (interactingBoltzmannWeight V ω)).toReal =
+      interactingBoltzmannWeight V ω := fun ω =>
+    ENNReal.toReal_ofReal (le_of_lt (interactingBoltzmannWeight_pos V ω))
+  simp_rw [h_toReal, smul_eq_mul]
+  -- Step 3: Simplify the scalar (1/Z)
+  have h_scalar : (ENNReal.ofReal Z)⁻¹.toReal = Z⁻¹ := by
+    rw [ENNReal.toReal_inv, ENNReal.toReal_ofReal (le_of_lt hZ_pos)]
+  rw [h_scalar]
+  -- Now LHS = Z⁻¹ * ∫ ω, exp(-V ω) * F ω ∂μ
+  -- Step 4: Bound Z⁻¹ ≤ 1 (since Z ≥ 1)
+  have hZinv_le_one : Z⁻¹ ≤ 1 := inv_le_one_of_one_le₀ hZ_ge_one
+  -- Step 5: Suffices to show Cauchy-Schwarz bound on the product integral
+  suffices h_cs : ∫ ω, interactingBoltzmannWeight V ω * F ω ∂μ ≤
+      K ^ (1/2 : ℝ) * (∫ ω, F ω ^ 2 ∂μ) ^ (1/2 : ℝ) by
+    calc Z⁻¹ * ∫ ω, interactingBoltzmannWeight V ω * F ω ∂μ
+        ≤ 1 * (K ^ (1/2 : ℝ) * (∫ ω, F ω ^ 2 ∂μ) ^ (1/2 : ℝ)) := by
+          apply mul_le_mul hZinv_le_one h_cs
+            (integral_nonneg fun ω =>
+              mul_nonneg (le_of_lt (interactingBoltzmannWeight_pos V ω)) (hF_nn ω))
+            one_pos.le
+      _ = K ^ (1/2 : ℝ) * (∫ ω, F ω ^ 2 ∂μ) ^ (1/2 : ℝ) := one_mul _
+  -- Step 6: Cauchy-Schwarz (Holder with p = q = 2)
+  -- ∫ exp(-V) * F ≤ (∫ exp(-V)²)^{1/2} * (∫ F²)^{1/2} ≤ K^{1/2} * (∫ F²)^{1/2}
+  -- Construct MemLp hypotheses for the Boltzmann weight and F
+  have hBW_aesm : AEStronglyMeasurable (interactingBoltzmannWeight V) μ :=
+    hV_meas.neg.exp.aestronglyMeasurable
+  -- The Boltzmann weight is bounded (V ≥ -B implies exp(-V) ≤ exp(B)), hence in L^p for all p
+  have hBW_memLp : MemLp (interactingBoltzmannWeight V) 2 μ := by
+    obtain ⟨B, hB⟩ := hV_below
+    exact memLp_of_bounded (a := 0) (b := Real.exp B)
+      (ae_of_all _ fun ω => ⟨le_of_lt (interactingBoltzmannWeight_pos V ω),
+        Real.exp_le_exp_of_le (by have := hB ω; linarith)⟩)
+      hBW_aesm 2
+  -- F is AEStronglyMeasurable: F = sqrt(F²) since F ≥ 0
+  have hF_aesm : AEStronglyMeasurable F μ := by
+    have : AEStronglyMeasurable (fun ω => Real.sqrt (F ω ^ 2)) μ :=
+      Real.continuous_sqrt.comp_aestronglyMeasurable hF_sq_int.aestronglyMeasurable
+    exact this.congr (ae_of_all _ fun ω => by simp [Real.sqrt_sq (hF_nn ω)])
+  have hF_memLp : MemLp F 2 μ :=
+    (memLp_two_iff_integrable_sq hF_aesm).mpr hF_sq_int
+  -- Apply Holder's inequality (Cauchy-Schwarz: p = q = 2)
+  have h_holder : ∫ ω, interactingBoltzmannWeight V ω * F ω ∂μ ≤
+      (∫ ω, interactingBoltzmannWeight V ω ^ (2:ℝ) ∂μ) ^ (1/2 : ℝ) *
+      (∫ ω, F ω ^ (2:ℝ) ∂μ) ^ (1/2 : ℝ) :=
+    integral_mul_le_Lp_mul_Lq_of_nonneg Real.HolderConjugate.two_two
+      (ae_of_all _ fun ω => le_of_lt (interactingBoltzmannWeight_pos V ω))
+      (ae_of_all _ fun ω => hF_nn ω)
+      (by rwa [show (ENNReal.ofReal (2:ℝ)) = 2 from by norm_num])
+      (by rwa [show (ENNReal.ofReal (2:ℝ)) = 2 from by norm_num])
+  -- Convert rpow to nat pow in the integrals to match hypotheses
+  simp_rw [Real.rpow_two] at h_holder
+  -- Bound (∫ exp(-V)²)^{1/2} ≤ K^{1/2} using hK_bound
+  calc ∫ ω, interactingBoltzmannWeight V ω * F ω ∂μ
+      ≤ (∫ ω, interactingBoltzmannWeight V ω ^ 2 ∂μ) ^ (1/2 : ℝ) *
+        (∫ ω, F ω ^ 2 ∂μ) ^ (1/2 : ℝ) := h_holder
+    _ ≤ K ^ (1/2 : ℝ) * (∫ ω, F ω ^ 2 ∂μ) ^ (1/2 : ℝ) := by
+        apply mul_le_mul_of_nonneg_right
+        · exact Real.rpow_le_rpow
+            (integral_nonneg fun ω => sq_nonneg (interactingBoltzmannWeight V ω))
+            hK_bound (by norm_num : (0:ℝ) ≤ 1/2)
+        · exact Real.rpow_nonneg (integral_nonneg fun ω => sq_nonneg (F ω)) _
 
 /-- **Uniform moment bound**: second moments under the interacting measure
 are bounded uniformly in the UV cutoff Λ.
@@ -148,7 +273,45 @@ theorem cylinderInteracting_second_moment_bound
     (f : CylinderTestFunction L) :
     ∃ C : ℝ, ∀ Λ : ℕ,
     ∫ ω, (ω f) ^ 2 ∂(cylinderInteractingMeasure L P Λ T mass hT hmass) ≤ C := by
-  sorry
+  -- Step 1: Get uniform L² bound K on the Boltzmann weight (independent of Λ)
+  obtain ⟨K, hK_pos, hK_bound⟩ := cylinderBoltzmannWeight_sq_integrable L P T mass hT hmass
+  -- Step 2: Gaussian 4th moment integrability.
+  -- The free measure is GaussianField.measure (cylinderMassOperator L mass hmass),
+  -- so pairing_memLp gives ω(f) ∈ Lᵖ for all p. In particular p = 4 gives
+  -- ∫ |ω(f)|⁴ dμ_free < ∞, which is exactly ∫ ((ω f)²)² dμ_free < ∞.
+  have hF_sq_int : Integrable (fun ω : Configuration (CylinderTestFunction L) =>
+      ((ω f) ^ 2) ^ 2) (cylinderFreeMeasure L mass hmass) := by
+    -- ω(f) ∈ L⁴(μ_free) by Gaussian all-moments (pairing_memLp at p = 4)
+    have h4 : MemLp (fun ω : Configuration (CylinderTestFunction L) => ω f)
+        4 (cylinderFreeMeasure L mass hmass) := by
+      exact_mod_cast pairing_memLp (cylinderMassOperator L mass hmass) f 4
+    -- MemLp f 4 → MemLp (‖f‖^4) 1 by norm_rpow, i.e., Integrable (‖f‖^4)
+    set μ_free := cylinderFreeMeasure L mass hmass
+    have hmem := h4.norm_rpow (p := (4 : ENNReal))
+      (by norm_num : (4 : ENNReal) ≠ 0) (by norm_num : (4 : ENNReal) ≠ ⊤)
+    rw [memLp_one_iff_integrable] at hmem
+    -- Convert rpow to pow and simplify ENNReal.toReal
+    have h_int : Integrable (fun ω : Configuration (CylinderTestFunction L) =>
+        ‖ω f‖ ^ (4 : ℕ)) μ_free := by
+      refine hmem.congr (Filter.Eventually.of_forall fun ω => ?_)
+      -- Goal: ‖ω f‖ ^ ENNReal.toReal 4 = ‖ω f‖ ^ 4
+      simp [ENNReal.toReal_ofNat]
+    -- For real x: ‖x‖^4 = (x^2)^2 since ‖x‖ = |x| and |x|^4 = (x^2)^2
+    exact h_int.congr (Filter.Eventually.of_forall fun ω => by
+      dsimp only
+      rw [Real.norm_eq_abs]
+      -- Goal: |ω f| ^ 4 = (ω f ^ 2) ^ 2
+      -- Both sides equal (ω f)^4: use sq_abs on the RHS inner part
+      conv_rhs => rw [show ω f ^ 2 = |ω f| ^ 2 from (sq_abs _).symm]
+      ring)
+  -- Step 3: Apply density transfer for each Λ.
+  -- For F(ω) = (ω f)², which is nonneg, cylinderDensityTransfer gives:
+  --   ∫ (ω f)² dμ_V ≤ K^(1/2) · (∫ ((ω f)²)² dμ_free)^(1/2)
+  -- The RHS is independent of Λ (K is uniform, free measure doesn't depend on Λ).
+  refine ⟨K ^ (1/2 : ℝ) * (∫ ω, ((ω f) ^ 2) ^ 2
+    ∂(cylinderFreeMeasure L mass hmass)) ^ (1/2 : ℝ), fun Λ => ?_⟩
+  exact cylinderDensityTransfer L P Λ T mass hT hmass K hK_pos (hK_bound Λ)
+    (fun ω => (ω f) ^ 2) (fun ω => sq_nonneg _) hF_sq_int
 
 end Pphi2
 
