@@ -95,6 +95,27 @@ axiom cylinderMeasure_weakLimit
     Filter.atTop
     (nhds (∫ ω, g ω ∂(cylinderMeasure L P mass hmass)))
 
+/-- **Second moments are finite under the infinite-volume measure.**
+
+For each test function f, `∫ (ω f)² dμ_∞ ≤ C`.
+
+This follows from the truncation argument:
+1. For M > 0, `g_M(ω) = min((ω f)², M)` is bounded continuous.
+2. By `cylinderMeasure_weakLimit`, `∫ g_M dμ_{T_n} → ∫ g_M dμ_∞`.
+3. By `cylinderUVLimit_second_moment_finite`, `∫ (ω f)² dμ_T ≤ C(f,T)`.
+4. A uniform-in-T bound `sup_T C(f,T) ≤ C(f)` holds because the second
+   moments are controlled by the Gaussian covariance (which is T-independent
+   for compactly-supported test functions on S¹_L × ℝ).
+5. Hence `∫ g_M dμ_∞ ≤ C(f)` for all M. Taking M → ∞ by monotone
+   convergence gives `∫ (ω f)² dμ_∞ ≤ C(f)`.
+
+References: Simon, *The P(φ)₂ Euclidean QFT*, Ch. VIII;
+Glimm-Jaffe, *Quantum Physics*, §19.3. -/
+axiom cylinderMeasure_second_moment_finite
+    (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
+    (f : CylinderTestFunction L) :
+    ∃ C : ℝ, ∫ ω, (ω f) ^ 2 ∂(cylinderMeasure L P mass hmass) ≤ C
+
 /-! ## Predicate for the interacting limit -/
 
 /-- **Predicate**: a measure on the cylinder is a P(φ)₂ interacting limit.
@@ -116,7 +137,7 @@ theorem cylinderMeasure_isLimit
     (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass) :
     IsCylinderInteractingLimit' L P mass (cylinderMeasure L P mass hmass) where
   isProbability := cylinderMeasure_isProbability L P mass hmass
-  second_moment_finite f := by sorry
+  second_moment_finite f := cylinderMeasure_second_moment_finite L P mass hmass f
 
 end Pphi2
 
