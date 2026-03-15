@@ -150,34 +150,30 @@ private lemma sum_exp_neg_mul_sq_le_integral (α : ℝ) (hα : 0 < α) (M : ℕ)
 private lemma sum_Icc_neg_pos_split (M : ℕ) (f : ℤ → ℝ) :
     ∑ k ∈ Finset.Icc (-(M : ℤ)) M, f k =
     f 0 + ∑ k ∈ Finset.Icc (1 : ℤ) M, f k + ∑ k ∈ Finset.Icc (1 : ℤ) M, f (-k) := by
-  -- Split Icc (-M) M into Icc (-M) (-1) ∪ {0} ∪ Icc 1 M
-  have h0 : (0 : ℤ) ∈ Finset.Icc (-(M : ℤ)) M := by simp
-  rw [← Finset.add_sum_erase _ _ h0]
-  congr 1
-  -- The erased set is Icc (-M) M \ {0}
-  -- Split it into negative and positive parts
-  have h_eq : (Finset.Icc (-(M : ℤ)) M).erase 0 =
-      Finset.Icc (-(M : ℤ)) (-1) ∪ Finset.Icc (1 : ℤ) M := by
+  -- Split Icc (-M) M = Icc (-M) (-1) ∪ {0} ∪ Icc 1 M
+  have h_eq : Finset.Icc (-(M : ℤ)) M =
+      Finset.Icc (-(M : ℤ)) (-1) ∪ {(0 : ℤ)} ∪ Finset.Icc (1 : ℤ) M := by
     ext k
-    simp only [Finset.mem_erase, Finset.mem_Icc, Finset.mem_union]
+    simp only [Finset.mem_Icc, Finset.mem_union, Finset.mem_singleton]
     omega
-  rw [h_eq]
-  have h_disj : Disjoint (Finset.Icc (-(M : ℤ)) (-1)) (Finset.Icc (1 : ℤ) M) := by
-    rw [Finset.disjoint_left]
-    intro k hk1 hk2
-    simp only [Finset.mem_Icc] at hk1 hk2
-    omega
-  rw [Finset.sum_union h_disj, add_comm]
-  congr 1
-  -- Show sum over Icc (-M) (-1) = sum over Icc 1 M of f(-k)
-  rw [show Finset.Icc (-(M : ℤ)) (-1) = (Finset.Icc (1 : ℤ) M).map
-    ⟨fun k => -k, Int.neg_injective⟩ from by
-    ext k; simp only [Finset.mem_Icc, Finset.mem_map, Function.Embedding.coeFn_mk]
-    constructor
-    · intro ⟨h1, h2⟩; exact ⟨-k, ⟨by omega, by omega⟩, by omega⟩
-    · intro ⟨a, ⟨ha1, ha2⟩, hak⟩; omega]
-  rw [Finset.sum_map]
-  simp only [Function.Embedding.coeFn_mk]
+  have h_d1 : Disjoint (Finset.Icc (-(M : ℤ)) (-1)) {(0 : ℤ)} := by
+    simp [Finset.disjoint_left, Finset.mem_Icc]; omega
+  have h_d2 : Disjoint (Finset.Icc (-(M : ℤ)) (-1) ∪ {(0 : ℤ)}) (Finset.Icc (1 : ℤ) M) := by
+    rw [Finset.disjoint_left]; intro k hk1 hk2
+    simp only [Finset.mem_union, Finset.mem_Icc, Finset.mem_singleton] at hk1 hk2; omega
+  rw [h_eq, Finset.sum_union h_d2, Finset.sum_union h_d1, Finset.sum_singleton]
+  -- Now: (sum_neg + f 0) + sum_pos = f 0 + sum_pos + sum_neg_via_pos
+  -- Need: sum over Icc (-M) (-1) = sum over Icc 1 M of f(-k)
+  have h_neg : ∑ k ∈ Finset.Icc (-(M : ℤ)) (-1), f k =
+      ∑ k ∈ Finset.Icc (1 : ℤ) M, f (-k) := by
+    rw [show Finset.Icc (-(M : ℤ)) (-1) = (Finset.Icc (1 : ℤ) M).map
+      ⟨fun k => -k, neg_injective⟩ from by
+      ext k; simp only [Finset.mem_Icc, Finset.mem_map, Function.Embedding.coeFn_mk]
+      constructor
+      · intro ⟨h1, h2⟩; exact ⟨-k, ⟨by omega, by omega⟩, by omega⟩
+      · intro ⟨a, ⟨ha1, ha2⟩, hak⟩; omega]
+    rw [Finset.sum_map]; rfl
+  rw [h_neg]; ring
 
 /-- Helper: for an even function, the sum over negative indices equals the sum over positive. -/
 private lemma sum_neg_eq_sum_pos (M : ℕ) (f : ℤ → ℝ) (hf : ∀ k, f (-k) = f k) :
@@ -188,7 +184,22 @@ private lemma sum_neg_eq_sum_pos (M : ℕ) (f : ℤ → ℝ) (hf : ∀ k, f (-k)
 private lemma sum_Icc_int_eq_sum_range (M : ℕ) (g : ℝ → ℝ) :
     ∑ k ∈ Finset.Icc (1 : ℤ) (M : ℤ), g (k : ℝ) =
     ∑ k ∈ Finset.range M, g ((k : ℝ) + 1) := by
-  sorry
+  -- Map: Finset.range M → Finset.Icc 1 M via k ↦ (k : ℤ) + 1
+  rw [show Finset.Icc (1 : ℤ) (M : ℤ) = (Finset.range M).map
+    ⟨fun k : ℕ => (k : ℤ) + 1, fun a b h => by have := h; push_cast at this; omega⟩ from by
+    ext k; simp only [Finset.mem_Icc, Finset.mem_map, Finset.mem_range,
+      Function.Embedding.coeFn_mk]
+    constructor
+    · intro ⟨h1, h2⟩
+      have hk_pos : 0 < k := by omega
+      refine ⟨(k - 1).toNat, ?_, ?_⟩
+      · rw [Int.toNat_lt (by omega)]; omega
+      · rw [Int.toNat_of_nonneg (by omega)]; omega
+    · intro ⟨a, ha, hak⟩; omega]
+  rw [Finset.sum_map]
+  simp only [Function.Embedding.coeFn_mk]
+  congr 1; ext k
+  push_cast; ring
 
 theorem gaussian_sum_bound (α : ℝ) (hα : 0 < α) :
     ∀ (M : ℕ), (∑ k ∈ Finset.Icc (-(M : ℤ)) M, exp (-α * (k : ℝ) ^ 2) : ℝ) ≤
@@ -197,7 +208,7 @@ theorem gaussian_sum_bound (α : ℝ) (hα : 0 < α) :
   set f : ℤ → ℝ := fun k => exp (-α * (k : ℝ) ^ 2) with hf_def
   -- f is even: f(-k) = f(k)
   have hf_even : ∀ k : ℤ, f (-k) = f k := by
-    intro k; simp [hf_def, neg_sq]
+    intro k; simp [hf_def]
   -- Step 1: Split into k=0, positive, negative
   have hsplit := sum_Icc_neg_pos_split M f
   -- Step 2: Negative part = positive part (by evenness)
