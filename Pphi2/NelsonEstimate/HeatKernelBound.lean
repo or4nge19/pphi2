@@ -72,8 +72,8 @@ theorem schwinger_smooth_Ioi (lam : ℝ) (hlam : 0 < lam) (T : ℝ) :
 
 theorem schwinger_smooth (lam : ℝ) (hlam : 0 < lam) (T : ℝ) (hT : 0 ≤ T) :
     exp (-T * lam) / lam = ∫ t in Set.Ici T, exp (-t * lam) := by
-  -- Ici and Ioi differ by {T}, measure zero
-  sorry
+  rw [MeasureTheory.integral_Ici_eq_integral_Ioi]
+  exact schwinger_smooth_Ioi lam hlam T
 
 /-- Schwinger identity for the rough covariance:
 `(1 - exp(-T·λ)) / λ = ∫₀ᵀ exp(-t·λ) dt` for λ > 0, T ≥ 0. -/
@@ -91,8 +91,9 @@ theorem schwinger_rough_interval (lam : ℝ) (hlam : 0 < lam) (T : ℝ) (hT : 0 
 
 theorem schwinger_rough (lam : ℝ) (hlam : 0 < lam) (T : ℝ) (hT : 0 ≤ T) :
     (1 - exp (-T * lam)) / lam = ∫ t in Set.Icc 0 T, exp (-t * lam) := by
-  -- Follows from schwinger_rough_interval + Icc = uIcc conversion
-  sorry
+  rw [MeasureTheory.integral_Icc_eq_integral_Ioc,
+      ← intervalIntegral.integral_of_le hT]
+  exact schwinger_rough_interval lam hlam T hT
 
 /-! ## Elementary bounds -/
 
