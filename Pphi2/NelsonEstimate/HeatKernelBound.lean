@@ -38,15 +38,26 @@ namespace Pphi2
 
 /-- Schwinger identity for the smooth covariance:
 `exp(-T·λ) / λ = ∫_T^∞ exp(-t·λ) dt` for λ > 0, T ≥ 0. -/
+private theorem hasDerivAt_neg_exp_div (lam : ℝ) (hlam : lam ≠ 0) (t : ℝ) :
+    HasDerivAt (fun s => -exp (-s * lam) / lam) (exp (-t * lam)) t := by
+  have h1 : HasDerivAt (fun s => -s * lam) (-lam) t := by
+    simpa using (hasDerivAt_id t).neg.mul_const lam
+  have h2 : HasDerivAt (fun s => exp (-s * lam)) (exp (-t * lam) * (-lam)) t :=
+    h1.exp
+  have h3 := h2.neg.div_const lam
+  convert h3 using 1
+  field_simp
+
 theorem schwinger_smooth (lam : ℝ) (hlam : 0 < lam) (T : ℝ) (hT : 0 ≤ T) :
     exp (-T * lam) / lam = ∫ t in Set.Ici T, exp (-t * lam) := by
-  sorry
+  sorry -- needs improper integral FTC: ∫_T^∞ f' = lim_{b→∞} F(b) - F(T)
 
 /-- Schwinger identity for the rough covariance:
 `(1 - exp(-T·λ)) / λ = ∫₀ᵀ exp(-t·λ) dt` for λ > 0, T ≥ 0. -/
 theorem schwinger_rough (lam : ℝ) (hlam : 0 < lam) (T : ℝ) (hT : 0 ≤ T) :
     (1 - exp (-T * lam)) / lam = ∫ t in Set.Icc 0 T, exp (-t * lam) := by
-  sorry
+  -- FTC: ∫_0^T f'(t) dt = F(T) - F(0) where F(t) = -exp(-tλ)/λ
+  sorry -- needs: convert Set.Icc integral to intervalIntegral, then apply FTC
 
 /-! ## Elementary bounds -/
 
