@@ -48,9 +48,29 @@ private theorem hasDerivAt_neg_exp_div (lam : ℝ) (hlam : lam ≠ 0) (t : ℝ) 
   convert h3 using 1
   field_simp
 
+theorem schwinger_smooth_Ioi (lam : ℝ) (hlam : 0 < lam) (T : ℝ) :
+    exp (-T * lam) / lam = ∫ t in Set.Ioi T, exp (-t * lam) := by
+  have hlam_ne : lam ≠ 0 := ne_of_gt hlam
+  set F := fun t => -exp (-t * lam) / lam
+  -- F'(t) = exp(-tλ) (proved)
+  have h_deriv : ∀ t ∈ Set.Ici T, HasDerivAt F (exp (-t * lam)) t :=
+    fun t _ => hasDerivAt_neg_exp_div lam hlam_ne t
+  -- F(t) → 0 as t → ∞ (exponential decay)
+  have h_tendsto : Filter.Tendsto F Filter.atTop (nhds 0) := by
+    sorry -- -exp(-tλ)/λ → 0 as t → ∞ since λ > 0
+  -- f' integrable on Ioi T (exponential decay)
+  have h_int : MeasureTheory.IntegrableOn (fun t => exp (-t * lam)) (Set.Ioi T) := by
+    sorry -- exp(-tλ) is integrable on [T, ∞) since λ > 0
+  -- Apply improper FTC
+  have h_ftc := integral_Ioi_of_hasDerivAt_of_tendsto'
+    h_deriv h_int h_tendsto
+  -- h_ftc : ∫ Ioi T, exp(-tλ) = 0 - F(T) = exp(-Tλ)/λ
+  rw [h_ftc]; simp only [F]; ring
+
 theorem schwinger_smooth (lam : ℝ) (hlam : 0 < lam) (T : ℝ) (hT : 0 ≤ T) :
     exp (-T * lam) / lam = ∫ t in Set.Ici T, exp (-t * lam) := by
-  sorry -- needs improper integral FTC: ∫_T^∞ f' = lim_{b→∞} F(b) - F(T)
+  -- Ici and Ioi differ by {T}, measure zero
+  sorry
 
 /-- Schwinger identity for the rough covariance:
 `(1 - exp(-T·λ)) / λ = ∫₀ᵀ exp(-t·λ) dt` for λ > 0, T ≥ 0. -/
