@@ -89,8 +89,6 @@ theorem torusContinuumMeasures_tight
       IsCompact K ∧
       ∀ (N : ℕ) [NeZero N],
       1 - ε ≤ (torusContinuumMeasure L N mass hmass K).toReal := by
-  haveI := configuration_torus_polish L
-  haveI := configuration_torus_borelSpace L
   intro ε hε
   -- Apply Mitoma-Chebyshev with ι = {N : ℕ // 0 < N}
   obtain ⟨K, hK_compact, hK_bound⟩ := configuration_tight_of_uniform_second_moments

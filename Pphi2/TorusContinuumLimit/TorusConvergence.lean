@@ -71,12 +71,8 @@ theorem torusGaussianLimit_exists
   -- We use N = n + 1 to ensure NeZero
   let ν : ℕ → Measure (Configuration (TorusTestFunction L)) :=
     fun n => torusContinuumMeasure L (n + 1) mass hmass
-  -- Apply the PROVED Prokhorov theorem on Polish spaces
-  haveI : PolishSpace (Configuration (TorusTestFunction L)) :=
-    configuration_torus_polish L
-  haveI : BorelSpace (Configuration (TorusTestFunction L)) :=
-    configuration_torus_borelSpace L
-  exact prokhorov_sequential ν
+  -- Apply Prokhorov on Configuration spaces (no PolishSpace needed)
+  exact prokhorov_configuration ν
     (fun n => torusContinuumMeasure_isProbability L (n + 1) mass hmass)
     (fun ε hε => by
       obtain ⟨K, hK_compact, hK_bound⟩ :=

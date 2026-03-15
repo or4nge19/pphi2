@@ -344,8 +344,6 @@ theorem torus_interacting_tightness
       IsCompact K ∧
       ∀ (N : ℕ) [NeZero N],
       1 - ε ≤ (torusInteractingMeasure L N P mass hmass K).toReal := by
-  haveI := configuration_torus_polish L
-  haveI := configuration_torus_borelSpace L
   intro ε hε
   -- Apply Mitoma-Chebyshev with ι = {N : ℕ // 0 < N}
   obtain ⟨K, hK_compact, hK_bound⟩ := configuration_tight_of_uniform_second_moments
@@ -447,11 +445,7 @@ theorem torusInteractingLimit_exists
           atTop (nhds (∫ ω, f ω ∂μ)) := by
   let ν : ℕ → Measure (Configuration (TorusTestFunction L)) :=
     fun n => torusInteractingMeasure L (n + 1) P mass hmass
-  haveI : PolishSpace (Configuration (TorusTestFunction L)) :=
-    configuration_torus_polish L
-  haveI : BorelSpace (Configuration (TorusTestFunction L)) :=
-    configuration_torus_borelSpace L
-  exact prokhorov_sequential ν
+  exact prokhorov_configuration ν
     (fun n => torusInteractingMeasure_isProbability L (n + 1) P mass hmass)
     (fun ε hε => by
       obtain ⟨K, hK_compact, hK_bound⟩ :=

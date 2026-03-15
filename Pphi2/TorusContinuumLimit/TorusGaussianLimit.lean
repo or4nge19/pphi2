@@ -910,8 +910,6 @@ theorem z2_symmetric_of_weakLimit
     Measure.map (Neg.neg : Configuration (TorusTestFunction L) →
       Configuration (TorusTestFunction L)) μ = μ := by
   -- We use the measure extensionality theorem for finite Borel measures.
-  haveI := configuration_torus_borelSpace L
-  haveI := configuration_torus_polish L
   have hneg_meas := torus_configuration_neg_measurable L
   haveI : IsProbabilityMeasure (Measure.map
       (Neg.neg : Configuration (TorusTestFunction L) →
@@ -989,10 +987,6 @@ theorem torusGaussianLimit_fullConvergence
   apply Filter.tendsto_of_subseq_tendsto
   intro ns hns
   -- Apply Prokhorov to the reindexed measures ν_{ns(n)+1}
-  haveI : PolishSpace (Configuration (TorusTestFunction L)) :=
-    configuration_torus_polish L
-  haveI : BorelSpace (Configuration (TorusTestFunction L)) :=
-    configuration_torus_borelSpace L
   obtain ⟨ψ, ν', hψ_mono, hν'_prob, hν'_conv⟩ := prokhorov_sequential
     (fun n => torusContinuumMeasure L (ns n + 1) mass hmass)
     (fun n => torusContinuumMeasure_isProbability L (ns n + 1) mass hmass)

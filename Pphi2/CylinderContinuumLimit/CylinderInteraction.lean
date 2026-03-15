@@ -107,30 +107,75 @@ theorem cylinderWickConstant_pos (mass : ℝ) (hmass : 0 < mass) (Λ : ℕ) :
 The UV-regularized field `φ_Λ(θ, t)` at spacetime point `(θ, t) ∈ S¹_L × ℝ`
 is the finite Fourier sum:
 
-  `φ_Λ(θ, t)(ω) = Σ_{|k| ≤ Λ} a_k(t, ω) · e^{2πikθ/L} / √L`
+  `φ_Λ(θ, t)(ω) = Σ_{n=0}^{2Λ} ψ_n(θ) · X_n(t)(ω)`
 
-where `a_k(t, ω)` is the temporal field amplitude for spatial Fourier mode `k`.
-In d = 1+1, each `a_k(·, ω)` is an Ornstein-Uhlenbeck process with parameter
-`ω_k = resolventFreq L mass k`, which is a.s. continuous by Kolmogorov's
-continuity criterion. -/
+where `ψ_n = fourierBasisFun n` is the n-th real Fourier basis function on S¹_L
+and `X_n(t)(ω)` is the Ornstein-Uhlenbeck process amplitude for spatial mode n.
+
+Each OU process `X_n(·)` is the centered Gaussian process with covariance
+  `E[X_n(t) X_n(s)] = exp(-ω_n |t-s|) / (2ω_n)`
+where `ω_n = resolventFreq L mass n`. Its single-time variance is
+  `E[X_n(t)²] = 1 / (2ω_n)`.
+
+The field at a point is NOT a pairing `ω(f)` for any test function f,
+because the temporal resolvent kernel `exp(-ω_n|t-·|)/√(2ω_n)` is in
+L²(ℝ) but not in 𝓢(ℝ). It is defined via the isonormal Gaussian
+extension from the test function space to L². -/
+
+/-- **OU process amplitude** for spatial Fourier mode `n` at time `t`.
+
+This is the isonormal Gaussian extension of the temporal resolvent kernel:
+  `X_n(t)(ω) = W_n(k_n(t, ·))`
+where `k_n(t, s) = exp(-ω_n|t-s|) / √(2ω_n)` is the resolvent kernel
+(in L²(ℝ) but not in 𝓢(ℝ)), and `W_n` is the white noise for mode n.
+
+Via the Hermite basis expansion:
+  `X_n(t)(ω) = Σ_j ⟨k_n(t,·), h_j⟩_{L²} · ω(basis(pair(n,j)))`
+where the sum converges in L²(Ω).
+
+Key properties (proved elsewhere):
+- Gaussian: `X_n(t) ~ N(0, 1/(2ω_n))` under the free measure
+- Covariance: `E[X_n(t) X_m(s)] = δ_{nm} · exp(-ω_n|t-s|)/(2ω_n)`
+- Measurability: L² limit of measurable functions -/
+def cylinderOUProcessEval (mass : ℝ) (_hmass : 0 < mass) (n : ℕ) (t : ℝ) :
+    Configuration (CylinderTestFunction L) → ℝ := sorry
+
+/-- The OU process evaluation is measurable in ω.
+
+Each partial sum `Σ_{j<N} ⟨k_n(t,·), h_j⟩ · ω(basis(pair(n,j)))` is
+measurable (finite linear combination of cylindrical coordinates), and
+the L² limit of measurable functions is measurable. -/
+axiom cylinderOUProcessEval_measurable
+    (mass : ℝ) (hmass : 0 < mass) (n : ℕ) (t : ℝ) :
+    Measurable (cylinderOUProcessEval L mass hmass n t)
 
 /-- **UV-regularized field** at spacetime point `(θ, t)`.
 
-Evaluates the field with spatial mode cutoff Λ at the point (θ, t) ∈ S¹_L × ℝ.
-This is a finite sum of spatial Fourier modes, each an Ornstein-Uhlenbeck
-process in the temporal variable. -/
-axiom cylinderRegularizedFieldEval
-    (Λ : ℕ) (mass : ℝ) (hmass : 0 < mass) (θ t : ℝ) :
-    Configuration (CylinderTestFunction L) → ℝ
+  `φ_Λ(θ, t)(ω) = Σ_{n=0}^{2Λ} ψ_n(θ) · X_n(t)(ω)`
+
+where `ψ_n = fourierBasisFun n` is the n-th Fourier basis function
+and `X_n(t)(ω) = cylinderOUProcessEval n t ω` is the OU amplitude.
+
+The sum covers all spatial Fourier modes `|k| ≤ Λ` via the `fourierFreq`
+enumeration: `n = 0, 1, ..., 2Λ` maps to `k = 0, 1, -1, 2, -2, ..., Λ, -Λ`. -/
+def cylinderRegularizedFieldEval
+    (Λ : ℕ) (mass : ℝ) (hmass : 0 < mass) (θ t : ℝ)
+    (ω : Configuration (CylinderTestFunction L)) : ℝ :=
+  (Finset.range (2 * Λ + 1)).sum fun n =>
+    SmoothMap_Circle.fourierBasisFun (L := L) n θ *
+    cylinderOUProcessEval L mass hmass n t ω
 
 /-- The UV-regularized field evaluation is measurable in ω for each fixed (θ, t).
 
-Each spatial mode amplitude `a_k(t, ω)` is a measurable linear functional
-of ω (evaluation against a test function), and a finite sum of measurable
-functions is measurable. -/
-axiom cylinderRegularizedFieldEval_measurable
+Proved from `cylinderOUProcessEval_measurable`: a finite sum of products
+of constants with measurable functions is measurable. -/
+theorem cylinderRegularizedFieldEval_measurable
     (Λ : ℕ) (mass : ℝ) (hmass : 0 < mass) (θ t : ℝ) :
-    Measurable (cylinderRegularizedFieldEval L Λ mass hmass θ t)
+    Measurable (cylinderRegularizedFieldEval L Λ mass hmass θ t) := by
+  unfold cylinderRegularizedFieldEval
+  apply Finset.measurable_sum
+  intro n _
+  exact (cylinderOUProcessEval_measurable L mass hmass n t).const_mul _
 
 /-! ## Cylinder interaction functional
 
