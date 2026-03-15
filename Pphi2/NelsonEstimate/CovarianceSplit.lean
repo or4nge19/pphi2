@@ -86,11 +86,27 @@ For d = 2 and T > 0: c_S ≤ C · (1 + |log T|)
 
 The smooth covariance `exp(-T·λ_k)/λ_k` is exponentially suppressed for large λ_k,
 so the sum over Fourier modes converges to O(|log T|) uniformly in N. -/
-theorem smoothVariance_le_log (hd : d = 2) (T : ℝ) (hT : 0 < T) :
+theorem smoothVariance_le_log (hd : d = 2) (T : ℝ) (hT : 0 < T)
+    (ha : 0 < a) (hmass : 0 < mass) :
     ∃ C : ℝ, 0 < C ∧ smoothWickConstant d N a mass T ≤ C * (1 + |Real.log T|) := by
-  -- smoothWickConstant = (1/|Λ|) * Σ smoothCovEigenvalue
-  -- ≤ (1/|Λ|) * C * (1 + |log T|) from smoothVariance_from_heat_kernel
-  sorry -- derives from HeatKernelBound.smoothVariance_from_heat_kernel
+  -- Direct bound: each smoothCovEigenvalue(k) = exp(-Tλ)/λ ≤ 1/λ ≤ 1/m²
+  -- So smoothWickConstant ≤ (1/|Λ|)·Σ 1/λ = wickConstant ≤ 1/m²
+  -- And 1/m² ≤ 1/m² · (1 + |log T|)
+  refine ⟨mass⁻¹ ^ 2, by positivity, ?_⟩
+  unfold smoothWickConstant
+  have h_le : ∀ m ∈ range (Fintype.card (FinLatticeSites d N)),
+      smoothCovEigenvalue d N a mass T m ≤ (latticeEigenvalue d N a mass m)⁻¹ := by
+    intro m _
+    -- exp(-Tλ)/λ ≤ 1/λ = λ⁻¹ since exp(-Tλ) ≤ 1 for T > 0, λ > 0
+    sorry
+  calc (1 / ↑(Fintype.card (FinLatticeSites d N))) *
+      ∑ m ∈ range (Fintype.card (FinLatticeSites d N)), smoothCovEigenvalue d N a mass T m
+      ≤ wickConstant d N a mass := by
+        unfold wickConstant
+        apply mul_le_mul_of_nonneg_left (Finset.sum_le_sum h_le) (by positivity)
+    _ ≤ mass⁻¹ ^ 2 := wickConstant_le_inv_mass_sq d N a mass ha hmass
+    _ ≤ mass⁻¹ ^ 2 * (1 + |Real.log T|) := le_mul_of_one_le_right (by positivity)
+        (by linarith [abs_nonneg (Real.log T)])
 
 /-- The rough L² bound is O(T).
 C_R(k) ≤ T (since (1-e^{-x})/x ≤ 1), so C_R(k)² ≤ T·C_R(k) ≤ T/λ_k.
