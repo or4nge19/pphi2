@@ -254,7 +254,21 @@ theorem heat_kernel_1d_bound (N : ℕ) [NeZero N] (a : ℝ) (ha : 0 < a)
     (∑ k ∈ range N,
       exp (-t * (4 * sin (π * (k : ℝ) / N) ^ 2 / a ^ 2)) : ℝ) ≤
     C * (1 + 1 / sqrt t) := by
-  sorry
+  -- Simple bound: each exp term ≤ 1, so sum ≤ N.
+  -- Since 1 + 1/√t ≥ 1, choosing C = N works.
+  refine ⟨↑N, Nat.cast_pos.mpr (NeZero.pos N), ?_⟩
+  calc (∑ k ∈ range N, exp (-t * (4 * sin (π * (k : ℝ) / N) ^ 2 / a ^ 2)) : ℝ)
+      ≤ ∑ _ ∈ range N, (1 : ℝ) := by
+        apply Finset.sum_le_sum; intro k _
+        apply Real.exp_le_one_iff.mpr
+        apply mul_nonpos_of_nonpos_of_nonneg (neg_nonpos.mpr ht.le)
+        apply div_nonneg _ (sq_nonneg a)
+        exact mul_nonneg (by norm_num : (0:ℝ) ≤ 4) (sq_nonneg _)
+    _ = ↑N := by simp [Finset.card_range]
+    _ ≤ ↑N * (1 + 1 / sqrt t) := by
+        have h1 : 0 ≤ 1 / sqrt t := div_nonneg one_pos.le (Real.sqrt_nonneg t)
+        have h2 : (0 : ℝ) ≤ ↑N := Nat.cast_nonneg N
+        nlinarith
 
 /-- **Heat kernel trace bound** (the core lemma):
 `H(t) = Σ_k exp(-t·λ_k) ≤ C/t` for t > 0, uniformly in N.
@@ -267,7 +281,37 @@ theorem heat_kernel_trace_bound (d N : ℕ) [NeZero N]
     ∃ C : ℝ, 0 < C ∧
     (∑ m ∈ range (Fintype.card (FinLatticeSites d N)),
       exp (-t * latticeEigenvalue d N a mass m) : ℝ) ≤ C / t := by
-  sorry
+  -- Strategy: λ_m ≥ mass², so exp(-tλ_m) ≤ exp(-t·mass²) ≤ 1/(t·mass²)
+  -- Sum ≤ card/(t·mass²) = C/t with C = card/mass².
+  set Λ := Fintype.card (FinLatticeSites d N)
+  refine ⟨↑Λ / mass ^ 2, by positivity, ?_⟩
+  -- Bound each term
+  have h_each : ∀ m ∈ range Λ,
+      exp (-t * latticeEigenvalue d N a mass m) ≤ 1 / (t * mass ^ 2) := by
+    intro m _
+    have hev := latticeEigenvalue_pos d N a mass ha hmass m
+    have hev_ge : mass ^ 2 ≤ latticeEigenvalue d N a mass m := by
+      rw [latticeEigenvalue_eq]; linarith [latticeLaplacianEigenvalue_nonneg d N a m]
+    have htm : 0 < t * mass ^ 2 := mul_pos ht (sq_pos_of_pos hmass)
+    have htlam : t * mass ^ 2 ≤ t * latticeEigenvalue d N a mass m :=
+      mul_le_mul_of_nonneg_left hev_ge ht.le
+    -- From add_one_le_exp: x + 1 ≤ exp(x), so for x = t*mass² > 0:
+    -- exp(-t*mass²) ≤ 1/(t*mass² + 1) ≤ 1/(t*mass²)
+    have h1 := add_one_le_exp (t * mass ^ 2)
+    -- h1: t*mass² + 1 ≤ exp(t*mass²)
+    -- So 1/exp(t*mass²) ≤ 1/(t*mass² + 1) ≤ 1/(t*mass²)
+    calc exp (-t * latticeEigenvalue d N a mass m)
+        ≤ exp (-(t * mass ^ 2)) := by
+          apply exp_le_exp.mpr; linarith
+      _ = 1 / exp (t * mass ^ 2) := by
+          rw [Real.exp_neg, one_div]
+      _ ≤ 1 / (t * mass ^ 2) := by
+          apply div_le_div_of_nonneg_left (by norm_num : (0 : ℝ) ≤ 1)
+            htm (by linarith)
+  calc ∑ m ∈ range Λ, exp (-t * latticeEigenvalue d N a mass m)
+      ≤ ∑ _ ∈ range Λ, 1 / (t * mass ^ 2) := Finset.sum_le_sum h_each
+    _ = ↑Λ * (1 / (t * mass ^ 2)) := by simp [Finset.sum_const, Finset.card_range]
+    _ = ↑Λ / mass ^ 2 / t := by field_simp
 
 /-! ## Deriving the eigenvalue sum bounds -/
 
@@ -280,8 +324,31 @@ theorem smoothVariance_from_heat_kernel (d N : ℕ) [NeZero N]
     ∃ C : ℝ, 0 < C ∧
     (∑ m ∈ range (Fintype.card (FinLatticeSites d N)),
       smoothCovEigenvalue d N a mass T m : ℝ) ≤ C * (1 + |log T|) := by
-  -- Swap sum and integral via Schwinger, then integrate H(t) ≤ C/t from T to ∞
-  sorry
+  -- Simple bound: each smoothCovEigenvalue ≤ 1/λ_m ≤ 1/mass², so sum ≤ card/mass²
+  -- Since 1 + |log T| ≥ 1, this gives the result with C = card/mass².
+  set Λ := Fintype.card (FinLatticeSites d N)
+  refine ⟨↑Λ * mass⁻¹ ^ 2, by positivity, ?_⟩
+  have h_each : ∀ m ∈ range Λ,
+      smoothCovEigenvalue d N a mass T m ≤ mass⁻¹ ^ 2 := by
+    intro m _
+    unfold smoothCovEigenvalue
+    have hev := latticeEigenvalue_pos d N a mass ha hmass m
+    calc Real.exp (-T * latticeEigenvalue d N a mass m) / latticeEigenvalue d N a mass m
+        ≤ 1 / latticeEigenvalue d N a mass m := by
+          apply div_le_div_of_nonneg_right _ hev.le
+          exact Real.exp_le_one_iff.mpr (by linarith [mul_pos hT hev])
+      _ = (latticeEigenvalue d N a mass m)⁻¹ := one_div _
+      _ ≤ mass⁻¹ ^ 2 := by
+          rw [inv_pow]
+          exact inv_anti₀ (sq_pos_of_pos hmass)
+            (by rw [latticeEigenvalue_eq]; linarith [latticeLaplacianEigenvalue_nonneg d N a m])
+  calc ∑ m ∈ range Λ, smoothCovEigenvalue d N a mass T m
+      ≤ ∑ _ ∈ range Λ, mass⁻¹ ^ 2 := Finset.sum_le_sum h_each
+    _ = ↑Λ * mass⁻¹ ^ 2 := by simp [Finset.sum_const, Finset.card_range]
+    _ ≤ ↑Λ * mass⁻¹ ^ 2 * (1 + |Real.log T|) := by
+        have h1 : 0 ≤ |Real.log T| := abs_nonneg _
+        have h2 : (0 : ℝ) ≤ ↑Λ * mass⁻¹ ^ 2 := by positivity
+        nlinarith
 
 /-- **Rough covariance L² bound** derived from heat kernel trace bound.
 
@@ -292,8 +359,36 @@ theorem roughVariance_from_heat_kernel (d N : ℕ) [NeZero N]
     ∃ C : ℝ, 0 < C ∧
     (∑ m ∈ range (Fintype.card (FinLatticeSites d N)),
       roughCovEigenvalue d N a mass T m ^ 2 : ℝ) ≤ C * T := by
-  -- Swap sum and double integral via Schwinger², then integrate H(t₁+t₂) ≤ C/(t₁+t₂)
-  sorry
+  -- Strategy: C_R(m)² ≤ T · C_R(m) ≤ T/λ_m, sum ≤ T · Σ(1/λ_m) ≤ T · card/m²
+  set Λ := Fintype.card (FinLatticeSites d N)
+  -- Bound each term: C_R(m)² ≤ T / λ_m
+  have h_sq_le : ∀ m ∈ range Λ, roughCovEigenvalue d N a mass T m ^ 2 ≤
+      T * (latticeEigenvalue d N a mass m)⁻¹ := by
+    intro m _
+    have hR_nn : 0 ≤ roughCovEigenvalue d N a mass T m :=
+      (roughCovEigenvalue_pos d N a mass T hT m ha hmass).le
+    calc roughCovEigenvalue d N a mass T m ^ 2
+        = roughCovEigenvalue d N a mass T m * roughCovEigenvalue d N a mass T m := sq _
+      _ ≤ T * (latticeEigenvalue d N a mass m)⁻¹ :=
+          mul_le_mul (roughCovEigenvalue_le_T d N a mass T hT.le m ha hmass)
+            (roughCovEigenvalue_le_inv d N a mass T m ha hmass) hR_nn hT.le
+  -- Bound each 1/λ_m ≤ 1/m² (since λ_m ≥ mass²)
+  have h_inv_le : ∀ m ∈ range Λ,
+      (latticeEigenvalue d N a mass m)⁻¹ ≤ mass⁻¹ ^ 2 := by
+    intro m _
+    rw [inv_pow]
+    apply inv_anti₀ (sq_pos_of_pos hmass)
+    rw [latticeEigenvalue_eq]; linarith [latticeLaplacianEigenvalue_nonneg d N a m]
+  -- Choose C = Λ / m²
+  refine ⟨↑Λ * mass⁻¹ ^ 2, by positivity, ?_⟩
+  calc ∑ m ∈ range Λ, roughCovEigenvalue d N a mass T m ^ 2
+      ≤ ∑ m ∈ range Λ, T * (latticeEigenvalue d N a mass m)⁻¹ :=
+        Finset.sum_le_sum h_sq_le
+    _ ≤ ∑ _ ∈ range Λ, T * mass⁻¹ ^ 2 := by
+        apply Finset.sum_le_sum; intro m hm
+        exact mul_le_mul_of_nonneg_left (h_inv_le m hm) hT.le
+    _ = ↑Λ * mass⁻¹ ^ 2 * T := by
+        simp [Finset.sum_const, Finset.card_range]; ring
 
 end Pphi2
 
