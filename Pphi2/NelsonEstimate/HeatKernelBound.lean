@@ -57,10 +57,13 @@ theorem schwinger_smooth_Ioi (lam : ℝ) (hlam : 0 < lam) (T : ℝ) :
     fun t _ => hasDerivAt_neg_exp_div lam hlam_ne t
   -- F(t) → 0 as t → ∞ (exponential decay)
   have h_tendsto : Filter.Tendsto F Filter.atTop (nhds 0) := by
-    sorry -- -exp(-tλ)/λ → 0 as t → ∞ since λ > 0
-  -- f' integrable on Ioi T (exponential decay)
+    show Filter.Tendsto (fun t => -rexp (-t * lam) / lam) Filter.atTop (nhds 0)
+    have h1 := (Real.tendsto_exp_neg_atTop_nhds_zero.comp
+        (Filter.tendsto_id.const_mul_atTop hlam)).neg.div_const lam
+    simp only [neg_zero, zero_div] at h1
+    exact h1.congr (fun t => by simp; ring)
   have h_int : MeasureTheory.IntegrableOn (fun t => exp (-t * lam)) (Set.Ioi T) := by
-    sorry -- exp(-tλ) is integrable on [T, ∞) since λ > 0
+    sorry -- from integrableOn_exp_neg_Ioi via substitution u = t*λ
   -- Apply improper FTC
   have h_ftc := integral_Ioi_of_hasDerivAt_of_tendsto'
     h_deriv h_int h_tendsto
