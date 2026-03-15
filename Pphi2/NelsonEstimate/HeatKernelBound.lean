@@ -62,11 +62,12 @@ theorem schwinger_smooth_Ioi (lam : ℝ) (hlam : 0 < lam) (T : ℝ) :
         (Filter.tendsto_id.const_mul_atTop hlam)).neg.div_const lam
     simp only [neg_zero, zero_div] at h1
     exact h1.congr (fun t => by simp; ring)
-  have h_int : MeasureTheory.IntegrableOn (fun t => exp (-t * lam)) (Set.Ioi T) := by
-    sorry -- from integrableOn_exp_neg_Ioi via substitution u = t*λ
-  -- Apply improper FTC
-  have h_ftc := integral_Ioi_of_hasDerivAt_of_tendsto'
-    h_deriv h_int h_tendsto
+  -- Apply improper FTC (nonneg version — no integrability needed!)
+  -- g(t) = -exp(-tλ)/λ is increasing (g' = exp(-tλ) ≥ 0), g → 0
+  have h_ftc := integral_Ioi_of_hasDerivAt_of_nonneg'
+    h_deriv
+    (fun t _ => le_of_lt (Real.exp_pos _))
+    h_tendsto
   -- h_ftc : ∫ Ioi T, exp(-tλ) = 0 - F(T) = exp(-Tλ)/λ
   rw [h_ftc]; simp only [F]; ring
 
