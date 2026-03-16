@@ -32,14 +32,7 @@ sets agree on the cylindrical σ-algebra.
 
 ## Sorry status
 
-One sorry remains:
-- `pushforward_eq_of_eval_eq` (line ~203): Equal 1D marginals for all `f : E` imply
-  equal pushforward measures on `ℝ^ℕ` via `configBasisEval`.
-
-  This is proved in the Bochner project (github.com/mrdouglasny/bochner,
-  `Minlos/Main.lean:minlos_uniqueness`, 0 sorries) via Kolmogorov extension +
-  projective family consistency. Integration requires bridging the typeclass
-  `DyninMityaginSpace` (gaussian-field) ↔ `IsHilbertNuclear` (bochner).
+No sorries. All proofs complete.
 
 ## Proved results
 
@@ -50,13 +43,18 @@ One sorry remains:
   analytic continuation from real to complex MGF (via Mathlib's
   `eqOn_complexMGF_of_mgf` + `integrableExpSet_id_gaussianReal`) and
   `ext_of_complexMGF_eq`.
-- `gaussian_measure_unique_of_covariance`: The main theorem, modulo
-  `pushforward_eq_of_eval_eq`. The pullback from `ℝ^ℕ` uses
-  `instMeasurableSpaceConfiguration_eq_comap`.
+- `pushforward_eq_of_eval_eq`: Equal 1D marginals for all f : E imply equal
+  pushforward measures on `ℝ^ℕ` via `configBasisEval`. Uses Cramer-Wold
+  (`ext_of_charFunDual` for finite-dim marginals) + Kolmogorov uniqueness
+  (`IsProjectiveLimit.unique` for the product sigma-algebra).
+- `gaussian_measure_unique_of_covariance`: The main theorem. The pullback
+  from `ℝ^ℕ` uses `instMeasurableSpaceConfiguration_eq_comap`.
 -/
 
 import GaussianField.ConfigurationEmbedding
 import Mathlib.Probability.Distributions.Gaussian.Real
+import Mathlib.MeasureTheory.Constructions.Projective
+import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
 
 noncomputable section
 
@@ -213,7 +211,112 @@ theorem pushforward_eq_of_eval_eq
       (configBasisEval (E := E)) μ₁ =
     @Measure.map _ _ instMeasurableSpaceConfiguration _
       (configBasisEval (E := E)) μ₂ := by
-  sorry
+  set ν₁ := @Measure.map _ _ instMeasurableSpaceConfiguration _
+    (configBasisEval (E := E)) μ₁
+  set ν₂ := @Measure.map _ _ instMeasurableSpaceConfiguration _
+    (configBasisEval (E := E)) μ₂
+  haveI : IsProbabilityMeasure ν₁ :=
+    Measure.isProbabilityMeasure_map
+      configBasisEval_measurable.aemeasurable
+  haveI : IsProbabilityMeasure ν₂ :=
+    Measure.isProbabilityMeasure_map
+      configBasisEval_measurable.aemeasurable
+  -- Step 1: Finite-dimensional marginals agree (Cramer-Wold)
+  have h_marginals :
+      ∀ I : Finset ℕ, ν₁.map I.restrict = ν₂.map I.restrict := by
+    intro I
+    have h_mr : Measurable (Finset.restrict
+        (π := fun _ : ℕ => ℝ) I) :=
+      measurable_pi_lambda _ (fun _ => measurable_pi_apply _)
+    rw [Measure.map_map h_mr configBasisEval_measurable,
+        Measure.map_map h_mr configBasisEval_measurable]
+    have h_cm : @Measurable _ _
+        instMeasurableSpaceConfiguration _
+        (I.restrict ∘ configBasisEval (E := E)) :=
+      h_mr.comp configBasisEval_measurable
+    apply Measure.ext_of_charFunDual
+    ext L
+    simp only [charFunDual_apply]
+    have h_asm : ∀ (ν : Measure (↑I → ℝ)),
+        AEStronglyMeasurable
+        (fun x : ↑I → ℝ =>
+          Complex.exp (↑(L x) * Complex.I)) ν :=
+      fun _ => (Complex.continuous_exp.comp
+        (Complex.continuous_ofReal.comp L.continuous
+          |>.mul continuous_const)).aestronglyMeasurable
+    rw [integral_map h_cm.aemeasurable (h_asm _),
+        integral_map h_cm.aemeasurable (h_asm _)]
+    -- Define f = sum of L(e_n) * basis_n
+    set f : E := I.sum (fun n =>
+      (L (fun j => if (j : ℕ) = n then 1 else 0)) •
+      DyninMityaginSpace.basis n) with hf_def
+    -- Key: L(I.restrict(configBasisEval w)) = w f
+    suffices h_key : ∀ ω : Configuration E,
+        L (I.restrict (configBasisEval ω)) = ω f by
+      -- Goal: ∫ x, exp(L(restrict ∘ cBE)(x) * I) dμ₁ =
+      --       ∫ x, exp(L(restrict ∘ cBE)(x) * I) dμ₂
+      -- Unfold ∘ and apply h_key to rewrite integrand
+      simp_rw [Function.comp_apply, h_key]
+      -- Goal: ∫ ω, exp(↑(ω f) * I) dμ₁ =
+      --       ∫ ω, exp(↑(ω f) * I) dμ₂
+      have h_em : ∀ (μ : @Measure (Configuration E)
+          instMeasurableSpaceConfiguration),
+          AEMeasurable (fun ω : Configuration E => ω f) μ :=
+        fun _ =>
+          (configuration_eval_measurable f).aemeasurable
+      have h_gsm : ∀ (ν : Measure ℝ),
+          AEStronglyMeasurable
+          (fun x : ℝ =>
+            Complex.exp (↑x * Complex.I)) ν :=
+        fun _ => (Complex.continuous_exp.comp
+          (Complex.continuous_ofReal.mul
+            continuous_const)).aestronglyMeasurable
+      calc ∫ ω : Configuration E,
+              Complex.exp (↑(ω f) * Complex.I) ∂μ₁
+          = ∫ x, Complex.exp (↑x * Complex.I)
+              ∂(μ₁.map (fun ω => ω f)) :=
+            (integral_map (h_em μ₁) (h_gsm _)).symm
+        _ = ∫ x, Complex.exp (↑x * Complex.I)
+              ∂(μ₂.map (fun ω => ω f)) := by
+            rw [h_eval f]
+        _ = ∫ ω : Configuration E,
+              Complex.exp (↑(ω f) * Complex.I) ∂μ₂ :=
+            integral_map (h_em μ₂) (h_gsm _)
+    -- Prove L(I.restrict(configBasisEval w)) = w f
+    intro ω
+    have h_decomp :
+        I.restrict (configBasisEval (E := E) ω) =
+        I.sum (fun n => (configBasisEval ω n) •
+          (fun j : ↑I =>
+            if (j : ℕ) = n then (1 : ℝ) else 0)) := by
+      ext ⟨j, hj⟩
+      simp only [Finset.restrict, Finset.sum_apply,
+        Pi.smul_apply, smul_eq_mul]
+      rw [Finset.sum_eq_single_of_mem j hj]
+      · simp [configBasisEval]
+      · intro k _ hkj
+        split_ifs with h
+        · exact absurd h.symm hkj
+        · ring
+    rw [h_decomp, map_sum]
+    simp only [ContinuousLinearMap.map_smul, smul_eq_mul]
+    rw [hf_def, map_sum]
+    simp only [map_smul, smul_eq_mul, configBasisEval]
+    apply Finset.sum_congr rfl
+    intro n _
+    ring
+  -- Step 2: Kolmogorov uniqueness (projective limit)
+  let P : ∀ J : Finset ℕ, Measure (∀ j : ↑J, ℝ) :=
+    fun J => ν₁.map J.restrict
+  have h₁ : MeasureTheory.IsProjectiveLimit ν₁ P :=
+    fun _ => rfl
+  have h₂ : MeasureTheory.IsProjectiveLimit ν₂ P :=
+    fun J => (h_marginals J).symm
+  haveI : ∀ J, IsProbabilityMeasure (P J) := fun J =>
+    Measure.isProbabilityMeasure_map
+      (measurable_pi_lambda _
+        (fun _ => measurable_pi_apply _)).aemeasurable
+  exact h₁.unique h₂
 
 /-! ## Main theorem -/
 
