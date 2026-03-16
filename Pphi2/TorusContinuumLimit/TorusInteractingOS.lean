@@ -192,19 +192,67 @@ theorem torusInteractingMeasure_gf_swap_invariant
   exact (interactingLatticeMeasure_swap_invariant L N P mass
     (circleSpacing_pos L N) hmass _).symm
 
-/-- The torus interacting generating functional is time-reflection-invariant at every cutoff.
+/-- The lattice time-reflection linear map: `(L_refl g)(x) = g(timeReflectSites x)`. -/
+private def latticeTimeReflectLM (N : ℕ) :
+    FinLatticeField 2 N →ₗ[ℝ] FinLatticeField 2 N where
+  toFun g := g ∘ timeReflectSites N
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
 
-  `∫ exp(iω(f)) dμ_{P,N} = ∫ exp(iω(Θf)) dμ_{P,N}` where Θ is time reflection.
+/-- **Lattice interacting measure is time-reflection-invariant.**
+Same justification as swap: sum relabeling + eigenvalue symmetry + measure preservation. -/
+axiom interactingLatticeMeasure_timeReflection_invariant
+    (N : ℕ) [NeZero N] (P : InteractionPolynomial) (mass : ℝ)
+    (ha : 0 < circleSpacing L N) (hmass : 0 < mass)
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (F : Configuration (FinLatticeField 2 N) → E) :
+    ∫ ω, F (ω.comp (latticeTimeReflectLM N).toContinuousLinearMap) ∂(interactingLatticeMeasure
+      2 N P (circleSpacing L N) mass ha hmass) =
+    ∫ ω, F ω ∂(interactingLatticeMeasure 2 N P (circleSpacing L N) mass ha hmass)
 
-Time reflection t ↦ -t on the periodic torus relabels lattice sites,
-preserving the interaction. The GFF covariance is also Θ-invariant
-(eigenvalues depend on |n|, not the sign of n). -/
-axiom torusInteractingMeasure_gf_timeReflection_invariant
+/-- **The torus interacting generating functional is time-reflection-invariant.**
+
+Proved from `evalTorusAtSite_timeReflection` (equivariance)
+and `interactingLatticeMeasure_timeReflection_invariant` (lattice symmetry). -/
+theorem torusInteractingMeasure_gf_timeReflection_invariant
     (N : ℕ) [NeZero N] (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
     (f : TorusTestFunction L) :
     torusGeneratingFunctional L (torusInteractingMeasure L N P mass hmass) f =
     torusGeneratingFunctional L (torusInteractingMeasure L N P mass hmass)
-      (torusTimeReflection L f)
+      (torusTimeReflection L f) := by
+  have h_lattice_refl : ∀ x : FinLatticeSites 2 N,
+      latticeTestFn L N (torusTimeReflection L f) x =
+      latticeTestFn L N f (timeReflectSites N x) := by
+    intro x
+    simp only [latticeTestFn, torusTimeReflection]
+    exact evalTorusAtSite_timeReflection L N x f
+  -- Follow exactly the same pattern as swap proof
+  unfold torusGeneratingFunctional torusInteractingMeasure
+  set μ_lat := interactingLatticeMeasure 2 N P (circleSpacing L N) mass
+    (circleSpacing_pos L N) hmass
+  have hmeas : AEMeasurable (torusEmbedLift L N) μ_lat :=
+    (torusEmbedLift_measurable L N).aemeasurable
+  have hasm₁ : AEStronglyMeasurable (fun ω : Configuration (TorusTestFunction L) =>
+      Complex.exp (Complex.I * ↑(ω f))) (Measure.map (torusEmbedLift L N) μ_lat) :=
+    (Complex.measurable_exp.comp (measurable_const.mul (Complex.measurable_ofReal.comp
+      (configuration_eval_measurable f)))).aestronglyMeasurable
+  have hasm₂ : AEStronglyMeasurable (fun ω : Configuration (TorusTestFunction L) =>
+      Complex.exp (Complex.I * ↑(ω (torusTimeReflection L f))))
+      (Measure.map (torusEmbedLift L N) μ_lat) := by
+    exact (Complex.measurable_exp.comp (measurable_const.mul (Complex.measurable_ofReal.comp
+      (configuration_eval_measurable (torusTimeReflection L f))))).aestronglyMeasurable
+  rw [MeasureTheory.integral_map hmeas hasm₁, MeasureTheory.integral_map hmeas hasm₂]
+  simp_rw [torusEmbedLift_eval_eq]
+  have h_refl_lattice : ∀ φ : Configuration (FinLatticeField 2 N),
+      φ (latticeTestFn L N (torusTimeReflection L f)) =
+      (φ.comp (latticeTimeReflectLM N).toContinuousLinearMap) (latticeTestFn L N f) := by
+    intro φ
+    change φ (latticeTestFn L N (torusTimeReflection L f)) =
+      φ ((latticeTimeReflectLM N) (latticeTestFn L N f))
+    congr 1; ext x; exact h_lattice_refl x
+  simp_rw [h_refl_lattice]
+  exact (interactingLatticeMeasure_timeReflection_invariant L N P mass
+    (circleSpacing_pos L N) hmass _).symm
 
 /-- **Interacting exponential moment bound** (transferred to continuum limit).
 
