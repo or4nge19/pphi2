@@ -43,7 +43,6 @@ t ∈ (0, L/2), which is the correct half for RP with periodic BCs.
 - Simon, *The P(φ)₂ Euclidean QFT*, Ch. I
 -/
 
-import Pphi2.GeneralResults.ComplexAnalysis
 import Pphi2.TorusContinuumLimit.TorusGaussianLimit
 import Pphi2.TorusContinuumLimit.TorusPropagatorConvergence
 import Torus.Symmetry
