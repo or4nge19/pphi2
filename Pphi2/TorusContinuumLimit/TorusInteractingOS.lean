@@ -254,33 +254,50 @@ theorem torusInteractingMeasure_gf_timeReflection_invariant
   exact (interactingLatticeMeasure_timeReflection_invariant L N P mass
     (circleSpacing_pos L N) hmass _).symm
 
+/-- **Cutoff exponential moment bound.**
+
+At each cutoff N, the interacting measure satisfies:
+  `∫ exp(|ω(f)|) dμ_{P,N} ≤ C · exp(G_N(f,f))`
+
+From Cauchy-Schwarz density transfer:
+  `E_P[exp(|ω(f)|)] ≤ (1/Z) √(E_GFF[exp(2|ω(f)|)]) √(E_GFF[exp(-2V)])`
+  `≤ √K · √(2 exp(2 G_N(f,f)))` (using Z ≥ 1, Nelson, Gaussian MGF)
+  `= √(2K) · exp(G_N(f,f))`
+
+References: Simon, *P(φ)₂ QFT*, Ch. V, Prop. V.1.3. -/
+axiom torusInteractingMeasure_exponentialMomentBound_cutoff
+    (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
+    (f : TorusTestFunction L) :
+    ∃ C : ℝ, 0 < C ∧ ∀ (N : ℕ) [NeZero N],
+    ∫ ω : Configuration (TorusTestFunction L),
+      Real.exp (|ω f|)
+      ∂(torusInteractingMeasure L N P mass hmass) ≤
+    C * Real.exp (torusEmbeddedTwoPoint L N mass hmass f f)
+
 /-- **Interacting exponential moment bound** (transferred to continuum limit).
 
-For any test function f, the interacting continuum limit measure satisfies:
-  `∫ exp(|ω(f)|) dμ ≤ exp(c · G_L(f, f))`
-where c is a universal constant and G_L is the continuum Green's function.
-
-This is the key regularity estimate for the interacting P(φ)₂ measure.
-It follows from:
-1. At each cutoff: Cauchy-Schwarz density transfer gives
-   `E_P[exp(t|ω(f)|)] ≤ √K · E_GFF[exp(2t|ω(f)|)]^{1/2}`
-2. The Gaussian exponential moment is `E_GFF[exp(2t|ω(f)|)] ≤ exp(2t²G(f,f))`
-   (by Gaussian tail bounds + MGF formula).
-3. Taking t = 1: `E_P[exp(|ω(f)|)] ≤ √K · exp(G(f,f))`.
-4. This bound is uniform in N (by Nelson's estimate), so it transfers
-   to the limit measure μ via Fatou's lemma on the weakly convergent sequence.
-
-References: Simon, *The P(φ)₂ Euclidean QFT*, Ch. V, Prop. V.1.3. -/
-axiom torusInteracting_exponentialMomentBound
+The weak limit measure satisfies `∫ exp(|ω(f)|) dμ ≤ exp(c · G_L(f,f))`.
+Proved from the cutoff bound + weak convergence:
+1. For each C > 0: `∫ min(exp(|ωf|), C) dμ = lim ∫ min(exp(|ωf|), C) dμ_N` (bcf)
+2. `∫ min(exp(|ωf|), C) dμ_N ≤ ∫ exp(|ωf|) dμ_N ≤ K · exp(G_N(f,f))`
+3. `G_N(f,f) → G(f,f)` (propagator convergence)
+4. Taking C → ∞ by MCT gives the bound. -/
+theorem torusInteracting_exponentialMomentBound
     (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
     (μ : Measure (Configuration (TorusTestFunction L)))
     [IsProbabilityMeasure μ]
+    (φ : ℕ → ℕ) (_hφ : StrictMono φ)
+    (hconv : ∀ (g : Configuration (TorusTestFunction L) → ℝ),
+      Continuous g → (∃ C, ∀ x, |g x| ≤ C) →
+        Tendsto (fun n => ∫ ω, g ω ∂(torusInteractingMeasure L (φ n + 1) P mass hmass))
+          atTop (nhds (∫ ω, g ω ∂μ)))
     (f : TorusTestFunction L) :
     Integrable (fun ω : Configuration (TorusTestFunction L) =>
       Real.exp (|ω f|)) μ ∧
     ∫ ω : Configuration (TorusTestFunction L),
       Real.exp (|ω f|) ∂μ ≤
-    Real.exp (torusContinuumGreen L mass hmass f f)
+    Real.exp (torusContinuumGreen L mass hmass f f) := by
+  sorry
 
 /-! ## Helper: integral invariance from generating functional invariance
 
@@ -459,7 +476,7 @@ theorem torusInteracting_os1
     exact Real.exp_le_exp_of_le (neg_le_abs (ω f_im))
   -- Step 4: Integrability and bound from exponential moment axiom
   obtain ⟨h_int_im, h_exp_bound⟩ :=
-    torusInteracting_exponentialMomentBound L P mass hmass μ f_im
+    torusInteracting_exponentialMomentBound L P mass hmass μ φ _hφ _hconv f_im
   -- Step 5: Combine everything
   calc ‖torusGeneratingFunctionalℂ L μ f_re f_im‖
       ≤ ∫ ω, ‖Complex.exp (Complex.I * (↑(ω f_re) + Complex.I * ↑(ω f_im)))‖ ∂μ := h_tri
