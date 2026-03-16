@@ -57,7 +57,9 @@ Dropped on the torus — RP is more natural on the cylinder S¹×ℝ.
 
 import Pphi2.TorusContinuumLimit.TorusOSAxioms
 import Pphi2.TorusContinuumLimit.TorusInteractingLimit
+import Pphi2.TorusContinuumLimit.TorusPropagatorConvergence
 import Pphi2.GeneralResults.ComplexAnalysis
+import Torus.Evaluation
 
 noncomputable section
 
@@ -103,18 +105,92 @@ axiom torusInteractingLimit_translation_invariant
     torusGeneratingFunctional L μ f =
     torusGeneratingFunctional L μ (torusTranslation L v f)
 
-/-- The torus interacting generating functional is swap-invariant at every cutoff.
+/-- The lattice swap linear map: `(L_swap g)(x) = g(swapSites x)`. -/
+private def latticeSwapLM (N : ℕ) :
+    FinLatticeField 2 N →ₗ[ℝ] FinLatticeField 2 N where
+  toFun g := g ∘ swapSites N
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
+/-- **Lattice interacting measure is swap-invariant.**
+
+The interacting lattice measure is invariant under coordinate swap
+`(i,j) ↦ (j,i)` on `FinLatticeSites 2 N`. This follows from:
+- The interaction `V = a² Σ_x :P(φ(x)):` sums over all sites; swap relabels.
+- The GFF eigenvalues `λ_{n₁,n₂}` are symmetric under n₁ ↔ n₂.
+- Lebesgue measure is preserved (det of swap = -1, |det| = 1).
+
+Analogous to `latticeMeasure_translation_invariant` but with swap. -/
+axiom interactingLatticeMeasure_swap_invariant
+    (N : ℕ) [NeZero N] (P : InteractionPolynomial) (mass : ℝ)
+    (ha : 0 < circleSpacing L N) (hmass : 0 < mass)
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (F : Configuration (FinLatticeField 2 N) → E) :
+    ∫ ω, F (ω.comp (latticeSwapLM N).toContinuousLinearMap) ∂(interactingLatticeMeasure 2 N P
+      (circleSpacing L N) mass ha hmass) =
+    ∫ ω, F ω ∂(interactingLatticeMeasure 2 N P (circleSpacing L N) mass ha hmass)
+
+/-- **The torus interacting generating functional is swap-invariant at every cutoff.**
 
   `∫ exp(iω(f)) dμ_{P,N} = ∫ exp(iω(σf)) dμ_{P,N}` where σ swaps coordinates.
 
-On the square torus, coordinate swap (t,x) ↦ (x,t) is a symmetry of both
-the Laplacian eigenvalues and the interaction (which sums over all sites). -/
-axiom torusInteractingMeasure_gf_swap_invariant
+Proved from `evalTorusAtSite_swap` (equivariance of the torus embedding)
+and `interactingLatticeMeasure_swap_invariant` (lattice measure symmetry). -/
+theorem torusInteractingMeasure_gf_swap_invariant
     (N : ℕ) [NeZero N] (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
     (f : TorusTestFunction L) :
     torusGeneratingFunctional L (torusInteractingMeasure L N P mass hmass) f =
     torusGeneratingFunctional L (torusInteractingMeasure L N P mass hmass)
-      (torusSwap L f)
+      (torusSwap L f) := by
+  -- Step 1: Both sides are integrals of exp(i·ω(g)) over the pushforward measure.
+  -- The key identity: latticeTestFn(swap f) = latticeSwapLM(latticeTestFn f)
+  have h_lattice_swap : ∀ x : FinLatticeSites 2 N,
+      latticeTestFn L N (torusSwap L f) x = latticeTestFn L N f (swapSites N x) := by
+    intro x
+    simp only [latticeTestFn, torusSwap]
+    exact evalTorusAtSite_swap L N x f
+  -- Step 2: Convert both sides to lattice integrals via definition unfolding
+  set μ_lat := interactingLatticeMeasure 2 N P (circleSpacing L N) mass
+    (circleSpacing_pos L N) hmass
+  -- Compute LHS as lattice integral
+  have h_lhs : torusGeneratingFunctional L (torusInteractingMeasure L N P mass hmass) f =
+      ∫ φ, Complex.exp (Complex.I * ↑(φ (latticeTestFn L N f))) ∂μ_lat := by
+    unfold torusGeneratingFunctional torusInteractingMeasure
+    have hasm : AEStronglyMeasurable (fun ω : Configuration (TorusTestFunction L) =>
+        Complex.exp (Complex.I * ↑(ω f)))
+        (Measure.map (torusEmbedLift L N) μ_lat) :=
+      (Complex.measurable_exp.comp
+        (measurable_const.mul (Complex.measurable_ofReal.comp
+          (configuration_eval_measurable f)))).aestronglyMeasurable
+    rw [MeasureTheory.integral_map (torusEmbedLift_measurable L N).aemeasurable hasm]
+    simp_rw [torusEmbedLift_eval_eq]
+  -- Compute RHS as lattice integral
+  have h_rhs : torusGeneratingFunctional L (torusInteractingMeasure L N P mass hmass)
+      (torusSwap L f) =
+      ∫ φ, Complex.exp (Complex.I * ↑(φ (latticeTestFn L N (torusSwap L f)))) ∂μ_lat := by
+    unfold torusGeneratingFunctional torusInteractingMeasure
+    have hasm : AEStronglyMeasurable (fun ω : Configuration (TorusTestFunction L) =>
+        Complex.exp (Complex.I * ↑(ω (torusSwap L f))))
+        (Measure.map (torusEmbedLift L N) μ_lat) :=
+      (Complex.measurable_exp.comp
+        (measurable_const.mul (Complex.measurable_ofReal.comp
+          (configuration_eval_measurable (torusSwap L f))))).aestronglyMeasurable
+    rw [MeasureTheory.integral_map (torusEmbedLift_measurable L N).aemeasurable hasm]
+    simp_rw [torusEmbedLift_eval_eq]
+  rw [h_lhs, h_rhs]
+  -- Now: ∫ exp(i·φ(latticeTestFn f)) = ∫ exp(i·φ(latticeTestFn(swap f)))
+  -- latticeTestFn(swap f) = latticeSwapLM(latticeTestFn f)
+  have h_swap_lattice : ∀ φ : Configuration (FinLatticeField 2 N),
+      φ (latticeTestFn L N (torusSwap L f)) =
+      (φ.comp (latticeSwapLM N).toContinuousLinearMap) (latticeTestFn L N f) := by
+    intro φ
+    change φ (latticeTestFn L N (torusSwap L f)) =
+      φ ((latticeSwapLM N) (latticeTestFn L N f))
+    congr 1; ext x; exact h_lattice_swap x
+  simp_rw [h_swap_lattice]
+  -- Apply lattice swap invariance
+  exact (interactingLatticeMeasure_swap_invariant L N P mass
+    (circleSpacing_pos L N) hmass _).symm
 
 /-- The torus interacting generating functional is time-reflection-invariant at every cutoff.
 
