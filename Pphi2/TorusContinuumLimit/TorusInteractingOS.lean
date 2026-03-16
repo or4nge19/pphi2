@@ -98,7 +98,23 @@ unifies translation, swap, and time-reflection invariance.
 The proof uses:
 1. V(σω) = V(ω): interaction sums over all sites (relabeling-invariant)
 2. ρ(σφ) = ρ(φ): Gaussian density depends on eigenvalues (σ-invariant by hσ)
-3. |det(σ)| = 1: σ is a permutation matrix on ℝ^{sites} -/
+3. |det(σ)| = 1: σ is a permutation matrix on ℝ^{sites}
+
+**The interacting lattice measure is invariant under Laplacian symmetries.**
+
+For a site bijection σ that preserves the lattice Gaussian quadratic form,
+the interacting measure `(1/Z) exp(-V) dμ_GFF` is σ-invariant.
+
+Proof (standard, see Glimm-Jaffe §8.1, Simon Ch. V):
+1. **BW invariance**: V(ω∘σ) = V(ω) — the interaction `Σ_x :P(φ(x)):_c`
+   sums over ALL sites; σ just relabels. Uses ultra-locality: the Wick
+   constant `C_{xx}` is site-independent on the torus (Green's function
+   depends only on x-y), so `:P:_c` is the same polynomial at every site.
+2. **Gaussian density invariance**: ρ(φ∘σ) = ρ(φ) — from `hσ_laplacian`
+   (σ commutes with the Laplacian, preserving the quadratic form).
+3. **Lebesgue preservation**: φ ↦ φ∘σ is a permutation matrix (det = ±1).
+4. **Partition function**: Z = ∫ exp(-V) dμ_GFF is the same after
+   change of variables (by steps 1-3), so the Z⁻¹ factor matches. -/
 axiom interactingLatticeMeasure_symmetry_invariant
     (N : ℕ) [NeZero N] (P : InteractionPolynomial) (mass : ℝ)
     (ha : 0 < circleSpacing L N) (hmass : 0 < mass)
