@@ -844,6 +844,62 @@ theorem torusInteractingLimit_translation_invariant
     tendsto_nhds_unique h_sub h_diff
   exact (sub_eq_zero.mp h_eq).symm
 
+/-- The Laplacian commutes with the swap `(x₀,x₁) ↦ (x₁,x₀)` on a 2D lattice.
+Proof: The stencil sums over directions i ∈ {0,1}. Swapping coordinates
+exchanges i=0 and i=1 terms; the sum is invariant by commutativity. -/
+private theorem finiteLaplacian_swap_commute (N : ℕ) [NeZero N] (a : ℝ)
+    (φ : FinLatticeField 2 N) :
+    finiteLaplacian 2 N a (φ ∘ swapSites N) =
+    (finiteLaplacian 2 N a φ) ∘ swapSites N := by
+  ext x
+  change finiteLaplacianFun 2 N a (φ ∘ swapSites N) x =
+    finiteLaplacianFun 2 N a φ (swapSites N x)
+  simp only [finiteLaplacianFun, Function.comp]
+  congr 1
+  -- LHS sums over i : Fin 2 with neighbors of x mapped through swap
+  -- RHS sums over i : Fin 2 with neighbors of (swap x)
+  -- Swap exchanges direction 0 ↔ 1, so use Equiv.swap on Fin 2
+  apply Fintype.sum_equiv (Equiv.swap (0 : Fin 2) 1)
+  intro i
+  -- For each i, show the stencil term with (φ ∘ swap) at x in direction i
+  -- equals the stencil term with φ at (swap x) in direction (swap_dir i)
+  -- Key: swap(fun j => if j=i then x j ± 1 else x j) =
+  --       fun j => if j=(swap_dir i) then (swap x) j ± 1 else (swap x) j
+  have swap_neighbor_fwd : ∀ (i : Fin 2),
+      swapSites N (fun j => if j = i then x j + 1 else x j) =
+      fun j => if j = (Equiv.swap (0 : Fin 2) 1 i) then
+        (swapSites N x) j + 1 else (swapSites N x) j := by
+    intro i; ext j
+    simp only [swapSites, Equiv.swap_apply_def]
+    fin_cases i <;> fin_cases j <;>
+      simp [Matrix.cons_val_zero, Matrix.cons_val_one]
+  have swap_neighbor_bwd : ∀ (i : Fin 2),
+      swapSites N (fun j => if j = i then x j - 1 else x j) =
+      fun j => if j = (Equiv.swap (0 : Fin 2) 1 i) then
+        (swapSites N x) j - 1 else (swapSites N x) j := by
+    intro i; ext j
+    simp only [swapSites, Equiv.swap_apply_def]
+    fin_cases i <;> fin_cases j <;>
+      simp [Matrix.cons_val_zero, Matrix.cons_val_one]
+  have swap_self : φ (swapSites N x) = φ (swapSites N x) := rfl
+  rw [swap_neighbor_fwd i, swap_neighbor_bwd i]
+
+/-- The mass operator Q = -Δ + m² commutes with swap.
+`Q(φ ∘ swap) = (Qφ) ∘ swap` pointwise. -/
+private theorem massOperator_swap_commute (N : ℕ) [NeZero N] (a mass : ℝ)
+    (φ : FinLatticeField 2 N) :
+    massOperator 2 N a mass (φ ∘ swapSites N) =
+    (massOperator 2 N a mass φ) ∘ swapSites N := by
+  have hΔ := finiteLaplacian_swap_commute N a φ
+  ext x
+  simp only [massOperator, ContinuousLinearMap.add_apply,
+    ContinuousLinearMap.neg_apply, ContinuousLinearMap.smul_apply,
+    ContinuousLinearMap.id_apply, Pi.add_apply, Pi.neg_apply,
+    Pi.smul_apply, smul_eq_mul, Function.comp]
+  have h := congr_fun hΔ x
+  simp only [Function.comp] at h
+  linarith
+
 private def latticeSwapLM (N : ℕ) := latticeSitePermuteLM N (swapSites N)
 
 private theorem interactingLatticeMeasure_swap_invariant
@@ -878,16 +934,24 @@ private theorem interactingLatticeMeasure_swap_invariant
       congr 1; congr 1
       -- Goal: ∑ x, (φ ∘ σ_equiv.symm) x * (massOperator 2 N a mass (φ ∘ σ_equiv.symm)) x =
       --       ∑ x, φ x * (massOperator 2 N a mass φ) x
-      -- Rewrite σ_equiv.symm as swapSites
-      simp_rw [Function.comp, hsymm_eq]
-      -- Now: ∑ x, φ(swap x) * (Q(φ∘swap)) x = ∑ x, φ x * (Q φ) x
-      -- The quadratic form is invariant under swap because:
-      -- 1. The mass operator Q = -Δ + m²I commutes with swap (the Laplacian stencil
-      --    sums over directions i=0,1, and swap exchanges these directions)
-      -- 2. The sum over all lattice sites is relabeling-invariant
-      -- This requires proving massOperator commutativity with swap,
-      -- which involves showing the stencil exchange property.
-      sorry)
+      -- Rewrite σ_equiv.symm as swapSites everywhere
+      have h_symm_comp : φ ∘ σ_equiv.symm = φ ∘ swapSites N :=
+        funext (fun y => congr_arg φ (hsymm_eq y))
+      rw [h_symm_comp]
+      simp_rw [Function.comp]
+      -- Goal: ∑ x, φ(swap x) * (Q(φ ∘ swap)) x = ∑ x, φ x * (Qφ) x
+      -- Step 1: Use commutativity Q(φ ∘ swap) = (Qφ) ∘ swap
+      have hcomm := massOperator_swap_commute N (circleSpacing L N) mass φ
+      simp_rw [show ∀ x,
+        massOperator 2 N (circleSpacing L N) mass (φ ∘ swapSites N) x =
+        (massOperator 2 N (circleSpacing L N) mass φ) (swapSites N x) from
+        fun x => congr_fun hcomm x]
+      -- Step 2: Relabel sum x ↦ swap x using swap as an Equiv
+      exact Fintype.sum_equiv σ_equiv
+        (fun x => φ (swapSites N x) *
+          (massOperator 2 N (circleSpacing L N) mass φ) (swapSites N x))
+        (fun x => φ x * (massOperator 2 N (circleSpacing L N) mass φ) x)
+        (fun x => by simp [σ_equiv, Equiv.ofBijective_apply]))
     F
 
 /-- **The torus interacting generating functional is swap-invariant at every cutoff.**
@@ -952,6 +1016,59 @@ theorem torusInteractingMeasure_gf_swap_invariant
   exact (interactingLatticeMeasure_swap_invariant L N P mass
     (circleSpacing_pos L N) hmass _).symm
 
+/-- The Laplacian commutes with time reflection `(x₀,x₁) ↦ (-x₀,x₁)`.
+Proof: For i=0, the stencil `φ(-x₀+1,x₁) + φ(-x₀-1,x₁)` = `φ(-x₀-1,x₁) + φ(-x₀+1,x₁)`
+by add_comm. For i=1, the stencil is unchanged since reflection only affects x₀. -/
+private theorem finiteLaplacian_timeReflect_commute (N : ℕ) [NeZero N] (a : ℝ)
+    (φ : FinLatticeField 2 N) :
+    finiteLaplacian 2 N a (φ ∘ timeReflectSites N) =
+    (finiteLaplacian 2 N a φ) ∘ timeReflectSites N := by
+  ext x
+  change finiteLaplacianFun 2 N a (φ ∘ timeReflectSites N) x =
+    finiteLaplacianFun 2 N a φ (timeReflectSites N x)
+  simp only [finiteLaplacianFun, Function.comp]
+  congr 1
+  apply Finset.sum_congr rfl
+  intro i _
+  -- Show: for each direction i, the stencil term with (φ ∘ refl) at x
+  -- equals the stencil term with φ at (refl x)
+  have refl_neighbor_fwd :
+      timeReflectSites N (fun j => if j = i then x j + 1 else x j) =
+      fun j => if j = i then (timeReflectSites N x) j + (if i = (0 : Fin 2) then -1 else 1)
+        else (timeReflectSites N x) j := by
+    ext j
+    simp only [timeReflectSites]
+    fin_cases i <;> fin_cases j <;>
+      simp [Matrix.cons_val_zero, Matrix.cons_val_one]; ring
+  have refl_neighbor_bwd :
+      timeReflectSites N (fun j => if j = i then x j - 1 else x j) =
+      fun j => if j = i then (timeReflectSites N x) j - (if i = (0 : Fin 2) then -1 else 1)
+        else (timeReflectSites N x) j := by
+    ext j
+    simp only [timeReflectSites]
+    fin_cases i <;> fin_cases j <;>
+      simp [Matrix.cons_val_zero, Matrix.cons_val_one]; ring
+  rw [refl_neighbor_fwd, refl_neighbor_bwd]
+  -- For i=1: the offsets are +1 and -1 as normal, so equal
+  -- For i=0: the offsets are -1 and +1 (swapped), so the sum is equal by add_comm
+  fin_cases i <;> simp <;> ring_nf
+
+/-- The mass operator Q = -Δ + m² commutes with time reflection.
+`Q(φ ∘ refl) = (Qφ) ∘ refl` pointwise. -/
+private theorem massOperator_timeReflect_commute (N : ℕ) [NeZero N] (a mass : ℝ)
+    (φ : FinLatticeField 2 N) :
+    massOperator 2 N a mass (φ ∘ timeReflectSites N) =
+    (massOperator 2 N a mass φ) ∘ timeReflectSites N := by
+  have hΔ := finiteLaplacian_timeReflect_commute N a φ
+  ext x
+  simp only [massOperator, ContinuousLinearMap.add_apply,
+    ContinuousLinearMap.neg_apply, ContinuousLinearMap.smul_apply,
+    ContinuousLinearMap.id_apply, Pi.add_apply, Pi.neg_apply,
+    Pi.smul_apply, smul_eq_mul, Function.comp]
+  have h := congr_fun hΔ x
+  simp only [Function.comp] at h
+  linarith
+
 /-- The lattice time-reflection linear map: `(L_refl g)(x) = g(timeReflectSites x)`. -/
 private def latticeTimeReflectLM (N : ℕ) := latticeSitePermuteLM N (timeReflectSites N)
 
@@ -969,9 +1086,40 @@ private theorem interactingLatticeMeasure_timeReflection_invariant
       intro x; simp only [timeReflectSites]
       ext i; fin_cases i <;> simp [Matrix.cons_val_zero, Matrix.cons_val_one]
     exact hinv.bijective
+  have hinv : Function.Involutive (timeReflectSites N) := by
+    intro x; simp only [timeReflectSites]
+    ext i; fin_cases i <;> simp [Matrix.cons_val_zero, Matrix.cons_val_one]
   exact interactingLatticeMeasure_symmetry_invariant L N P mass ha hmass
     (timeReflectSites N) hbij
-    (by sorry) -- Density preservation: gaussianDensity invariant under time reflection
+    (by -- Density preservation: gaussianDensity(φ∘refl⁻¹) = gaussianDensity(φ)
+      intro φ
+      set σ_equiv := Equiv.ofBijective (timeReflectSites N) hbij
+      -- Since refl is involutive, refl⁻¹ = refl
+      have hsymm_eq : ∀ y, σ_equiv.symm y = timeReflectSites N y := by
+        intro y
+        rw [Equiv.symm_apply_eq]
+        exact (hinv y).symm
+      -- Unfold gaussianDensity and show the exponent is equal
+      unfold gaussianDensity
+      congr 1; congr 1
+      -- Rewrite σ_equiv.symm as timeReflectSites everywhere
+      have h_symm_comp : φ ∘ σ_equiv.symm = φ ∘ timeReflectSites N :=
+        funext (fun y => congr_arg φ (hsymm_eq y))
+      rw [h_symm_comp]
+      simp_rw [Function.comp]
+      -- Goal: ∑ x, φ(refl x) * (Q(φ ∘ refl)) x = ∑ x, φ x * (Qφ) x
+      -- Step 1: Use commutativity Q(φ ∘ refl) = (Qφ) ∘ refl
+      have hcomm := massOperator_timeReflect_commute N (circleSpacing L N) mass φ
+      simp_rw [show ∀ x,
+        massOperator 2 N (circleSpacing L N) mass (φ ∘ timeReflectSites N) x =
+        (massOperator 2 N (circleSpacing L N) mass φ) (timeReflectSites N x) from
+        fun x => congr_fun hcomm x]
+      -- Step 2: Relabel sum x ↦ refl x using refl as an Equiv
+      exact Fintype.sum_equiv σ_equiv
+        (fun x => φ (timeReflectSites N x) *
+          (massOperator 2 N (circleSpacing L N) mass φ) (timeReflectSites N x))
+        (fun x => φ x * (massOperator 2 N (circleSpacing L N) mass φ) x)
+        (fun x => by simp [σ_equiv, Equiv.ofBijective_apply]))
     F
 
 /-- **The torus interacting generating functional is time-reflection-invariant.**
