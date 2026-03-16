@@ -260,9 +260,23 @@ private theorem interactingLatticeMeasure_translation_invariant
     (j₁ j₂ : ℤ) (F : Configuration (FinLatticeField 2 N) → E) :
     ∫ ω, F (ω.comp (latticeTranslateLM N j₁ j₂).toContinuousLinearMap)
       ∂(interactingLatticeMeasure 2 N P (circleSpacing L N) mass ha hmass) =
-    ∫ ω, F ω ∂(interactingLatticeMeasure 2 N P (circleSpacing L N) mass ha hmass) :=
-  interactingLatticeMeasure_symmetry_invariant L N P mass ha hmass
-    (translateSites N j₁ j₂) sorry sorry sorry F
+    ∫ ω, F ω ∂(interactingLatticeMeasure 2 N P (circleSpacing L N) mass ha hmass) := by
+  -- Translation x ↦ x - (j₁, j₂) on (ZMod N)² is bijective (group subtraction)
+  have hbij : Function.Bijective (translateSites N j₁ j₂) := by
+    set σ_inv := fun (x : FinLatticeSites 2 N) =>
+      (![x 0 + (j₁ : ZMod N), x 1 + (j₂ : ZMod N)] : FinLatticeSites 2 N)
+    have hleft : Function.LeftInverse σ_inv (translateSites N j₁ j₂) := by
+      intro x; simp only [translateSites, σ_inv]
+      ext i; fin_cases i <;> simp [Matrix.cons_val_zero, Matrix.cons_val_one]
+    have hright : Function.RightInverse σ_inv (translateSites N j₁ j₂) := by
+      intro x; simp only [translateSites, σ_inv]
+      ext i; fin_cases i <;> simp [Matrix.cons_val_zero, Matrix.cons_val_one]
+    exact ⟨hleft.injective, hright.surjective⟩
+  exact interactingLatticeMeasure_symmetry_invariant L N P mass ha hmass
+    (translateSites N j₁ j₂) hbij
+    (by sorry) -- Laplacian preservation: ∫(ω(g∘σ))² = ∫(ωg)²
+    (by sorry) -- Density preservation: gaussianDensity(φ∘σ⁻¹) = gaussianDensity(φ)
+    F
 
 theorem torusInteractingMeasure_gf_latticeTranslation_invariant
     (N : ℕ) [NeZero N] (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
@@ -630,9 +644,18 @@ private theorem interactingLatticeMeasure_swap_invariant
     (F : Configuration (FinLatticeField 2 N) → E) :
     ∫ ω, F (ω.comp (latticeSwapLM N).toContinuousLinearMap) ∂(interactingLatticeMeasure 2 N P
       (circleSpacing L N) mass ha hmass) =
-    ∫ ω, F ω ∂(interactingLatticeMeasure 2 N P (circleSpacing L N) mass ha hmass) :=
-  interactingLatticeMeasure_symmetry_invariant L N P mass ha hmass
-    (swapSites N) sorry sorry sorry F
+    ∫ ω, F ω ∂(interactingLatticeMeasure 2 N P (circleSpacing L N) mass ha hmass) := by
+  -- Swap (x₀, x₁) ↦ (x₁, x₀) is its own inverse, hence bijective
+  have hbij : Function.Bijective (swapSites N) := by
+    have hinv : Function.Involutive (swapSites N) := by
+      intro x; simp only [swapSites]
+      ext i; fin_cases i <;> simp [Matrix.cons_val_zero, Matrix.cons_val_one]
+    exact hinv.bijective
+  exact interactingLatticeMeasure_symmetry_invariant L N P mass ha hmass
+    (swapSites N) hbij
+    (by sorry) -- Laplacian preservation: eigenvalues λ(n₁,n₂) symmetric
+    (by sorry) -- Density preservation: quadratic form symmetric under swap
+    F
 
 /-- **The torus interacting generating functional is swap-invariant at every cutoff.**
 
@@ -706,9 +729,18 @@ private theorem interactingLatticeMeasure_timeReflection_invariant
     (F : Configuration (FinLatticeField 2 N) → E) :
     ∫ ω, F (ω.comp (latticeTimeReflectLM N).toContinuousLinearMap) ∂(interactingLatticeMeasure
       2 N P (circleSpacing L N) mass ha hmass) =
-    ∫ ω, F ω ∂(interactingLatticeMeasure 2 N P (circleSpacing L N) mass ha hmass) :=
-  interactingLatticeMeasure_symmetry_invariant L N P mass ha hmass
-    (timeReflectSites N) sorry sorry sorry F
+    ∫ ω, F ω ∂(interactingLatticeMeasure 2 N P (circleSpacing L N) mass ha hmass) := by
+  -- Time reflection (x₀, x₁) ↦ (-x₀, x₁) is its own inverse, hence bijective
+  have hbij : Function.Bijective (timeReflectSites N) := by
+    have hinv : Function.Involutive (timeReflectSites N) := by
+      intro x; simp only [timeReflectSites]
+      ext i; fin_cases i <;> simp [Matrix.cons_val_zero, Matrix.cons_val_one]
+    exact hinv.bijective
+  exact interactingLatticeMeasure_symmetry_invariant L N P mass ha hmass
+    (timeReflectSites N) hbij
+    (by sorry) -- Laplacian preservation: eigenvalues depend on n₁², invariant under n₁→-n₁
+    (by sorry) -- Density preservation: gaussianDensity invariant under time reflection
+    F
 
 /-- **The torus interacting generating functional is time-reflection-invariant.**
 
