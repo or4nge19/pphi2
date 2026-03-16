@@ -266,9 +266,8 @@ From Cauchy-Schwarz density transfer:
 
 References: Simon, *P(φ)₂ QFT*, Ch. V, Prop. V.1.3. -/
 axiom torusInteractingMeasure_exponentialMomentBound_cutoff
-    (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
-    (f : TorusTestFunction L) :
-    ∃ C : ℝ, 0 < C ∧ ∀ (N : ℕ) [NeZero N],
+    (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass) :
+    ∃ C : ℝ, 0 < C ∧ ∀ (f : TorusTestFunction L) (N : ℕ) [NeZero N],
     ∫ ω : Configuration (TorusTestFunction L),
       Real.exp (|ω f|)
       ∂(torusInteractingMeasure L N P mass hmass) ≤
@@ -291,13 +290,21 @@ theorem torusInteracting_exponentialMomentBound
       Continuous g → (∃ C, ∀ x, |g x| ≤ C) →
         Tendsto (fun n => ∫ ω, g ω ∂(torusInteractingMeasure L (φ n + 1) P mass hmass))
           atTop (nhds (∫ ω, g ω ∂μ)))
-    (f : TorusTestFunction L) :
+    : ∃ K : ℝ, 0 < K ∧ ∀ (f : TorusTestFunction L),
     Integrable (fun ω : Configuration (TorusTestFunction L) =>
       Real.exp (|ω f|)) μ ∧
     ∫ ω : Configuration (TorusTestFunction L),
       Real.exp (|ω f|) ∂μ ≤
-    Real.exp (torusContinuumGreen L mass hmass f f) := by
-  sorry
+    K * Real.exp (torusContinuumGreen L mass hmass f f) := by
+  -- Get the universal cutoff bound (K independent of f and N)
+  obtain ⟨K, hK_pos, hK_bound⟩ :=
+    torusInteractingMeasure_exponentialMomentBound_cutoff L P mass hmass
+  refine ⟨K, hK_pos, fun f => ?_⟩
+  constructor
+  -- Part 1: Integrability + Part 2: Bound
+  -- Both via truncation: min(exp(|ωf|), M) is bcf, converges via hconv,
+  -- bounded by K * exp(G_N(f,f)) at cutoff, transfers to K * exp(G(f,f)).
+  all_goals sorry
 
 /-! ## Helper: integral invariance from generating functional invariance
 
@@ -446,38 +453,36 @@ theorem torusInteracting_os1
         Tendsto (fun n => ∫ ω, f ω ∂(torusInteractingMeasure L (φ n + 1) P mass hmass))
           atTop (nhds (∫ ω, f ω ∂μ))) :
     TorusOS1_Regularity L μ := by
-  -- Use q(f) = G_L(f,f), which is continuous by spectral argument
-  refine ⟨fun f => torusContinuumGreen L mass hmass f f,
-          torusContinuumGreen_continuous_diag L mass hmass,
+  -- Get the exponential moment bound with universal constant K
+  -- Use q(f) = G(f,f) + log(K), c = 1 to absorb the K factor:
+  -- K * exp(G) = exp(G + log K) = exp(q(f)) where q(f) = G(f,f) + log K
+  -- Then ‖Z_ℂ‖ ≤ exp(q(f_im)) ≤ exp(1 * (q(f_re) + q(f_im)))
+  obtain ⟨K, hK_pos, hK_all⟩ :=
+    torusInteracting_exponentialMomentBound L P mass hmass μ φ _hφ _hconv
+  -- Use q(f) = G(f,f) + Real.log K to absorb the constant K
+  refine ⟨fun f => torusContinuumGreen L mass hmass f f + |Real.log K|,
+          (torusContinuumGreen_continuous_diag L mass hmass).add continuous_const,
           1, one_pos, ?_⟩
   intro f_re f_im
-  -- Step 1: Triangle inequality
-  -- ‖Z_ℂ[f_re, f_im]‖ ≤ ∫ ‖exp(I*(ω(f_re) + I*ω(f_im)))‖ dμ
+  -- Get the bound for f_im (using universal K)
+  obtain ⟨h_int_im, h_exp_bound_im⟩ := hK_all f_im
+  -- ‖Z_ℂ‖ ≤ ∫ exp(|ω(f_im)|) dμ ≤ K * exp(G(f_im, f_im))
+  -- = exp(G(f_im) + log K) = exp(q(f_im))
+  -- ≤ exp(1 * (q(f_re) + q(f_im)))
   have h_tri : ‖torusGeneratingFunctionalℂ L μ f_re f_im‖ ≤
       ∫ ω, ‖Complex.exp (Complex.I * (↑(ω f_re) + Complex.I * ↑(ω f_im)))‖ ∂μ :=
     norm_integral_le_integral_norm _
-  -- Step 2: ‖exp(I*(x + Iy))‖ = exp(-y)
   have h_norm : ∀ ω : Configuration (TorusTestFunction L),
       ‖Complex.exp (Complex.I * (↑(ω f_re) + Complex.I * ↑(ω f_im)))‖ =
       Real.exp (-(ω f_im)) := by
     intro ω
-    rw [Complex.norm_exp]
-    congr 1
+    rw [Complex.norm_exp]; congr 1
     have : Complex.I * (↑(ω f_re) + Complex.I * ↑(ω f_im)) =
         -↑(ω f_im) + ↑(ω f_re) * Complex.I := by
       rw [mul_add, ← mul_assoc, Complex.I_mul_I, neg_one_mul]; ring
     rw [this, Complex.add_re, Complex.neg_re, Complex.ofReal_re,
         Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
         Complex.I_re, Complex.I_im, mul_zero, zero_mul, sub_zero, add_zero]
-  -- Step 3: exp(-y) ≤ exp(|y|) since -y ≤ |y|
-  have h_abs_bound : ∀ ω : Configuration (TorusTestFunction L),
-      Real.exp (-(ω f_im)) ≤ Real.exp (|ω f_im|) := by
-    intro ω
-    exact Real.exp_le_exp_of_le (neg_le_abs (ω f_im))
-  -- Step 4: Integrability and bound from exponential moment axiom
-  obtain ⟨h_int_im, h_exp_bound⟩ :=
-    torusInteracting_exponentialMomentBound L P mass hmass μ φ _hφ _hconv f_im
-  -- Step 5: Combine everything
   calc ‖torusGeneratingFunctionalℂ L μ f_re f_im‖
       ≤ ∫ ω, ‖Complex.exp (Complex.I * (↑(ω f_re) + Complex.I * ↑(ω f_im)))‖ ∂μ := h_tri
     _ = ∫ ω, Real.exp (-(ω f_im)) ∂μ := by congr 1; ext ω; exact h_norm ω
@@ -485,13 +490,24 @@ theorem torusInteracting_os1
         apply integral_mono_of_nonneg
         · exact ae_of_all _ (fun _ => (Real.exp_pos _).le)
         · exact h_int_im
-        · exact ae_of_all _ h_abs_bound
-    _ ≤ Real.exp (torusContinuumGreen L mass hmass f_im f_im) := h_exp_bound
-    _ ≤ Real.exp (1 * (torusContinuumGreen L mass hmass f_re f_re +
-          torusContinuumGreen L mass hmass f_im f_im)) := by
-        rw [one_mul]
-        exact Real.exp_le_exp_of_le (le_add_of_nonneg_left
-          (torusContinuumGreen_nonneg L mass hmass f_re))
+        · exact ae_of_all _ (fun ω => Real.exp_le_exp_of_le (neg_le_abs (ω f_im)))
+    _ ≤ K * Real.exp (torusContinuumGreen L mass hmass f_im f_im) := h_exp_bound_im
+    _ ≤ Real.exp (torusContinuumGreen L mass hmass f_im f_im + |Real.log K|) := by
+        have hle : K ≤ Real.exp (|Real.log K|) := by
+          by_cases h1 : 1 ≤ K
+          · rw [abs_of_nonneg (Real.log_nonneg h1), Real.exp_log hK_pos]
+          · push_neg at h1
+            exact le_trans h1.le (Real.one_le_exp (abs_nonneg _))
+        calc K * Real.exp (torusContinuumGreen L mass hmass f_im f_im)
+            ≤ Real.exp (|Real.log K|) *
+              Real.exp (torusContinuumGreen L mass hmass f_im f_im) :=
+              mul_le_mul_of_nonneg_right hle (Real.exp_pos _).le
+          _ = Real.exp (torusContinuumGreen L mass hmass f_im f_im + |Real.log K|) := by
+              rw [← Real.exp_add]; ring_nf
+    _ ≤ Real.exp (1 * ((torusContinuumGreen L mass hmass f_re f_re + |Real.log K|) +
+          (torusContinuumGreen L mass hmass f_im f_im + |Real.log K|))) := by
+        rw [one_mul]; apply Real.exp_le_exp_of_le
+        linarith [torusContinuumGreen_nonneg L mass hmass f_re, abs_nonneg (Real.log K)]
 
 /-! ## OS2: Translation invariance of the interacting measure
 
