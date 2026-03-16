@@ -59,6 +59,7 @@ import Pphi2.TorusContinuumLimit.TorusOSAxioms
 import Pphi2.TorusContinuumLimit.TorusInteractingLimit
 import Pphi2.TorusContinuumLimit.TorusPropagatorConvergence
 import Pphi2.GeneralResults.ComplexAnalysis
+import Pphi2.InteractingMeasure.Normalization
 import Torus.Evaluation
 
 noncomputable section
@@ -89,46 +90,163 @@ private def latticeSitePermuteLM (N : ℕ)
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
 
+/-- Helper: `piCongrLeft(σ_equiv)` maps `φ ↦ φ ∘ σ⁻¹`. -/
+private lemma piCongrLeft_eq_comp_symm {N : ℕ}
+    (σ_equiv : FinLatticeSites 2 N ≃ FinLatticeSites 2 N)
+    (φ : FinLatticeField 2 N) :
+    (Equiv.piCongrLeft (fun _ : FinLatticeSites 2 N => ℝ) σ_equiv) φ =
+      φ ∘ σ_equiv.symm := by
+  ext x
+  change (Equiv.piCongrLeft (fun _ => ℝ) σ_equiv) φ x = φ (σ_equiv.symm x)
+  -- Use piCongrLeft_apply_apply with y = σ⁻¹ x:
+  -- piCongrLeft(σ) φ (σ (σ⁻¹ x)) = φ (σ⁻¹ x)
+  -- Since σ (σ⁻¹ x) = x, this gives piCongrLeft(σ) φ x = φ (σ⁻¹ x)
+  have h := Equiv.piCongrLeft_apply_apply (P := fun _ : FinLatticeSites 2 N => ℝ)
+    σ_equiv φ (σ_equiv.symm x)
+  rwa [σ_equiv.apply_symm_apply] at h
+
 /-- **Lattice interacting measure is invariant under site symmetries.**
 
-For any site permutation `σ` that preserves the lattice Laplacian
-eigenvalues, the interacting measure is σ-invariant. This single axiom
-unifies translation, swap, and time-reflection invariance.
+For a bijective site permutation `σ` that preserves the Gaussian density,
+`integral F(omega . sigma) d mu_int = integral F(omega) d mu_int`.
 
-The proof uses:
-1. V(σω) = V(ω): interaction sums over all sites (relabeling-invariant)
-2. ρ(σφ) = ρ(φ): Gaussian density depends on eigenvalues (σ-invariant by hσ)
-3. |det(σ)| = 1: σ is a permutation matrix on ℝ^{sites}
-
-**The interacting lattice measure is invariant under Laplacian symmetries.**
-
-For a site bijection σ that preserves the lattice Gaussian quadratic form,
-the interacting measure `(1/Z) exp(-V) dμ_GFF` is σ-invariant.
-
-Proof (standard, see Glimm-Jaffe §8.1, Simon Ch. V):
-1. **BW invariance**: V(ω∘σ) = V(ω) — the interaction `Σ_x :P(φ(x)):_c`
-   sums over ALL sites; σ just relabels. Uses ultra-locality: the Wick
-   constant `C_{xx}` is site-independent on the torus (Green's function
-   depends only on x-y), so `:P:_c` is the same polynomial at every site.
-2. **Gaussian density invariance**: ρ(φ∘σ) = ρ(φ) — from `hσ_laplacian`
-   (σ commutes with the Laplacian, preserving the quadratic form).
-3. **Lebesgue preservation**: φ ↦ φ∘σ is a permutation matrix (det = ±1).
-4. **Partition function**: Z = ∫ exp(-V) dμ_GFF is the same after
-   change of variables (by steps 1-3), so the Z⁻¹ factor matches. -/
-axiom interactingLatticeMeasure_symmetry_invariant
+Proof:
+1. BW invariance: V(omega . sigma) = V(omega) (interaction sum relabeling)
+2. Density invariance: rho(phi . sigma^-1) = rho(phi) (hypothesis)
+3. Lebesgue preservation: phi -> phi . sigma^-1 is a permutation (det = plus or minus 1)
+4. Gaussian measure preservation: combines 2 + 3 (sorry, to be filled)
+5. Change of variables on the E-valued Bochner integral -/
+theorem interactingLatticeMeasure_symmetry_invariant
     (N : ℕ) [NeZero N] (P : InteractionPolynomial) (mass : ℝ)
     (ha : 0 < circleSpacing L N) (hmass : 0 < mass)
     (σ : FinLatticeSites 2 N → FinLatticeSites 2 N)
-    (_hσ_bij : Function.Bijective σ)
+    (hσ_bij : Function.Bijective σ)
     (_hσ_laplacian : ∀ (g : FinLatticeField 2 N),
       ∫ ω : Configuration (FinLatticeField 2 N), (ω (g ∘ σ)) ^ 2
         ∂(latticeGaussianMeasure 2 N (circleSpacing L N) mass ha hmass) =
       ∫ ω, (ω g) ^ 2 ∂(latticeGaussianMeasure 2 N (circleSpacing L N) mass ha hmass))
+    (hσ_density : ∀ φ : FinLatticeField 2 N,
+      gaussianDensity 2 N (circleSpacing L N) mass
+        (φ ∘ (Equiv.ofBijective σ hσ_bij).symm) =
+      gaussianDensity 2 N (circleSpacing L N) mass φ)
     {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
     (F : Configuration (FinLatticeField 2 N) → E) :
     ∫ ω, F (ω.comp (latticeSitePermuteLM N σ).toContinuousLinearMap)
       ∂(interactingLatticeMeasure 2 N P (circleSpacing L N) mass ha hmass) =
-    ∫ ω, F ω ∂(interactingLatticeMeasure 2 N P (circleSpacing L N) mass ha hmass)
+    ∫ ω, F ω ∂(interactingLatticeMeasure 2 N P (circleSpacing L N) mass ha hmass) := by
+  -- Setup notation
+  set a := circleSpacing L N
+  set mu_GFF := latticeGaussianMeasure 2 N a mass ha hmass
+  set bw := boltzmannWeight 2 N P a mass
+  set σ_equiv := Equiv.ofBijective σ hσ_bij
+  set L_σ : FinLatticeField 2 N →ₗ[ℝ] FinLatticeField 2 N :=
+    latticeSitePermuteLM N σ
+  -- Step 1: Unfold the interacting measure = Z⁻¹ • μ_GFF.withDensity(bw)
+  unfold interactingLatticeMeasure
+  simp_rw [integral_smul_measure]
+  congr 1  -- Z⁻¹ factor is the same on both sides
+  -- Step 2: Convert withDensity integrals to μ_GFF integrals with NNReal smul
+  set bw_nn := fun ω : Configuration (FinLatticeField 2 N) => Real.toNNReal (bw ω)
+  have hbw_nn_meas : Measurable bw_nn :=
+    Measurable.real_toNNReal
+      ((interactionFunctional_measurable 2 N P a mass).neg.exp)
+  change ∫ ω, F (ω.comp L_σ.toContinuousLinearMap)
+      ∂(mu_GFF.withDensity (fun ω => ↑(bw_nn ω))) =
+    ∫ ω, F ω ∂(mu_GFF.withDensity (fun ω => ↑(bw_nn ω)))
+  rw [integral_withDensity_eq_integral_smul hbw_nn_meas,
+      integral_withDensity_eq_integral_smul hbw_nn_meas]
+  -- Step 3: BW invariance at the configuration level
+  -- bw(ω.comp L_σ) = bw(ω) because the interaction sums over all sites
+  -- and composing with σ just relabels the sum.
+  have hBW_config : ∀ ω : Configuration (FinLatticeField 2 N),
+      bw (ω.comp L_σ.toContinuousLinearMap) = bw ω := by
+    intro ω
+    suffices h : interactionFunctional 2 N P a mass
+        (ω.comp L_σ.toContinuousLinearMap) =
+        interactionFunctional 2 N P a mass ω by
+      simp only [bw, boltzmannWeight, h]
+    simp only [interactionFunctional]
+    congr 1
+    apply Fintype.sum_equiv σ_equiv.symm
+    intro x; congr 1
+    -- (ω.comp L_σ)(δ_x) = ω(δ_x ∘ σ) = ω(δ_{σ⁻¹ x})
+    change ω (L_σ (finLatticeDelta 2 N x)) = ω (finLatticeDelta 2 N (σ_equiv.symm x))
+    congr 1; ext y
+    simp only [L_σ, latticeSitePermuteLM, LinearMap.coe_mk, AddHom.coe_mk,
+      Function.comp, finLatticeDelta]
+    -- Goal: (if σ y = x then 1 else 0) = (if y = σ_equiv.symm x then 1 else 0)
+    congr 1; exact propext σ_equiv.apply_eq_iff_eq_symm_apply
+  -- Step 4: Use BW invariance to factor the LHS integrand as G ∘ Φ
+  have hBW_nn_config : ∀ ω : Configuration (FinLatticeField 2 N),
+      bw_nn (ω.comp L_σ.toContinuousLinearMap) = bw_nn ω := by
+    intro ω; simp only [bw_nn, hBW_config]
+  set G := fun ω : Configuration (FinLatticeField 2 N) => bw_nn ω • F ω
+  -- Rewrite LHS integrand: bw_nn(ω) • F(Φ(ω)) = G(Φ(ω))
+  -- using bw_nn(Φ(ω)) = bw_nn(ω)
+  have hG_eq : ∀ ω, bw_nn ω • F (ω.comp L_σ.toContinuousLinearMap) =
+      G (ω.comp L_σ.toContinuousLinearMap) := by
+    intro ω; simp only [G, hBW_nn_config]
+  simp_rw [hG_eq]
+  -- Goal: ∫ G(ω.comp L_σ) dμ_GFF = ∫ G(ω) dμ_GFF
+  -- Step 5: Build configuration-level MeasurableEquiv
+  -- ω ↦ ω.comp L_σ corresponds via evalMap to φ ↦ φ ∘ σ⁻¹ = piCongrLeft(σ_equiv)(φ)
+  -- As functions: Φ = evalME.symm ∘ piCongrLeft(σ_equiv) ∘ evalME
+  -- In .trans notation (A.trans B = B ∘ A):
+  --   Φ = evalME.trans(σ_field.trans(evalME.symm)) : Config → Config
+  set σ_field_equiv : FinLatticeField 2 N ≃ᵐ FinLatticeField 2 N :=
+    MeasurableEquiv.piCongrLeft (fun _ : FinLatticeSites 2 N => ℝ) σ_equiv
+  set evalME := GaussianField.evalMapMeasurableEquiv 2 N
+  set Φ_equiv : Configuration (FinLatticeField 2 N) ≃ᵐ
+      Configuration (FinLatticeField 2 N) :=
+    evalME.trans (σ_field_equiv.trans evalME.symm)
+  -- Step 6: Show Φ_equiv agrees with ω ↦ ω.comp L_σ.toCLM
+  have hΦ_eq : ∀ ω : Configuration (FinLatticeField 2 N),
+      Φ_equiv ω = ω.comp L_σ.toContinuousLinearMap := by
+    intro ω
+    -- Φ_equiv ω = evalME.symm(σ_field(evalME(ω)))
+    -- Both sides are configurations; show they agree on all delta functions.
+    apply evalME.injective
+    ext x
+    -- LHS: evalME(Φ_equiv ω)(x) = evalME(evalME.symm(σ_field(evalME ω)))(x)
+    --     = σ_field(evalME ω)(x) (by apply_symm_apply)
+    simp only [Φ_equiv, MeasurableEquiv.trans_apply, MeasurableEquiv.apply_symm_apply]
+    -- Now LHS: σ_field_equiv(evalME ω)(x)
+    -- RHS: evalME(ω.comp L_σ)(x) = (ω.comp L_σ)(δ_x)
+    -- Use piCongrLeft_eq_comp_symm to simplify LHS
+    rw [show σ_field_equiv (evalME ω) = (evalME ω) ∘ σ_equiv.symm from
+      piCongrLeft_eq_comp_symm σ_equiv (evalME ω)]
+    -- LHS: ((evalME ω) ∘ σ⁻¹)(x) = (evalME ω)(σ⁻¹ x) = ω(δ_{σ⁻¹ x})
+    -- RHS: evalME(ω.comp L_σ)(x) = (ω.comp L_σ)(δ_x) = ω(δ_x ∘ σ)
+    simp only [Function.comp, evalME]
+    -- Goal: ω(δ_{σ⁻¹ x}) = (ω.comp L_σ)(δ_x) = ω(L_σ(δ_x))
+    change ω (finLatticeDelta 2 N (σ_equiv.symm x)) =
+      ω (L_σ (finLatticeDelta 2 N x))
+    congr 1; ext y
+    simp only [L_σ, latticeSitePermuteLM, LinearMap.coe_mk, AddHom.coe_mk,
+      Function.comp, finLatticeDelta]
+    congr 1; exact propext σ_equiv.eq_symm_apply
+  -- Step 7: Rewrite G(ω.comp L_σ) as G(Φ_equiv ω)
+  simp_rw [← hΦ_eq]
+  -- Goal: ∫ G(Φ_equiv ω) dμ_GFF = ∫ G(ω) dμ_GFF
+  -- Step 8: Show Φ_equiv preserves μ_GFF and apply MeasurePreserving.integral_comp'
+  -- Φ_equiv = evalME.trans(σ_field.trans(evalME.symm))
+  -- evalME maps μ_GFF to latticeGaussianFieldLaw = (∫ρ)⁻¹ • volume.withDensity(ρ)
+  -- σ_field preserves this measure (by density invariance + volume preservation)
+  -- evalME.symm maps it back
+  -- Net result: Φ_equiv preserves μ_GFF
+  have hΦ_mp : MeasurePreserving Φ_equiv mu_GFF mu_GFF := by
+    -- Decompose: Φ = evalME.trans(σ_field.trans(evalME.symm))
+    -- MeasurePreserving of a composition
+    -- We need: evalME maps μ_GFF to some ν, σ_field preserves ν, evalME.symm maps ν back
+    -- Actually, for MeasurableEquiv, Φ_equiv.symm.map μ_GFF = μ_GFF
+    -- It's easier to show directly.
+    -- Use the ℝ-valued density bridge to show Φ_* μ_GFF = μ_GFF.
+    -- For any measurable set S: Φ_*(μ_GFF)(S) = μ_GFF(Φ⁻¹(S)) = μ_GFF(S)
+    -- This requires showing all finite-dimensional distributions agree.
+    -- For now, we sorry this (the formal proof requires connecting through
+    -- latticeGaussianFieldLaw and the density bridge).
+    sorry
+  exact hΦ_mp.integral_comp' G
 
 -- Specific instances:
 
@@ -144,7 +262,7 @@ private theorem interactingLatticeMeasure_translation_invariant
       ∂(interactingLatticeMeasure 2 N P (circleSpacing L N) mass ha hmass) =
     ∫ ω, F ω ∂(interactingLatticeMeasure 2 N P (circleSpacing L N) mass ha hmass) :=
   interactingLatticeMeasure_symmetry_invariant L N P mass ha hmass
-    (translateSites N j₁ j₂) sorry sorry F
+    (translateSites N j₁ j₂) sorry sorry sorry F
 
 theorem torusInteractingMeasure_gf_latticeTranslation_invariant
     (N : ℕ) [NeZero N] (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
@@ -514,7 +632,7 @@ private theorem interactingLatticeMeasure_swap_invariant
       (circleSpacing L N) mass ha hmass) =
     ∫ ω, F ω ∂(interactingLatticeMeasure 2 N P (circleSpacing L N) mass ha hmass) :=
   interactingLatticeMeasure_symmetry_invariant L N P mass ha hmass
-    (swapSites N) sorry sorry F
+    (swapSites N) sorry sorry sorry F
 
 /-- **The torus interacting generating functional is swap-invariant at every cutoff.**
 
@@ -590,7 +708,7 @@ private theorem interactingLatticeMeasure_timeReflection_invariant
       2 N P (circleSpacing L N) mass ha hmass) =
     ∫ ω, F ω ∂(interactingLatticeMeasure 2 N P (circleSpacing L N) mass ha hmass) :=
   interactingLatticeMeasure_symmetry_invariant L N P mass ha hmass
-    (timeReflectSites N) sorry sorry F
+    (timeReflectSites N) sorry sorry sorry F
 
 /-- **The torus interacting generating functional is time-reflection-invariant.**
 
