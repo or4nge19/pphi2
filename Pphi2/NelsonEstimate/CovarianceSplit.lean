@@ -53,7 +53,7 @@ theorem covariance_split (T : ℝ) (m : ℕ) :
     (latticeEigenvalue d N a mass m)⁻¹ =
     smoothCovEigenvalue d N a mass T m + roughCovEigenvalue d N a mass T m := by
   unfold smoothCovEigenvalue roughCovEigenvalue
-  rw [add_div]; ring
+  rw [inv_eq_one_div, ← add_div]; ring
 
 /-- The smooth Wick constant: average of smooth covariance eigenvalues. -/
 def smoothWickConstant (T : ℝ) : ℝ :=
