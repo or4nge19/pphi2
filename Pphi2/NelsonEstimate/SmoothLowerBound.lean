@@ -123,7 +123,7 @@ theorem smooth_interaction_lower_bound_log (ha : 0 < a) (hmass : 0 < mass)
     a ^ d * ∑ x : FinLatticeSites d N,
       wickMonomial 4 (smoothWickConstant d N a mass T) (φ_S x) := by
   -- Step 1: Get the smooth variance bound c_S ≤ K₁ · (1 + |log T|)
-  obtain ⟨K₁, hK₁, h_cS_bound⟩ := smoothVariance_le_log d N a mass hd T hT
+  obtain ⟨K₁, hK₁, h_cS_bound⟩ := smoothVariance_le_log d N a mass hd T hT ha hmass
   -- Step 2: Apply smooth_interaction_lower_bound_volume
   -- V_S ≥ -6 L^d c_S² ≥ -6 L^d (K₁(1+|log T|))² = -6 L^d K₁² (1+|log T|)²
   have hc_S_nn : 0 ≤ smoothWickConstant d N a mass T := by
