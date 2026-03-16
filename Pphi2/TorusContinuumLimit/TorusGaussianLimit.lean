@@ -37,6 +37,7 @@ the S'(ℝ^d) approach, but on the torus configuration space.
 import Pphi2.TorusContinuumLimit.TorusConvergence
 import Mathlib.MeasureTheory.Measure.HasOuterApproxClosed
 import Mathlib.Probability.Distributions.Gaussian.Real
+import Pphi2.TorusContinuumLimit.MeasureUniqueness
 
 noncomputable section
 
@@ -778,10 +779,8 @@ theorem gaussian_measure_unique_of_covariance
     (hcov : ∀ (f : TorusTestFunction L),
       ∫ ω : Configuration (TorusTestFunction L), (ω f) ^ 2 ∂μ₁ =
       ∫ ω : Configuration (TorusTestFunction L), (ω f) ^ 2 ∂μ₂) :
-    μ₁ = μ₂ := by
-  -- Same covariance + both Gaussian → same MGF → same 1D marginals → same measure
-  -- Proved in gaussian-field (GaussianField.MeasureUniqueness) modulo Cramér-Wold
-  sorry
+    μ₁ = μ₂ :=
+  GaussianField.gaussian_measure_unique_of_covariance μ₁ μ₂ hμ₁_gauss hμ₂_gauss hcov
 
 /-! ## Z₂ symmetry helpers -/
 
