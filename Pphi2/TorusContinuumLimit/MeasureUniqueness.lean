@@ -249,13 +249,17 @@ theorem gaussian_measure_unique_of_covariance
       μ₁.map (fun ω : Configuration E => ω f) =
       μ₂.map (fun ω : Configuration E => ω f) :=
     eval_map_eq_of_covariance μ₁ μ₂ hμ₁_gauss hμ₂_gauss hcov
-  -- Step 2: Equal 1D marginals for all f → equal measures
-  -- This follows from Minlos uniqueness (bochner project, 0 sorries):
-  --   minlos_uniqueness: two measures with same CF are equal
-  -- BLOCKED by MeasurableSpace diamond: gaussian-field and bochner define
-  -- different (but equal) MeasurableSpace instances on WeakDual ℝ E.
-  -- Fix: unify the instances across repos.
-  sorry
+  -- Step 2: Pushforward measures to ℝ^ℕ agree
+  have h_push_eq := pushforward_eq_of_eval_eq μ₁ μ₂ h_eval
+  -- Step 3: Pull back from ℝ^ℕ to Configuration E
+  ext s hs
+  rw [instMeasurableSpaceConfiguration_eq_comap] at hs
+  obtain ⟨T, hT, hpre⟩ := hs
+  calc μ₁ s = (μ₁.map configBasisEval) T := by
+        rw [Measure.map_apply configBasisEval_measurable hT, ← hpre]
+    _ = (μ₂.map configBasisEval) T := by rw [h_push_eq]
+    _ = μ₂ s := by
+        rw [Measure.map_apply configBasisEval_measurable hT, ← hpre]
 
 end GaussianField
 
