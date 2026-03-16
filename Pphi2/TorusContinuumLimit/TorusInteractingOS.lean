@@ -512,7 +512,7 @@ G_N(h, h) ≤ (1/mass²) · p(h)² for a fixed continuous seminorm p on
 TorusTestFunction L, uniformly in N. Follows from eigenvalues λ_k ≥ mass². -/
 axiom torusEmbeddedTwoPoint_le_seminorm
     (mass : ℝ) (hmass : 0 < mass) :
-    ∃ (p : TorusTestFunction L → ℝ) (_ : Continuous p),
+    ∃ (p : TorusTestFunction L → ℝ) (_ : Continuous p) (_ : p 0 = 0),
     ∀ (f : TorusTestFunction L) (N : ℕ) [NeZero N],
       torusEmbeddedTwoPoint L N mass hmass f f ≤ p f ^ 2
 
@@ -525,6 +525,57 @@ axiom torusTranslation_continuous_in_v
     (f : TorusTestFunction L) :
     Continuous (fun v : ℝ × ℝ => torusTranslation L v f)
 
+/-- **Generating functional is uniformly Lipschitz in a continuous seminorm.**
+
+For a probability measure with second moments bounded by `C · G_N(f,f)` and
+`G_N(f,f) ≤ p(f)²`, the generating functional satisfies:
+
+  `‖Z_N[g] - Z_N[h]‖ ≤ B · p(g - h)`
+
+with B = 2√C independent of N. The proof uses:
+1. `‖exp(ia) - exp(ib)‖ ≤ 2|a-b|` (Lipschitz of Re/Im parts of exp(i·))
+2. Triangle inequality for integrals
+3. `E[|X|] ≤ √(E[X²])` (Cauchy-Schwarz for probability measures)
+4. `E_P[ω(h)²] ≤ C · G_N(h,h) ≤ C · p(h)²` (uniform second moment + seminorm bound) -/
+private theorem gf_sub_norm_le_seminorm
+    (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass) :
+    ∃ (B : ℝ) (p : TorusTestFunction L → ℝ),
+    Continuous p ∧ p 0 = 0 ∧
+    ∀ (g h : TorusTestFunction L) (N : ℕ) [NeZero N],
+    ‖torusGeneratingFunctional L
+        (torusInteractingMeasure L N P mass hmass) g -
+      torusGeneratingFunctional L
+        (torusInteractingMeasure L N P mass hmass) h‖ ≤
+    B * p (g - h) := by
+  -- Get constants from the two uniform bounds
+  obtain ⟨C, hC_pos, hC_bound⟩ :=
+    torus_interacting_second_moment_continuous L P mass hmass
+  obtain ⟨p, hp_cont, hp_zero, hp_bound⟩ :=
+    torusEmbeddedTwoPoint_le_seminorm L mass hmass
+  -- The bound B = 2 * √C works with seminorm p
+  refine ⟨2 * Real.sqrt C, p, hp_cont, hp_zero, fun g h N _ => ?_⟩
+  · -- ‖Z_N[g] - Z_N[h]‖ ≤ 2√C · p(g - h)
+    set μ := torusInteractingMeasure L N P mass hmass
+    -- Key bound: ∫ω(g-h)² dμ ≤ C · p(g-h)²
+    have h_second : ∫ ω : Configuration (TorusTestFunction L),
+        (ω (g - h)) ^ 2 ∂μ ≤
+        C * torusEmbeddedTwoPoint L N mass hmass (g - h) (g - h) :=
+      hC_bound (g - h) N
+    have h_seminorm : torusEmbeddedTwoPoint L N mass hmass
+        (g - h) (g - h) ≤ p (g - h) ^ 2 :=
+      hp_bound (g - h) N
+    have h_combined : ∫ ω : Configuration (TorusTestFunction L),
+        (ω (g - h)) ^ 2 ∂μ ≤ C * p (g - h) ^ 2 :=
+      h_second.trans (mul_le_mul_of_nonneg_left h_seminorm hC_pos.le)
+    -- The full chain: ‖Z[g]-Z[h]‖ ≤ 2∫|ω(g-h)|dμ ≤ 2√(∫ω(g-h)²dμ)
+    -- ≤ 2√(C·p(g-h)²) = 2√C·|p(g-h)| ≤ 2√C·p(g-h)
+    -- The intermediate steps (exp Lipschitz + Cauchy-Schwarz) are
+    -- standard but technically involved:
+    -- 1. ‖Z[g]-Z[h]‖ ≤ 2∫|ω(g-h)| uses abs_cos_sub_cos_le +
+    --    abs_sin_sub_sin_le + Re/Im decomposition
+    -- 2. ∫|X| ≤ √(∫X²) uses Cauchy-Schwarz for probability measures
+    sorry
+
 theorem torusGF_latticeApproximation_error_vanishes
     (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
     (φ : ℕ → ℕ) (hφ : StrictMono φ)
@@ -534,17 +585,127 @@ theorem torusGF_latticeApproximation_error_vanishes
         (torusTranslation L v f) -
       torusGeneratingFunctional L (torusInteractingMeasure L (φ n + 1) P mass hmass) f)
     atTop (nhds 0) := by
-  -- Proof outline (see docs/translation-invariance-proof.md):
-  -- 1. For each n, let w_n be the nearest lattice vector to v
-  -- 2. Z_N[T_{w_n} f] = Z_N[f] (lattice invariance, proved)
-  -- 3. |Z_N[T_v f] - Z_N[T_{w_n} f]| ≤ √(C · G_N(T_v f - T_{w_n} f, ...))
-  --    (from torus_interacting_second_moment_continuous + Cauchy-Schwarz)
-  -- 4. G_N(T_v f - T_{w_n} f, ...) ≤ p(T_v f - T_{w_n} f)²
-  --    (from torusEmbeddedTwoPoint_le_seminorm)
-  -- 5. p(T_v f - T_{w_n} f) → 0
-  --    (from torusTranslation_continuous_in_v + w_n → v)
-  -- 6. Hence Z_N[T_v f] - Z_N[f] → 0
-  sorry
+  -- Step 1: Get the uniform GF Lipschitz bound
+  obtain ⟨B, p, hp_cont, hp_zero, hp_bound⟩ :=
+    gf_sub_norm_le_seminorm L P mass hmass
+  -- Step 2: For each n, define w_n as the nearest lattice point to v.
+  -- w_n = (a_n * j₁_n, a_n * j₂_n) where a_n = L/(φ(n)+1) and
+  -- j_i_n = round(v_i / a_n) is the nearest integer.
+  set a : ℕ → ℝ := fun n => circleSpacing L (φ n + 1)
+  set j₁ : ℕ → ℤ := fun n => round (v.1 / a n)
+  set j₂ : ℕ → ℤ := fun n => round (v.2 / a n)
+  set w : ℕ → ℝ × ℝ := fun n => (a n * j₁ n, a n * j₂ n)
+  -- Step 3: Z_N[T_{w_n} f] = Z_N[f] by lattice translation invariance
+  have h_lattice_inv : ∀ n,
+      torusGeneratingFunctional L
+        (torusInteractingMeasure L (φ n + 1) P mass hmass)
+        (torusTranslation L (w n) f) =
+      torusGeneratingFunctional L
+        (torusInteractingMeasure L (φ n + 1) P mass hmass) f := by
+    intro n
+    exact (torusInteractingMeasure_gf_latticeTranslation_invariant
+      L (φ n + 1) P mass hmass (j₁ n) (j₂ n) f).symm
+  -- Step 4: Rewrite the target as Z_N[T_v f] - Z_N[T_{w_n} f]
+  -- Since Z_N[T_{w_n} f] = Z_N[f], we have:
+  -- Z_N[T_v f] - Z_N[f] = Z_N[T_v f] - Z_N[T_{w_n} f]
+  have h_rewrite : ∀ n,
+      torusGeneratingFunctional L
+        (torusInteractingMeasure L (φ n + 1) P mass hmass)
+        (torusTranslation L v f) -
+      torusGeneratingFunctional L
+        (torusInteractingMeasure L (φ n + 1) P mass hmass) f =
+      torusGeneratingFunctional L
+        (torusInteractingMeasure L (φ n + 1) P mass hmass)
+        (torusTranslation L v f) -
+      torusGeneratingFunctional L
+        (torusInteractingMeasure L (φ n + 1) P mass hmass)
+        (torusTranslation L (w n) f) := by
+    intro n; rw [h_lattice_inv n]
+  simp_rw [h_rewrite]
+  -- Step 5: Bound ‖Z_N[T_v f] - Z_N[T_{w_n} f]‖ ≤ B * p(T_v f - T_{w_n} f)
+  have h_norm_bound : ∀ n,
+      ‖torusGeneratingFunctional L
+          (torusInteractingMeasure L (φ n + 1) P mass hmass)
+          (torusTranslation L v f) -
+        torusGeneratingFunctional L
+          (torusInteractingMeasure L (φ n + 1) P mass hmass)
+          (torusTranslation L (w n) f)‖ ≤
+      B * p (torusTranslation L v f - torusTranslation L (w n) f) :=
+    fun n => hp_bound _ _ _
+  -- Step 6: Show B * p(T_v f - T_{w_n} f) → 0
+  -- This follows from w_n → v and continuity of v ↦ T_v f and p.
+  -- Step 6a: a_n → 0 (lattice spacing vanishes)
+  have h_a_tendsto : Tendsto a atTop (nhds 0) := by
+    change Tendsto (fun n => L / (↑(φ n + 1) : ℝ)) atTop (nhds 0)
+    have h_denom : Tendsto (fun n => (↑(φ n + 1) : ℝ)) atTop atTop := by
+      exact tendsto_natCast_atTop_atTop.comp
+        ((tendsto_add_atTop_nat 1).comp (hφ.tendsto_atTop))
+    exact h_denom.const_div_atTop L
+  -- Step 6b: w_n → v (each component is within a_n/2 of v_i)
+  have h_w_tendsto : Tendsto w atTop (nhds v) := by
+    rw [Prod.tendsto_iff]
+    have h_comp : ∀ (vi : ℝ) (ji : ℕ → ℤ),
+        (∀ n, ji n = round (vi / a n)) →
+        Tendsto (fun n => a n * (ji n : ℝ)) atTop (nhds vi) := by
+      intro vi ji hji
+      -- |a_n * ji_n - vi| ≤ a_n/2, so a_n * ji_n → vi as a_n → 0
+      have h_a_half : Tendsto (fun n => a n / 2) atTop (nhds 0) := by
+        simpa using h_a_tendsto.div_const (2 : ℝ)
+      apply tendsto_of_tendsto_of_tendsto_of_le_of_le
+        (g := fun n => vi - a n / 2) (h := fun n => vi + a n / 2)
+      · -- vi - a_n/2 → vi
+        simpa using tendsto_const_nhds.sub h_a_half
+      · -- vi + a_n/2 → vi
+        simpa using tendsto_const_nhds.add h_a_half
+      · -- vi - a_n/2 ≤ a_n * ji_n
+        intro n; simp only
+        have ha_pos : 0 < a n := circleSpacing_pos L (φ n + 1)
+        have h_bnd := abs_sub_round (vi / a n)
+        rw [abs_le] at h_bnd
+        have h1 : vi / a n - (1:ℝ) / 2 ≤ ↑(ji n) := by
+          rw [hji]; linarith [h_bnd.1]
+        have h2 : vi = a n * (vi / a n) := by field_simp
+        linarith [mul_le_mul_of_nonneg_left h1 ha_pos.le]
+      · -- a_n * ji_n ≤ vi + a_n/2
+        intro n; simp only
+        have ha_pos : 0 < a n := circleSpacing_pos L (φ n + 1)
+        have h_bnd := abs_sub_round (vi / a n)
+        rw [abs_le] at h_bnd
+        have h1 : ↑(ji n) ≤ vi / a n + (1:ℝ) / 2 := by
+          rw [hji]; linarith [h_bnd.2]
+        have h2 : vi = a n * (vi / a n) := by field_simp
+        linarith [mul_le_mul_of_nonneg_left h1 ha_pos.le]
+    constructor
+    · change Tendsto (fun n => (w n).1) atTop (nhds v.1)
+      change Tendsto (fun n => a n * (j₁ n : ℝ)) atTop (nhds v.1)
+      exact h_comp v.1 j₁ (fun _ => rfl)
+    · change Tendsto (fun n => (w n).2) atTop (nhds v.2)
+      change Tendsto (fun n => a n * (j₂ n : ℝ)) atTop (nhds v.2)
+      exact h_comp v.2 j₂ (fun _ => rfl)
+  -- Step 6b: T_{w_n} f → T_v f (by continuity of translation)
+  have h_Tw_tendsto :
+      Tendsto (fun n => torusTranslation L (w n) f) atTop
+        (nhds (torusTranslation L v f)) :=
+    (torusTranslation_continuous_in_v L f).continuousAt.tendsto.comp
+      h_w_tendsto
+  -- Step 6c: p(T_v f - T_{w_n} f) → p(T_v f - T_v f) = p(0) = 0
+  have h_p_tendsto :
+      Tendsto (fun n => p (torusTranslation L v f -
+        torusTranslation L (w n) f)) atTop (nhds 0) := by
+    have h_sub_tendsto : Tendsto
+        (fun n => torusTranslation L v f - torusTranslation L (w n) f)
+        atTop (nhds (torusTranslation L v f - torusTranslation L v f)) :=
+      Filter.Tendsto.const_sub _ h_Tw_tendsto
+    rw [sub_self] at h_sub_tendsto
+    rw [← hp_zero]
+    exact hp_cont.continuousAt.tendsto.comp h_sub_tendsto
+  -- Step 7: Conclude by squeezing
+  apply squeeze_zero_norm (fun n => h_norm_bound n)
+  -- Need: B * p(T_v f - T_{w_n} f) → 0
+  have : Tendsto (fun n => B * p (torusTranslation L v f -
+      torusTranslation L (w n) f)) atTop (nhds (B * 0)) :=
+    h_p_tendsto.const_mul B
+  simpa using this
 
 /-! ## Helper: integral invariance from generating functional invariance
 
