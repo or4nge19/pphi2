@@ -909,45 +909,11 @@ theorem z2_symmetric_of_weakLimit
       Tendsto (fun n => ∫ ω, g ω ∂(μ_seq n)) atTop (nhds (∫ ω, g ω ∂μ))) :
     Measure.map (Neg.neg : Configuration (TorusTestFunction L) →
       Configuration (TorusTestFunction L)) μ = μ := by
-  -- We use the measure extensionality theorem for finite Borel measures.
-  have hneg_meas := torus_configuration_neg_measurable L
-  haveI : IsProbabilityMeasure (Measure.map
-      (Neg.neg : Configuration (TorusTestFunction L) →
-        Configuration (TorusTestFunction L)) μ) :=
-    Measure.isProbabilityMeasure_map hneg_meas.aemeasurable
-  -- It suffices to show integrals agree on all bounded continuous functions
-  apply ext_of_forall_integral_eq_of_IsFiniteMeasure
-  intro f
-  -- ∫ f d(neg_* μ) = ∫ (f ∘ neg) dμ  (change of variables)
-  -- With BorelSpace, continuous functions are AEStronglyMeasurable
-  have hf_aesm : ∀ (ν : Measure (Configuration (TorusTestFunction L))),
-      AEStronglyMeasurable (fun ω => (f : Configuration (TorusTestFunction L) → ℝ) ω) ν :=
-    fun ν => f.continuous.aestronglyMeasurable
-  rw [integral_map hneg_meas.aemeasurable (hf_aesm _)]
-  -- Need to show: ∫ f(-ω) dμ = ∫ f(ω) dμ
-  -- g := ω ↦ f(-ω) is bounded continuous
-  set g : Configuration (TorusTestFunction L) → ℝ :=
-    fun ω => (f : Configuration (TorusTestFunction L) → ℝ) (-ω) with hg_def
-  have hg_cont : Continuous g := f.continuous.comp continuous_neg
-  have hbnd : ∀ x : Configuration (TorusTestFunction L),
-      |(f : Configuration (TorusTestFunction L) → ℝ) x| ≤ ‖f‖ := by
-    intro x; rw [← Real.norm_eq_abs]; exact f.norm_coe_le_norm x
-  have hg_bdd : ∃ C, ∀ x, |g x| ≤ C := ⟨‖f‖, fun x => hbnd (-x)⟩
-  have hf_bdd : ∃ C, ∀ x,
-      |(f : Configuration (TorusTestFunction L) → ℝ) x| ≤ C := ⟨‖f‖, hbnd⟩
-  -- ∫ g dμ_n → ∫ g dμ  (weak convergence)
-  have hconv_g := hconv g hg_cont hg_bdd
-  -- ∫ f dμ_n → ∫ f dμ  (weak convergence)
-  have hconv_f := hconv _ f.continuous hf_bdd
-  -- But ∫ g dμ_n = ∫ f(-ω) dμ_n = ∫ f(ω) d(neg_* μ_n) = ∫ f(ω) dμ_n
-  have h_eq_n : (fun n => ∫ ω, g ω ∂(μ_seq n)) =
-      (fun n => ∫ ω, (f : Configuration (TorusTestFunction L) → ℝ) ω ∂(μ_seq n)) := by
-    funext n
-    change ∫ ω, (f : Configuration (TorusTestFunction L) → ℝ) (-ω) ∂(μ_seq n) =
-        ∫ ω, (f : Configuration (TorusTestFunction L) → ℝ) ω ∂(μ_seq n)
-    rw [← integral_map hneg_meas.aemeasurable (hf_aesm _), hμ_symm n]
-  -- Since the sequences are equal, their limits are equal
-  exact tendsto_nhds_unique (h_eq_n ▸ hconv_g) hconv_f
+  -- Z₂ symmetry of weak limit: needs measure extensionality on cylindrical σ-algebra.
+  -- The proof shows ∫ f d(neg_*μ) = ∫ f dμ for all bounded continuous f via weak
+  -- convergence. The extensionality step needs cylindrical σ-algebra treatment
+  -- (BorelSpace removed as inconsistent for infinite-dim weak duals).
+  sorry
 
 /-! ## Full convergence from Gaussian uniqueness -/
 
@@ -987,7 +953,7 @@ theorem torusGaussianLimit_fullConvergence
   apply Filter.tendsto_of_subseq_tendsto
   intro ns hns
   -- Apply Prokhorov to the reindexed measures ν_{ns(n)+1}
-  obtain ⟨ψ, ν', hψ_mono, hν'_prob, hν'_conv⟩ := prokhorov_sequential
+  obtain ⟨ψ, ν', hψ_mono, hν'_prob, hν'_conv⟩ := prokhorov_configuration
     (fun n => torusContinuumMeasure L (ns n + 1) mass hmass)
     (fun n => torusContinuumMeasure_isProbability L (ns n + 1) mass hmass)
     (fun ε hε => by
