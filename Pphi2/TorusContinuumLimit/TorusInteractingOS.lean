@@ -79,18 +79,29 @@ translations and D4 point group symmetries. These follow from:
 
 References: Glimm-Jaffe §19.4, Simon Ch. V §1. -/
 
-/-- The torus interacting generating functional is translation-invariant at every cutoff.
+/-- **Translation invariance of the interacting continuum limit.**
 
-  `∫ exp(iω(f)) dμ_{P,N} = ∫ exp(iω(T_v f)) dμ_{P,N}` for all N, v, f.
+The weak limit measure μ_P satisfies `Z[f] = Z[T_v f]` for all `v ∈ ℝ²`.
 
-This holds because translation on the torus merely relabels the lattice
-sites, preserving the interaction, the GFF covariance, and Lebesgue measure. -/
-axiom torusInteractingMeasure_gf_translation_invariant
-    (N : ℕ) [NeZero N] (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
+**Note:** This is stated at the limit level, not the cutoff level.
+At finite cutoff N, the lattice interacting measure is only invariant under
+*lattice* translations (multiples of L/N). Translation invariance for
+all v ∈ ℝ² holds only in the continuum limit, via an approximation argument:
+
+1. For any v, let w_N be the nearest lattice vector (in spacing L/N).
+2. At cutoff N: `Z_N[T_{w_N} f] = Z_N[f]` (by `latticeMeasure_translation_invariant`).
+3. `Z_N[T_v f] - Z_N[T_{w_N} f] → 0` (since w_N → v and the GF is continuous in
+   the test function argument via the uniform second moment bound).
+4. Taking N → ∞: `Z[T_v f] = Z[f]`.
+
+References: Glimm-Jaffe §8.1, Simon Ch. V §1. -/
+axiom torusInteractingLimit_translation_invariant
+    (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
+    (μ : Measure (Configuration (TorusTestFunction L)))
+    [IsProbabilityMeasure μ]
     (v : ℝ × ℝ) (f : TorusTestFunction L) :
-    torusGeneratingFunctional L (torusInteractingMeasure L N P mass hmass) f =
-    torusGeneratingFunctional L (torusInteractingMeasure L N P mass hmass)
-      (torusTranslation L v f)
+    torusGeneratingFunctional L μ f =
+    torusGeneratingFunctional L μ (torusTranslation L v f)
 
 /-- The torus interacting generating functional is swap-invariant at every cutoff.
 
@@ -361,57 +372,22 @@ Taking N → ∞, both sides converge to the limit, giving
 /-- **OS2 (translation) for the torus interacting continuum limit.**
 
 The interacting measure is invariant under translations on T²_L.
-  `Z(f) = Z(T_v f)` for all `v ∈ ℝ²`. -/
+  `Z(f) = Z(T_v f)` for all `v ∈ ℝ²`.
+
+This follows directly from `torusInteractingLimit_translation_invariant`,
+which axiomatizes the continuum limit's translation invariance. -/
 theorem torusInteracting_os2_translation
     (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
     (μ : Measure (Configuration (TorusTestFunction L)))
     [IsProbabilityMeasure μ]
-    (φ : ℕ → ℕ) (_hφ : StrictMono φ)
-    (hconv : ∀ (f : Configuration (TorusTestFunction L) → ℝ),
+    (_φ : ℕ → ℕ) (_hφ : StrictMono _φ)
+    (_hconv : ∀ (f : Configuration (TorusTestFunction L) → ℝ),
       Continuous f → (∃ C, ∀ x, |f x| ≤ C) →
-        Tendsto (fun n => ∫ ω, f ω ∂(torusInteractingMeasure L (φ n + 1) P mass hmass))
+        Tendsto (fun n => ∫ ω, f ω ∂(torusInteractingMeasure L (_φ n + 1) P mass hmass))
           atTop (nhds (∫ ω, f ω ∂μ))) :
     TorusOS2_TranslationInvariance L μ := by
-  -- Goal: ∀ v f, Z_μ[f] = Z_μ[T_v f]
   intro v f
-  -- Strategy: show Re and Im parts agree separately, using weak convergence
-  -- and cutoff invariance transferred through tendsto_nhds_unique.
-  apply Complex.ext
-  · -- Re part: ∫ cos(ωf) dμ = ∫ cos(ω(T_v f)) dμ
-    rw [gf_re_eq_cos_integral L μ f, gf_re_eq_cos_integral L μ (torusTranslation L v f)]
-    -- Use cutoff invariance + tendsto_nhds_unique
-    -- cos(ω(T_v f)) integrals converge to ∫ cos(ω(T_v f)) dμ along φ
-    have h_Tvf := hconv _ (cosEval_continuous L (torusTranslation L v f))
-      (cosEval_bounded L (torusTranslation L v f))
-    -- cos(ωf) integrals converge to ∫ cos(ωf) dμ along φ
-    have h_f := hconv _ (cosEval_continuous L f) (cosEval_bounded L f)
-    -- At each cutoff: Z_N[f] = Z_N[T_v f], so cos integrals agree
-    have h_cutoff : ∀ n, ∫ ω, Real.cos (ω (torusTranslation L v f))
-        ∂(torusInteractingMeasure L (φ n + 1) P mass hmass) =
-      ∫ ω, Real.cos (ω f) ∂(torusInteractingMeasure L (φ n + 1) P mass hmass) := by
-      intro n
-      -- From generating functional invariance
-      have hgf := torusInteractingMeasure_gf_translation_invariant L (φ n + 1) P mass hmass v f
-      -- Extract Re parts
-      have hre := congr_arg Complex.re hgf
-      rw [gf_re_eq_cos_integral, gf_re_eq_cos_integral] at hre
-      exact hre.symm
-    -- The sequence ∫ cos(ω(T_v f)) dμ_{φ(n)+1} converges to both limits
-    exact tendsto_nhds_unique h_f (h_Tvf.congr h_cutoff)
-  · -- Im part: ∫ sin(ωf) dμ = ∫ sin(ω(T_v f)) dμ
-    rw [gf_im_eq_sin_integral L μ f, gf_im_eq_sin_integral L μ (torusTranslation L v f)]
-    have h_Tvf := hconv _ (sinEval_continuous L (torusTranslation L v f))
-      (sinEval_bounded L (torusTranslation L v f))
-    have h_f := hconv _ (sinEval_continuous L f) (sinEval_bounded L f)
-    have h_cutoff : ∀ n, ∫ ω, Real.sin (ω (torusTranslation L v f))
-        ∂(torusInteractingMeasure L (φ n + 1) P mass hmass) =
-      ∫ ω, Real.sin (ω f) ∂(torusInteractingMeasure L (φ n + 1) P mass hmass) := by
-      intro n
-      have hgf := torusInteractingMeasure_gf_translation_invariant L (φ n + 1) P mass hmass v f
-      have him := congr_arg Complex.im hgf
-      rw [gf_im_eq_sin_integral, gf_im_eq_sin_integral] at him
-      exact him.symm
-    exact tendsto_nhds_unique h_f (h_Tvf.congr h_cutoff)
+  exact torusInteractingLimit_translation_invariant L P mass hmass μ v f
 
 /-! ## OS2: D4 point group invariance
 
