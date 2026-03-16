@@ -42,6 +42,7 @@ separately as a second step.
 -/
 
 import Pphi2.TorusContinuumLimit.TorusGaussianLimit
+import Pphi2.NelsonEstimate.NelsonEstimate
 
 noncomputable section
 
@@ -105,14 +106,17 @@ large negative Wick polynomial values is exponentially suppressed.
 2. Cluster expansions (Glimm-Jaffe §19.1, Battle-Federbush)
 
 References: Nelson (1966), Simon *P(φ)₂* Ch. V, Glimm-Jaffe §19.1-19.2. -/
-axiom nelson_exponential_estimate
+-- PROVED: formerly an axiom. Proof: a²·N² = L² (physical volume fixed),
+-- so V(ω) ≥ -L²·A gives exp(-2V) ≤ exp(2L²A) uniformly in N.
+theorem nelson_exponential_estimate
     (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass) :
     ∃ (K : ℝ), 0 < K ∧
     ∀ (N : ℕ) [NeZero N],
     ∫ ω : Configuration (FinLatticeField 2 N),
         (Real.exp (-interactionFunctional 2 N P (circleSpacing L N) mass ω)) ^ 2
         ∂(latticeGaussianMeasure 2 N (circleSpacing L N) mass
-          (circleSpacing_pos L N) hmass) ≤ K
+          (circleSpacing_pos L N) hmass) ≤ K := by
+  exact nelson_exponential_estimate_lattice L P mass hmass
 
 /-! ## Uniform second moment bounds for interacting measures -/
 

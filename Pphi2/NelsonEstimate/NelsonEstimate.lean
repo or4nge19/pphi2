@@ -29,7 +29,8 @@ hypercontractivity on the rough error to prove Nelson's exponential estimate:
 
 import Pphi2.NelsonEstimate.SmoothLowerBound
 import Pphi2.NelsonEstimate.RoughErrorBound
-import Pphi2.TorusContinuumLimit.TorusInteractingLimit
+import Pphi2.InteractingMeasure.LatticeMeasure
+import Pphi2.TorusContinuumLimit.TorusEmbedding
 
 noncomputable section
 
