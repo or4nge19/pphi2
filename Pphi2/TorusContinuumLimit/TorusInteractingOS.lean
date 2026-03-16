@@ -509,8 +509,28 @@ Proof (see docs/translation-invariance-proof.md):
 
 The last step uses: w_n → v (lattice gets finer), so T_{w_n} f → T_v f
 in the test function topology, hence G_N(T_v f - T_{w_n} f, ...) → 0
-(from eigenvalue bound G_N(h,h) ≤ ‖h‖²/mass²). -/
-axiom torusGF_latticeApproximation_error_vanishes
+(from eigenvalue bound G_N(h,h) ≤ ‖h‖²/mass²).
+
+**Uniform Green's function bound by a continuous seminorm.**
+
+G_N(h, h) ≤ (1/mass²) · p(h)² for a fixed continuous seminorm p on
+TorusTestFunction L, uniformly in N. Follows from eigenvalues λ_k ≥ mass². -/
+axiom torusEmbeddedTwoPoint_le_seminorm
+    (mass : ℝ) (hmass : 0 < mass) :
+    ∃ (p : TorusTestFunction L → ℝ) (_ : Continuous p),
+    ∀ (f : TorusTestFunction L) (N : ℕ) [NeZero N],
+      torusEmbeddedTwoPoint L N mass hmass f f ≤ p f ^ 2
+
+/-- **Translation is continuous in the test function topology.**
+
+The map `v ↦ T_v f` is continuous from ℝ² to `TorusTestFunction L`.
+This is a standard property of smooth functions on the torus:
+translation varies smoothly in the shift parameter. -/
+axiom torusTranslation_continuous_in_v
+    (f : TorusTestFunction L) :
+    Continuous (fun v : ℝ × ℝ => torusTranslation L v f)
+
+theorem torusGF_latticeApproximation_error_vanishes
     (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
     (φ : ℕ → ℕ) (hφ : StrictMono φ)
     (v : ℝ × ℝ) (f : TorusTestFunction L) :
@@ -518,7 +538,18 @@ axiom torusGF_latticeApproximation_error_vanishes
       torusGeneratingFunctional L (torusInteractingMeasure L (φ n + 1) P mass hmass)
         (torusTranslation L v f) -
       torusGeneratingFunctional L (torusInteractingMeasure L (φ n + 1) P mass hmass) f)
-    atTop (nhds 0)
+    atTop (nhds 0) := by
+  -- Proof outline (see docs/translation-invariance-proof.md):
+  -- 1. For each n, let w_n be the nearest lattice vector to v
+  -- 2. Z_N[T_{w_n} f] = Z_N[f] (lattice invariance, proved)
+  -- 3. |Z_N[T_v f] - Z_N[T_{w_n} f]| ≤ √(C · G_N(T_v f - T_{w_n} f, ...))
+  --    (from torus_interacting_second_moment_continuous + Cauchy-Schwarz)
+  -- 4. G_N(T_v f - T_{w_n} f, ...) ≤ p(T_v f - T_{w_n} f)²
+  --    (from torusEmbeddedTwoPoint_le_seminorm)
+  -- 5. p(T_v f - T_{w_n} f) → 0
+  --    (from torusTranslation_continuous_in_v + w_n → v)
+  -- 6. Hence Z_N[T_v f] - Z_N[f] → 0
+  sorry
 
 /-! ## Helper: integral invariance from generating functional invariance
 
