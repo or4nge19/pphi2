@@ -11,7 +11,10 @@ The proof architecture is: axiomatize key analytic/probabilistic results with
 detailed proof sketches, prove the logical structure connecting them, and
 progressively fill in the axioms with full proofs.
 
-**pphi2: 41 axioms, 0 sorries** | **gaussian-field (upstream): 1 axiom, 0 sorries**
+**pphi2: 58 axioms, 1 sorry** (+ 5 in Nelson estimate skeleton) | **gaussian-field (upstream, cylinder): 0 axioms outside future/**
+
+**Route B (torus): 3 active axioms, 0 sorries** — most developed route.
+False PolishSpace/BorelSpace axioms removed; prokhorov_configuration used instead.
 
 Note: Three axioms are `private`: `schwartz_riemann_sum_bound` (PropagatorConvergence),
 `fourier_representation_convolution` (GaussianFourier), and `gaussian_rp_cov_perfect_square` (OS3_RP_Lattice).
@@ -334,7 +337,7 @@ Note: `os1_inheritance` is a theorem (not axiom) — OS1 transfers trivially sin
 | `torusLimit_covariance_eq` | TorusGaussianLimit | Medium | Weak convergence transfers second moments. Uniform integrability from `torusEmbeddedTwoPoint_uniform_bound`. |
 | `gaussian_measure_unique_of_covariance` | TorusGaussianLimit | Medium | Gaussian on nuclear space determined by covariance. Bochner-Minlos uniqueness. |
 | `torusGaussianMeasure_z2_symmetric` | TorusGaussianLimit | **PROVED** | Lattice GFF pushforward is Z₂-symmetric: both `neg_* ν` and `ν` are Gaussian with same covariance, hence equal by `gaussian_measure_unique_of_covariance`. |
-| `z2_symmetric_of_weakLimit` | TorusGaussianLimit | **PROVED** | Z₂ symmetry transfers through weak limits. Uses `ext_of_forall_integral_eq_of_IsFiniteMeasure` (Mathlib) + `configuration_torus_borelSpace` (axiom in gaussian-field). |
+| `z2_symmetric_of_weakLimit` | TorusGaussianLimit | **PROVED** | Z₂ symmetry transfers through weak limits. Proved via configBasisEval pushforward to ℝ^ℕ (Polish) + Portmanteau. |
 | ~~`torusGaussianLimit_fullConvergence`~~ | TorusGaussianLimit | **PROVED** | Full sequence convergence via `Filter.tendsto_of_subseq_tendsto` + Prokhorov + Gaussian uniqueness. |
 | `torus_interacting_tightness` | TorusInteractingLimit | Medium | Cauchy-Schwarz density transfer from Gaussian tightness. Nelson's estimate + hypercontractivity. |
 
@@ -670,7 +673,7 @@ The gaussian-field library (dependency) has **14 axioms, 0 sorries**.
 - `GaussianField/Support.lean`: 2 axioms (`not_supported_of_not_hilbertSchmidt`, `supportHilbertSpace_exists`)
 - `HeatKernel/PositionKernel.lean`: 1 axiom (`mehlerKernel_eq_series`)
 - `HeatKernel/GreenInvariance.lean`: 0 axioms (all 3 proved via pure tensor extension)
-- `Torus/Restriction.lean`: 2 axioms (`configuration_torus_polish`, `configuration_torus_borelSpace`)
+- `Torus/Restriction.lean`: 0 axioms (PolishSpace axioms removed as incorrect)
 - `SmoothCircle/FourierTranslation.lean`: 0 axioms (all 6 proved)
 - `Nuclear/TensorProductFunctorAxioms.lean`: 6 axioms (tensor product functor)
 - `Lattice/Convergence.lean`: 2 axioms (`lattice_covariance_pure_eq_2d_spectral`, `lattice_green_tendsto_continuum`)

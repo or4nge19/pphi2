@@ -101,7 +101,7 @@ Main theorem: `torusInteractingLimit_exists`
 
 **Remaining 3 axioms:**
 1. `nelson_exponential_estimate` — uniform-in-N L² bound on Boltzmann weight
-   (proof skeleton in `Pphi2/NelsonEstimate/`: heat kernel splitting + dynamic cutoff, 7 sorries)
+   (proof skeleton in `Pphi2/NelsonEstimate/`: heat kernel splitting + dynamic cutoff, 5 sorries)
 2. `torusGeneratingFunctionalℂ_analyticOnNhd` — OS0 analyticity
 3. `gaussian_measure_unique_of_covariance` — Gaussian uniqueness (Bochner-Minlos, belongs in gaussian-field)
 
@@ -187,6 +187,8 @@ Main theorem: `cylinderInteracting_satisfies_OS`
 ### Upstream (gaussian-field repo, cylinder branch): 12 axioms
 Cylinder module: `cylinderMassOperator`, `cylinderGreen_pos`,
 `cylinderMassOperator_equivariant_of_heat_comm`, Fourier multiplier + RP axioms.
-Tightness: `configuration_tight_of_uniform_second_moments` proved (0 sorries on cylinder).
+Tightness: `configuration_tight_of_uniform_second_moments` proved (0 sorries).
+False PolishSpace/BorelSpace axioms removed; `prokhorov_configuration` used instead.
 
-### Grand total: ~58 axioms + 1 sorry (pphi2) + 12 axioms (gaussian-field cylinder)
+### Grand total: 58 axioms + 1 sorry (pphi2) + 12 axioms (gaussian-field cylinder)
+### Nelson estimate: proof skeleton with 5 sub-sorries in `Pphi2/NelsonEstimate/`

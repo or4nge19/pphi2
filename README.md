@@ -69,7 +69,7 @@ Finite-volume warm-up isolating the UV limit. Lattice (ℤ/Nℤ)² with
 spacing a = L/N → 0. The interacting continuum limit exists (proved via
 Mitoma-Chebyshev tightness from gaussian-field + Nelson's exponential estimate).
 OS3 (reflection positivity) is dropped here — it's more natural on the cylinder.
-**3 axioms, 0 sorries** (+ Nelson estimate proof skeleton: 7 sub-sorries).
+**3 axioms, 0 sorries** (+ Nelson estimate proof skeleton in `NelsonEstimate/`: 5 sub-sorries).
 
 ### Route C: S¹_L × ℝ (cylinder) — OS0–OS3
 Direct Nelson/Simon construction with natural time axis ℝ for OS reconstruction.
@@ -139,8 +139,9 @@ consistency checks:
 All six phases are structurally complete and the full project builds
 (`lake build`, 3084 jobs).
 
-- **pphi2:** 41 axioms, 0 sorries
-- **gaussian-field** (upstream dependency): 1 axiom, 0 sorries
+- **pphi2:** 58 axioms, 1 sorry (+ 5 in Nelson estimate proof skeleton)
+- **gaussian-field** (upstream, cylinder branch): 0 axioms outside `future/`
+- **Route B (torus):** 3 active axioms, 0 sorries — most developed route
 
 The torus continuum limit (`TorusContinuumLimit/`) provides a cleaner alternative
 to the S'(ℝ^d) approach: by fixing the physical volume L and taking only N→∞,
