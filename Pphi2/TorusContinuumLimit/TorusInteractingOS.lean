@@ -359,32 +359,48 @@ theorem torusInteracting_exponentialMomentBound
   have h_trunc_nat : ∀ n : ℕ, ∫ ω, min (F ω) (↑n : ℝ) ∂μ ≤ B := by
     intro n
     by_cases hn : n = 0
-    · simp [hn]; exact le_of_lt hB_pos
+    · subst hn
+      simp only [Nat.cast_zero]
+      calc ∫ ω, min (F ω) (0 : ℝ) ∂μ
+          ≤ ∫ ω, (0 : ℝ) ∂μ := by
+            apply integral_mono_of_nonneg
+            · exact ae_of_all _ fun _ => le_min (hF_nn _) le_rfl
+            · exact integrable_const 0
+            · exact ae_of_all _ fun _ => min_le_right _ _
+        _ = 0 := by simp
+        _ ≤ B := le_of_lt hB_pos
     · exact h_trunc n (Nat.cast_pos.mpr (Nat.pos_of_ne_zero hn))
   -- Step 3: Integrability of F from bounded lintegral
-  -- ∫⁻ F dμ = sup_n ∫⁻ min(F, n) dμ ≤ B < ∞
+  -- Use MCT for lintegrals: ∫⁻ ofReal(min(F, n)) → ∫⁻ ofReal(F) as n → ∞
+  -- Each term ≤ ofReal(B), so the limit is ≤ ofReal(B) < ∞
   have h_int : Integrable F μ := by
-    rw [← integrable_congr (ae_of_all _ fun ω => (abs_of_nonneg (hF_nn ω)).symm)]
-    rw [integrable_iff_hasFiniteIntegral hF_meas.aestronglyMeasurable]
-    rw [HasFiniteIntegral]
-    calc ∫⁻ ω, ‖F ω‖₊ ∂μ
-        = ∫⁻ ω, ENNReal.ofReal (F ω) ∂μ := by
-          congr 1; ext ω
-          rw [ENNReal.ofReal_eq_coe_nnreal (hF_nn ω)]
-          simp [Real.toNNReal_eq_nnnorm_of_nonneg (hF_nn ω)]
-      _ = ⨆ n : ℕ, ∫⁻ ω, ENNReal.ofReal (min (F ω) (↑n : ℝ)) ∂μ := by
-          rw [← lintegral_iSup]
-          · congr 1; ext ω
-            rw [ENNReal.ofReal_eq_iSup_ofReal_min_nat (hF_nn ω)]
-          · exact fun n => (hF_meas.min measurable_const).ennreal_ofReal
-          · intro n m hnm ω
-            exact ENNReal.ofReal_le_ofReal (min_le_min_left _ (Nat.cast_le.mpr hnm))
-      _ ≤ ENNReal.ofReal B := by
-          apply iSup_le; intro n
-          rw [← ofReal_integral_eq_lintegral_ofReal (h_trunc_int n)
-            (ae_of_all _ fun ω => le_min (hF_nn ω) (Nat.cast_nonneg n))]
-          exact ENNReal.ofReal_le_ofReal (h_trunc_nat n)
-      _ < ⊤ := ENNReal.ofReal_lt_top
+    refine ⟨hF_meas.aestronglyMeasurable, ?_⟩
+    rw [hasFiniteIntegral_iff_ofReal (ae_of_all _ hF_nn)]
+    -- MCT for lintegrals: ∫⁻ ofReal(min(F, n)) ↗ ∫⁻ ofReal(F)
+    have h_lint_mono : ∀ᵐ ω ∂μ, Monotone
+        (fun n : ℕ => ENNReal.ofReal (min (F ω) (↑n : ℝ))) :=
+      ae_of_all _ fun ω n m hnm =>
+        ENNReal.ofReal_le_ofReal (min_le_min_left _ (Nat.cast_le.mpr hnm))
+    have h_lint_pw : ∀ᵐ ω ∂μ, Tendsto
+        (fun n : ℕ => ENNReal.ofReal (min (F ω) (↑n : ℝ)))
+        atTop (nhds (ENNReal.ofReal (F ω))) :=
+      ae_of_all _ fun ω => (ENNReal.continuous_ofReal.tendsto _).comp
+        (tendsto_atTop_of_eventually_const (i₀ := ⌈F ω⌉₊) fun n hn => by
+          rw [min_eq_left]; exact le_trans (Nat.le_ceil _) (Nat.cast_le.mpr hn))
+    have h_lint_meas : ∀ n : ℕ, AEMeasurable
+        (fun ω => ENNReal.ofReal (min (F ω) (↑n : ℝ))) μ :=
+      fun n => (hF_meas.min measurable_const).ennreal_ofReal.aemeasurable
+    have h_lint_conv := lintegral_tendsto_of_tendsto_of_monotone
+      h_lint_meas h_lint_mono h_lint_pw
+    -- Each ∫⁻ ofReal(min(F, n)) = ofReal(∫ min(F, n)) ≤ ofReal(B)
+    have h_lint_bound : ∀ n : ℕ, ∫⁻ ω, ENNReal.ofReal (min (F ω) (↑n : ℝ)) ∂μ ≤
+        ENNReal.ofReal B := by
+      intro n
+      rw [← ofReal_integral_eq_lintegral_ofReal (h_trunc_int n)
+        (ae_of_all _ fun ω => le_min (hF_nn ω) (Nat.cast_nonneg n))]
+      exact ENNReal.ofReal_le_ofReal (h_trunc_nat n)
+    -- The limit ∫⁻ ofReal(F) ≤ ofReal(B) by le_of_tendsto'
+    exact lt_of_le_of_lt (le_of_tendsto' h_lint_conv h_lint_bound) ENNReal.ofReal_lt_top
   constructor
   · exact h_int
   · -- Step 4: ∫ F dμ ≤ B by MCT + truncation bounds
@@ -512,16 +528,31 @@ theorem torusInteracting_os0
         Tendsto (fun n => ∫ ω, f ω ∂(torusInteractingMeasure L (_φ n + 1) P mass hmass))
           atTop (nhds (∫ ω, f ω ∂μ))) :
     TorusOS0_Analyticity L μ := by
-  -- The proof requires `analyticOnNhd_integral` with:
-  -- 1. Pointwise analyticity: z ↦ exp(i ⟨ω, Σ zᵢJᵢ⟩) is entire for each ω
-  --    (composition of exp with a linear function of z).
-  -- 2. Domination: on compact K ⊆ ℂⁿ, ‖exp(i⟨ω, Σ zᵢJᵢ⟩)‖ ≤ exp(C_K Σ|ω(Jᵢ)|),
-  --    where C_K = max_{z∈K, i} |Im(zᵢ)|. This is integrable by
-  --    `torusInteracting_exponentialMomentBound` (Nelson's estimate).
-  -- 3. Measurability: the integrand is measurable from `configuration_eval_measurable`.
-  -- Full proof deferred: requires multi-variable Morera (Hartogs + dominated
-  -- convergence for the interacting measure's exponential moments).
-  sorry
+  intro n J
+  -- Goal: z ↦ ∫ exp(I * (ω(Σ Re(zᵢ)Jᵢ) + I * ω(Σ Im(zᵢ)Jᵢ))) dμ is entire
+  -- This is ∫ F(z, ω) dμ where F(z, ω) = exp(I * Σᵢ zᵢ ω(Jᵢ))
+  -- Apply analyticOnNhd_integral
+  -- Note: AnalyticOn = AnalyticOnNhd for open sets (Set.univ is open)
+  rw [analyticOn_univ]
+  apply analyticOnNhd_integral
+  · -- Pointwise analyticity: z ↦ F(z, ω) is entire for each ω
+    -- exp(I * (ω(Σ Re(zᵢ)Jᵢ) + I * ω(Σ Im(zᵢ)Jᵢ))) is exp of a ℂ-linear function of z
+    intro ω z _
+    apply AnalyticAt.cexp'
+    -- I * (ω(Σ Re(zᵢ)Jᵢ) + I * ω(Σ Im(zᵢ)Jᵢ)) = I * Σ zᵢ ω(Jᵢ)
+    -- by linearity of ω and Re(z) + I*Im(z) = z. The RHS is ℂ-linear in z.
+    sorry
+  · -- Measurability: F(z, ·) is ae strongly measurable for each z
+    intro z
+    apply (Complex.measurable_exp.comp _).aestronglyMeasurable
+    exact (measurable_const.mul ((Complex.measurable_ofReal.comp
+      (configuration_eval_measurable _)).add (measurable_const.mul
+      (Complex.measurable_ofReal.comp (configuration_eval_measurable _)))))
+  · -- Domination: on compact K, ‖F(z, ω)‖ ≤ bound(ω) integrable
+    -- ‖exp(I * Σ zᵢ ω(Jᵢ))‖ = exp(-Im(Σ zᵢ ω(Jᵢ))) ≤ exp(Σ |Im(zᵢ)| |ω(Jᵢ)|)
+    -- On compact K: |Im(zᵢ)| ≤ C_K, so bound ≤ exp(C_K Σ |ω(Jᵢ)|)
+    -- ≤ exp(n * C_K * max_i |ω(Jᵢ)|) which is integrable by exp moment bound
+    sorry
 
 /-! ## OS1: Regularity of the interacting generating functional -/
 
