@@ -716,17 +716,64 @@ private theorem circleTranslation_continuous_in_s
   -- have the partner h(x - s₀) with |x-s - (x-s₀)| = |s₀ - s| < δ.
   -- Use uniform continuity of h on ℝ (periodic implies globally uniformly continuous)
   have hh_uc : UniformContinuous h := by
-    -- h factors through the compact quotient AddCircle L:
-    -- h = h.lift ∘ (QuotientAddGroup.mk : ℝ → AddCircle L)
-    -- h.lift is continuous on compact AddCircle L, hence uniformly continuous.
-    -- The quotient map is uniformly continuous (quotient of uniform add group).
-    -- Composition of uniformly continuous maps is uniformly continuous.
-    --
-    -- Alternatively: use Heine-Cantor on [0, 2L] and reduce via periodicity.
-    -- For any x, y with |x-y| < δ (where δ ≤ L), set x' = toIcoMod 0 x ∈ [0,L).
-    -- Then y' := toIcoMod 0 y may differ from x' + (y-x), but both h(x)=h(x') and
-    -- h(y)=h(y'), and we can find representatives in [-L, 2L] with the same distance.
-    sorry
+    -- Strategy: Heine-Cantor on [-L, 2L] + periodicity reduction.
+    -- For any x, reduce to x' := toIcoMod(0,L,x) ∈ [0,L), set y' := x'+(y-x).
+    -- Both x', y' ∈ [-L, 2L] when |y-x| < L, so UC on the compact set applies.
+    rw [Metric.uniformContinuous_iff]
+    intro ε' hε'
+    -- Step 1: h is uniformly continuous on the compact set [-L, 2L]
+    have huc_cpt : UniformContinuousOn h (Set.Icc (-L) (2 * L)) :=
+      isCompact_Icc.uniformContinuousOn_of_continuous hh_cont.continuousOn
+    rw [Metric.uniformContinuousOn_iff] at huc_cpt
+    obtain ⟨δ₀, hδ₀_pos, huc_cpt⟩ := huc_cpt ε' hε'
+    -- Step 2: Take δ = min(δ₀, L/2)
+    refine ⟨min δ₀ (L / 2), lt_min hδ₀_pos (by linarith [hL.out]), fun {x y} hxy => ?_⟩
+    -- Step 3: Reduce x to x' ∈ [0,L) via toIcoMod
+    set x' := toIcoMod hL.out 0 x
+    set n := toIcoDiv hL.out (0 : ℝ) x
+    -- x = x' + n • L
+    have hx_eq : x = x' + n • L :=
+      (toIcoMod_add_toIcoDiv_zsmul hL.out 0 x).symm
+    -- x' ∈ [0, L)
+    have hx'_mem : x' ∈ Set.Ico (0 : ℝ) L := by
+      have := toIcoMod_mem_Ico hL.out 0 x; simp at this; exact this
+    -- Set y' = x' + (y - x), so y' - x' = y - x
+    set y' := x' + (y - x)
+    -- h(x) = h(x') by periodicity
+    have hx_val : h x = h x' := by
+      have : x = x' + n • L := hx_eq
+      rw [this]; exact hh_per.zsmul n x'
+    -- h(y) = h(y') by periodicity (y' = y - n • L)
+    have hy_val : h y = h y' := by
+      change h y = h (x' + (y - x))
+      have heq : x' + (y - x) = y - n • L := by rw [hx_eq]; ring
+      rw [heq]
+      exact (hh_per.sub_zsmul_eq n).symm
+    -- x' ∈ [-L, 2L]
+    have hx'_Icc : x' ∈ Set.Icc (-L) (2 * L) := by
+      exact ⟨by linarith [hx'_mem.1, hL.out], by linarith [hx'_mem.2, hL.out]⟩
+    -- y' ∈ [-L, 2L]: since x' ∈ [0,L) and |y'-x'| = |y-x| < L/2
+    have hy'x' : dist y' x' < L / 2 := by
+      have : dist y' x' = dist y x := by
+        simp only [y', dist_eq_norm]; congr 1; ring
+      rw [this, dist_comm]
+      exact lt_of_lt_of_le hxy (min_le_right _ _)
+    have hy'_Icc : y' ∈ Set.Icc (-L) (2 * L) := by
+      rw [Real.dist_eq] at hy'x'
+      constructor
+      · linarith [hx'_mem.1, abs_le.mp (le_of_lt hy'x')]
+      · linarith [hx'_mem.2, abs_le.mp (le_of_lt hy'x')]
+    -- dist x' y' = dist x y < δ₀
+    have hdist : dist x' y' < δ₀ := by
+      have : dist x' y' = dist x y := by
+        simp only [y', dist_eq_norm]
+        congr 1
+        ring
+      rw [this]
+      exact lt_of_lt_of_le hxy (min_le_left _ _)
+    -- Apply uniform continuity on [-L, 2L]
+    rw [hx_val, hy_val]
+    exact huc_cpt x' hx'_Icc y' hy'_Icc hdist
   -- From uniform continuity: ∃ δ > 0, ∀ x y, |x - y| < δ → |h(x) - h(y)| < ε
   rw [Metric.uniformContinuous_iff] at hh_uc
   obtain ⟨δ, hδ_pos, hδ⟩ := hh_uc ε hε
@@ -753,11 +800,21 @@ private theorem circleTranslation_continuous_in_s
       have h_deriv : iteratedDeriv k
           (↑(GaussianField.circleTranslation L s g - GaussianField.circleTranslation L s₀ g)) x =
           h (x - s) - h (x - s₀) := by
-        -- D^k(y ↦ g(y - s))(x) = (D^k g)(x - s) by iteratedDeriv_comp_sub_const
-        -- D^k(y ↦ g(y - s₀))(x) = (D^k g)(x - s₀)
-        -- D^k(T_s g - T_{s₀} g) = D^k(T_s g) - D^k(T_{s₀} g) by linearity of D^k
-        -- Combining: = h(x-s) - h(x-s₀)
-        sorry
+        -- D^k of subtraction = subtraction of D^k (linearity)
+        -- then D^k(y ↦ g(y-c))(x) = (D^k g)(x-c) by iteratedDeriv_comp_sub_const
+        have hTs_cd : ContDiffAt ℝ k (fun y => g (y - s)) x :=
+          (g.smooth.comp (contDiff_id.sub contDiff_const)).contDiffAt.of_le
+            (by exact_mod_cast le_top)
+        have hTs₀_cd : ContDiffAt ℝ k (fun y => g (y - s₀)) x :=
+          (g.smooth.comp (contDiff_id.sub contDiff_const)).contDiffAt.of_le
+            (by exact_mod_cast le_top)
+        -- The coercion of the difference is the pointwise difference
+        have h_coe_eq : (↑(GaussianField.circleTranslation L s g -
+            GaussianField.circleTranslation L s₀ g) : ℝ → ℝ) =
+            fun y => g (y - s) - g (y - s₀) := by ext y; rfl
+        rw [h_coe_eq, iteratedDeriv_fun_sub hTs_cd hTs₀_cd]
+        -- Apply iteratedDeriv_comp_sub_const for each term
+        congr 1 <;> exact congr_fun (iteratedDeriv_comp_sub_const k (⇑g) _) x
       rw [h_deriv, ← dist_eq_norm]
       -- dist(h(x-s), h(x-s₀)) < ε by hδ since dist(x-s, x-s₀) = dist(s, s₀) < δ
       apply hδ
@@ -766,7 +823,7 @@ private theorem circleTranslation_continuous_in_s
       exact Metric.mem_ball.mp hs
     -- Step 2: sSup of values < ε implies sobolevSeminorm < ε
     -- sobolevSeminorm k f = sSup (norm ∘ iteratedDeriv k f '' [0, L])
-    show GaussianField.SmoothMap_Circle.sobolevSeminorm k
+    change GaussianField.SmoothMap_Circle.sobolevSeminorm k
       (GaussianField.circleTranslation L s g - GaussianField.circleTranslation L s₀ g) < ε
     -- sobolevSeminorm k f = sSup ((fun x => ‖D^k f x‖) '' [0,L])
     -- The image is compact (continuous on compact), hence the sup is a max.
