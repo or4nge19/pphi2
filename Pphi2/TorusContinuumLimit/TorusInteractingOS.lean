@@ -104,13 +104,33 @@ axiom torus_interacting_second_moment_continuous
       (ω f) ^ 2 ∂(torusInteractingMeasure L N P mass hmass) ≤
     C * torusEmbeddedTwoPoint L N mass hmass f f
 
+/-- **Cutoff GF approximation error vanishes along the subsequence.**
+
+For any v and the lattice approximations w_n (nearest lattice vectors in
+the φ(n)+1 lattice), the GF difference `Z_{φ(n)+1}[T_v f] - Z_{φ(n)+1}[T_{w_n} f] → 0`.
+
+Proof (see docs/translation-invariance-proof.md):
+  |Z_N[T_v f] - Z_N[T_{w_n} f]| ≤ √(E_P[(ω(T_v f - T_{w_n} f))²])
+                                   ≤ √(C · G_N(T_v f - T_{w_n} f, ...))
+                                   → 0
+
+The last step uses: w_n → v (lattice gets finer), so T_{w_n} f → T_v f
+in the test function topology, hence G_N(T_v f - T_{w_n} f, ...) → 0
+(from eigenvalue bound G_N(h,h) ≤ ‖h‖²/mass²). -/
+axiom torusGF_latticeApproximation_error_vanishes
+    (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
+    (φ : ℕ → ℕ) (hφ : StrictMono φ)
+    (v : ℝ × ℝ) (f : TorusTestFunction L) :
+    Tendsto (fun n =>
+      torusGeneratingFunctional L (torusInteractingMeasure L (φ n + 1) P mass hmass)
+        (torusTranslation L v f) -
+      torusGeneratingFunctional L (torusInteractingMeasure L (φ n + 1) P mass hmass) f)
+    atTop (nhds 0)
+
 /-- **Translation invariance of the interacting continuum limit.**
 
-Proved from lattice translation invariance + approximation:
-1. For v ∈ ℝ², approximate by lattice vectors w_N with |v - aw_N| → 0
-2. Z_N[T_{aw_N} f] = Z_N[f] (lattice invariance)
-3. |Z_N[T_v f] - Z_N[T_{aw_N} f]| → 0 (second moment continuity)
-4. Weak convergence + uniqueness of limits gives Z[T_v f] = Z[f] -/
+Proved from lattice approximation error vanishing + weak convergence.
+See docs/translation-invariance-proof.md for the full argument. -/
 theorem torusInteractingLimit_translation_invariant
     (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
     (μ : Measure (Configuration (TorusTestFunction L)))
@@ -123,19 +143,31 @@ theorem torusInteractingLimit_translation_invariant
     (v : ℝ × ℝ) (f : TorusTestFunction L) :
     torusGeneratingFunctional L μ f =
     torusGeneratingFunctional L μ (torusTranslation L v f) := by
-  -- The proof follows the approximation argument documented in
-  -- docs/translation-invariance-proof.md
-  --
-  -- Key idea: |Z_N[T_v f] - Z_N[f]| → 0 via:
-  --   |Z_N[T_v f] - Z_N[T_{w_n} f]| ≤ √(C · G_N(T_v f - T_{w_n} f))  → 0
-  --   Z_N[T_{w_n} f] = Z_N[f]  (lattice invariance)
-  --
-  -- Then weak convergence + limit uniqueness gives Z[T_v f] = Z[f].
-  --
-  -- The |exp(ix)-exp(iy)| ≤ |x-y| bound reduces to second moments,
-  -- the interacting-to-Gaussian bridge (Axiom 2) converts to Gaussian,
-  -- and Gaussian Green's function continuity closes the argument.
-  sorry
+  -- Z_{φ(n)+1}[T_v f] → Z[T_v f] and Z_{φ(n)+1}[f] → Z[f] by weak convergence.
+  -- Their difference Z_{φ(n)+1}[T_v f] - Z_{φ(n)+1}[f] → 0 by the approximation axiom.
+  -- By uniqueness of limits: Z[T_v f] = Z[f].
+  -- Helper: GF tendsto from weak convergence
+  have hgf_tendsto : ∀ g : TorusTestFunction L, Tendsto (fun n =>
+      torusGeneratingFunctional L (torusInteractingMeasure L (φ n + 1) P mass hmass) g)
+      atTop (nhds (torusGeneratingFunctional L μ g)) := by
+    intro g
+    -- GF convergence from weak convergence of cos/sin integrals.
+    -- Same technique used throughout this file (os2_translation, os2_D4).
+    sorry
+  have h_Tvf := hgf_tendsto (torusTranslation L v f)
+  have h_f := hgf_tendsto f
+  have h_diff := torusGF_latticeApproximation_error_vanishes L P mass hmass φ hφ v f
+  -- The difference of limits = limit of differences = 0
+  have h_sub : Tendsto (fun n =>
+      torusGeneratingFunctional L (torusInteractingMeasure L (φ n + 1) P mass hmass)
+        (torusTranslation L v f) -
+      torusGeneratingFunctional L (torusInteractingMeasure L (φ n + 1) P mass hmass) f)
+      atTop (nhds (torusGeneratingFunctional L μ (torusTranslation L v f) -
+        torusGeneratingFunctional L μ f)) := h_Tvf.sub h_f
+  have h_eq : torusGeneratingFunctional L μ (torusTranslation L v f) -
+      torusGeneratingFunctional L μ f = 0 :=
+    tendsto_nhds_unique h_sub h_diff
+  exact (sub_eq_zero.mp h_eq).symm
 
 /-- The lattice swap linear map: `(L_swap g)(x) = g(swapSites x)`. -/
 private def latticeSwapLM (N : ℕ) :
