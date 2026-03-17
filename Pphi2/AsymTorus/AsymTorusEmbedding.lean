@@ -62,44 +62,75 @@ theorem asymSpaceSpacing_pos (Ns : ℕ) [NeZero Ns] :
 The asymmetric lattice (ZMod Nt) × (ZMod Ns) embeds into the asymmetric
 torus configuration space via `asymTorusEmbedCLM` from gaussian-field. -/
 
-/-- The asymmetric torus embedding lift.
+/-- Convert `FinLatticeSites 2 N` to `AsymLatticeSites N N`.
+These are equivalent: `(Fin 2 → ZMod N) ≃ (ZMod N × ZMod N)`. -/
+def finToAsymSite (N : ℕ) (x : FinLatticeSites 2 N) : AsymLatticeSites N N :=
+  (x 0, x 1)
 
-Maps a lattice configuration ω on `AsymLatticeField Nt Ns` to a
-configuration on `AsymTorusTestFunction Lt Ls` by extracting field
-values at each lattice site. -/
-def asymTorusEmbedLift (Nt Ns : ℕ) [NeZero Nt] [NeZero Ns] :
-    Configuration (AsymLatticeField Nt Ns) →
+/-- Evaluate an asymmetric torus test function at a site given in `FinLatticeSites 2 N` form.
+Converts `(Fin 2 → ZMod N)` to `(ZMod N × ZMod N)` and applies `evalAsymTorusAtSite`. -/
+def evalAsymAtFinSite (N : ℕ) [NeZero N]
+    (x : FinLatticeSites 2 N) : AsymTorusTestFunction Lt Ls →L[ℝ] ℝ :=
+  evalAsymTorusAtSite Lt Ls N N (x 0, x 1)
+
+/-- The asymmetric torus embedding: maps lattice configs on `FinLatticeField 2 N`
+to configs on `AsymTorusTestFunction Lt Ls`. Uses DIFFERENT circle restrictions
+per direction (Lt/N for time, Ls/N for space). -/
+def asymTorusEmbedLift (N : ℕ) [NeZero N] :
+    Configuration (FinLatticeField 2 N) →
     Configuration (AsymTorusTestFunction Lt Ls) :=
-  fun ω => asymTorusEmbedCLM Lt Ls Nt Ns
-    (fun x => ω (Pi.single x 1))
+  fun ω =>
+    { toFun := fun f => ∑ x : FinLatticeSites 2 N,
+        ω (Pi.single x 1) * evalAsymAtFinSite Lt Ls N x f
+      map_add' := fun f g => by simp [mul_add, Finset.sum_add_distrib]
+      map_smul' := fun r f => by
+        simp [smul_eq_mul, mul_left_comm, Finset.mul_sum, RingHom.id_apply]
+      cont := by
+        apply continuous_finset_sum; intro x _
+        exact continuous_const.mul (evalAsymAtFinSite Lt Ls N x).cont }
 
 /-- The asymmetric torus embedding lift is measurable. -/
-theorem asymTorusEmbedLift_measurable (Nt Ns : ℕ) [NeZero Nt] [NeZero Ns] :
+theorem asymTorusEmbedLift_measurable (N : ℕ) [NeZero N] :
     @Measurable _ _ instMeasurableSpaceConfiguration instMeasurableSpaceConfiguration
-      (asymTorusEmbedLift Lt Ls Nt Ns) := by
+      (asymTorusEmbedLift Lt Ls N) := by
   apply configuration_measurable_of_eval_measurable
   intro f
-  show Measurable (fun (ω : Configuration (AsymLatticeField Nt Ns)) =>
-    asymTorusEmbedLift Lt Ls Nt Ns ω f)
-  simp only [asymTorusEmbedLift, asymTorusEmbedCLM_apply]
   exact Finset.measurable_sum _ fun x _ =>
     (configuration_eval_measurable (Pi.single x 1)).mul measurable_const
 
 /-! ## Interacting measure on asymmetric torus -/
 
+/-- The geometric mean spacing: √(at · as) = √(Lt · Ls) / N.
+
+This is the effective spacing for the interaction on the asymmetric lattice.
+The cell area at·as = Lt·Ls/N² equals a_geom², preserving the relationship
+between physical volume and lattice sum that Nelson's estimate uses. -/
+def asymGeomSpacing (N : ℕ) [NeZero N] : ℝ :=
+  Real.sqrt (asymTimeSpacing Lt N * asymSpaceSpacing Ls N)
+
+theorem asymGeomSpacing_pos (N : ℕ) [NeZero N] :
+    0 < asymGeomSpacing Lt Ls N :=
+  Real.sqrt_pos_of_pos (mul_pos (asymTimeSpacing_pos Lt N) (asymSpaceSpacing_pos Ls N))
+
 /-- The asymmetric torus-embedded interacting P(φ)₂ measure.
 
-Pushforward of the lattice interacting measure under the asymmetric
-torus embedding. Uses the GEOMETRIC MEAN spacing √(at·as) as the
-lattice spacing parameter for the interaction. -/
-def asymTorusInteractingMeasure (Nt Ns : ℕ) [NeZero Nt] [NeZero Ns]
+Uses the same N for both directions (Option 2), with the geometric mean
+spacing `a_geom = √(Lt·Ls)/N` as the effective lattice spacing parameter.
+This means:
+- The lattice is (ℤ/Nℤ)² (same sites as symmetric torus)
+- The Gaussian measure uses the SYMMETRIC Laplacian with spacing a_geom
+  (TODO: replace with asymmetric Laplacian for correct eigenvalues)
+- The interaction V = a_geom² Σ_x :P(φ(x)):_c has cell area = Lt·Ls/N²
+- Nelson's estimate: a_geom² · N² = Lt·Ls (physical volume, constant)
+
+The pushforward maps lattice configs to asymmetric torus configs via
+`asymTorusEmbedLift` which uses DIFFERENT circle restrictions per direction. -/
+def asymTorusInteractingMeasure (N : ℕ) [NeZero N]
     (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass) :
     Measure (Configuration (AsymTorusTestFunction Lt Ls)) :=
-  sorry -- Need to define the lattice measure on asymmetric sites
-  -- The key decision: what spacing parameter to use for the interaction?
-  -- Option A: geometric mean √(at·as) — preserves physical volume Lt·Ls
-  -- Option B: separate spacings at, as — needs asymmetric interaction
-  -- For now: placeholder
+  Measure.map (asymTorusEmbedLift Lt Ls N)
+    (interactingLatticeMeasure 2 N P (asymGeomSpacing Lt Ls N) mass
+      (asymGeomSpacing_pos Lt Ls N) hmass)
 
 /-! ## Continuum Green's function -/
 
