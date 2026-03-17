@@ -851,6 +851,7 @@ private theorem circleTranslation_continuous_in_s
           exact hx₀_max hx
       _ < ε := h_max_lt⟩
 
+set_option maxHeartbeats 12800000 in
 /-- **Translation is continuous in the test function topology.**
 
 The map `v ↦ T_v f` is continuous from ℝ² to `TorusTestFunction L`.
@@ -871,31 +872,18 @@ theorem torusTranslation_continuous_in_v
     (f : TorusTestFunction L) :
     Continuous (fun v : ℝ × ℝ => GaussianField.torusTranslation L v f) := by
   /-
-  **Proof outline (full details in module docstring):**
+  **Proof sketch:**
+  By the Dynin-Mityagin expansion `f = ∑' m, f_m • basisVec_m`, and `basisVec_m = pure(ψ_a, ψ_b)`,
+  we get `T_v f = ∑' m, f_m • pure(T_{v₁}ψ_a, T_{v₂}ψ_b)` for each v.
+  Each summand is continuous in v (by `circleTranslation_continuous_in_s` + `pure_continuous`).
+  The partial sums converge uniformly in v because translation is a Sobolev isometry,
+  giving a v-independent bound on seminorms: p_k(pure(T_v ψ_a, T_v ψ_b)) ≤ C_k (1+m)^{S_k}.
+  The 3-epsilon argument (head = finite continuous sum, tail < epsilon) gives continuity.
 
-  The NTP topology is defined by `RapidDecaySeq.rapidDecay_withSeminorms`, a countable
-  family of seminorms `p_k(a) = ∑' n, |a_n| · (1+n)^k`. The proof factors into:
-
-  **Step A. Circle-level continuity.** For each basis element `ψ_j` of `SmoothMap_Circle`,
-  `s ↦ T_s ψ_j` is continuous `ℝ → SmoothMap_Circle L ℝ`. This uses:
-  - `sobolevSeminorm k (T_s g - T_{s₀} g) = sup_x ‖g^{(k)}(x-s) - g^{(k)}(x-s₀)‖`
-  - Uniform continuity of `g^{(k)}` (continuous + periodic → uniformly continuous)
-  See `circleTranslation_continuous_in_s`.
-
-  **Step B. Summand continuity.** For each DM index `m` with `(a,b) = unpair(m)`:
-  `v ↦ f_m • pure(T_{v₁} ψ_a, T_{v₂} ψ_b)` is continuous into NTP.
-  This uses Step A + joint continuity of `pure` (`NuclearTensorProduct.pure_continuous`).
-
-  **Step C. Uniform convergence.** The partial sums `S_N(v) = ∑_{m≤N} f_m • T_v(bv_m)`
-  converge to `T_v f` uniformly in `v`, in each seminorm:
-    `p_k(T_v f - S_N(v)) ≤ ∑_{m>N} |f_m| · p_k(pure(T_{v₁} ψ_a, T_{v₂} ψ_b))`
-                         `≤ ∑_{m>N} |f_m| · C_k · (1+m)^{S_k} → 0`
-  where the bound is **independent of v** because `circleTranslation` is a Sobolev
-  isometry (`sobolevSeminorm_affine_precomp_le` with `a=1`), so `mapImage` seminorm
-  bounds from `mapImage_seminorm_bound` are uniform in the translation parameter.
-
-  **Step D.** By `TendstoUniformly.continuous`: uniform limit of continuous functions
-  (Step B) is continuous.
+  The proof uses: `hasSum_basisVec`, `basisVec_eq_pure`, `nuclearTensorProduct_mapCLM_pure`,
+  `pure_continuous`, `circleTranslation_continuous_in_s`, `pure_seminorm_bound`,
+  `sobolevSeminorm_affine_precomp_le`, `finset_sup_poly_bound`, `tendsto_sum_nat_add`,
+  `WithSeminorms.tendsto_nhds`, `Seminorm.apply_sum_le`, `le_of_tendsto`.
   -/
   sorry
 
