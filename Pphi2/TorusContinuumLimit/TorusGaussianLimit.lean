@@ -764,7 +764,7 @@ of a nuclear space is uniquely determined by its characteristic functional
 4. Apply `minlos_uniqueness` from bochner (github.com/mrdouglasny/bochner).
 
 See `../gaussian-field/docs/gaussian-uniqueness-plan.md` for the full implementation plan. -/
--- PROVED: formerly axiom, now from GaussianField.MeasureUniqueness (1 upstream sorry)
+-- PROVED: uses local Pphi2.TorusContinuumLimit.MeasureUniqueness (0 sorry)
 theorem gaussian_measure_unique_of_covariance
     (μ₁ μ₂ : Measure (Configuration (TorusTestFunction L)))
     [IsProbabilityMeasure μ₁] [IsProbabilityMeasure μ₂]
