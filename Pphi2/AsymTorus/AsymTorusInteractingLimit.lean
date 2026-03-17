@@ -40,7 +40,12 @@ This is the key identity for Nelson's estimate: the physical volume
 is independent of the lattice size N. -/
 theorem asymGeomSpacing_sq_mul_sq (N : ℕ) [NeZero N] :
     asymGeomSpacing Lt Ls N ^ 2 * (N : ℝ) ^ 2 = Lt * Ls := by
-  sorry -- arithmetic: √(Lt/N · Ls/N)² · N² = Lt·Ls
+  unfold asymGeomSpacing asymTimeSpacing asymSpaceSpacing
+  have hN_pos : (0 : ℝ) < N := Nat.cast_pos.mpr (NeZero.pos N)
+  have h_nn : 0 ≤ Lt / ↑N * (Ls / ↑N) :=
+    mul_nonneg (div_nonneg hLt.out.le hN_pos.le) (div_nonneg hLs.out.le hN_pos.le)
+  rw [Real.sq_sqrt h_nn]
+  field_simp
 
 /-- **Nelson's exponential estimate** (asymmetric torus, uniform in N).
 
