@@ -98,6 +98,45 @@ theorem asymTorusEmbedLift_measurable (N : ℕ) [NeZero N] :
   exact Finset.measurable_sum _ fun x _ =>
     (configuration_eval_measurable (Pi.single x 1)).mul measurable_const
 
+/-! ## Lattice test functions and eval identity -/
+
+/-- The asymmetric lattice test function: evaluates an asymmetric torus test function
+at each lattice site. This is the asymmetric analog of `latticeTestFn`. -/
+def asymLatticeTestFn (N : ℕ) [NeZero N]
+    (f : AsymTorusTestFunction Lt Ls) : FinLatticeField 2 N :=
+  fun x => evalAsymAtFinSite Lt Ls N x f
+
+/-- Key identity: the asymmetric lattice test function equals the sum of its
+values times delta functions. -/
+theorem asymLatticeTestFn_expand (N : ℕ) [NeZero N]
+    (f : AsymTorusTestFunction Lt Ls) :
+    asymLatticeTestFn Lt Ls N f =
+    ∑ x : FinLatticeSites 2 N,
+      (asymLatticeTestFn Lt Ls N f) x • Pi.single x (1 : ℝ) := by
+  funext y
+  simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul, Pi.single_apply, mul_ite, mul_one,
+    mul_zero, Finset.sum_ite_eq, Finset.mem_univ, ite_true]
+
+/-- The asymmetric torus embedding preserves evaluation:
+`(asymTorusEmbedLift ω) f = ω (asymLatticeTestFn f)`.
+
+This is the asymmetric analog of `torusEmbedLift_eval_eq`. -/
+theorem asymTorusEmbedLift_eval_eq (N : ℕ) [NeZero N]
+    (f : AsymTorusTestFunction Lt Ls)
+    (ω : Configuration (FinLatticeField 2 N)) :
+    (asymTorusEmbedLift Lt Ls N ω) f = ω (asymLatticeTestFn Lt Ls N f) := by
+  -- LHS = Σ_x ω(δ_x) * eval_x(f)
+  -- RHS = ω(Σ_x eval_x(f) • δ_x) = Σ_x eval_x(f) * ω(δ_x)
+  change (∑ x : FinLatticeSites 2 N,
+      ω (Pi.single x 1) * evalAsymAtFinSite Lt Ls N x f) =
+    ω (asymLatticeTestFn Lt Ls N f)
+  rw [asymLatticeTestFn_expand Lt Ls N f, map_sum]
+  simp_rw [map_smul, smul_eq_mul]
+  congr 1
+  funext x
+  unfold asymLatticeTestFn
+  ring
+
 /-! ## Interacting measure on asymmetric torus -/
 
 /-- The geometric mean spacing: √(at · as) = √(Lt · Ls) / N.
