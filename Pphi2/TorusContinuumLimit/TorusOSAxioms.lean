@@ -45,6 +45,7 @@ t ∈ (0, L/2), which is the correct half for RP with periodic BCs.
 
 import Pphi2.TorusContinuumLimit.TorusGaussianLimit
 import Pphi2.TorusContinuumLimit.TorusPropagatorConvergence
+import Pphi2.GeneralResults.ComplexAnalysis
 import Torus.Symmetry
 import HeatKernel.GreenInvariance
 import Mathlib.Probability.Moments.ComplexMGF
@@ -254,12 +255,339 @@ private theorem analyticOnNhd_eq_of_eqOn_reals {n : ℕ}
     exact h_id (Set.mem_univ _)
 
 
-/-! ### Gaussian OS0 (removed)
+/-! ### Gaussian OS0: analyticity of the generating functional -/
 
-The Gaussian OS0 chain was removed (not needed for interacting case).
-The interacting OS0 is proved independently in TorusInteractingOS.lean
-via analyticOnNhd_integral. Gaussian OS0 is provable directly
-(exp of quadratic is entire) without Osgood. -/
+/-- **Gaussian linear exponential integrability.**
+
+For a Gaussian measure satisfying `E[exp(ω(f))] = exp(½ ∫(ω f)² dμ)`,
+the function `ω ↦ exp(t·ω(f))` is integrable for any real `t`.
+
+Proof by contradiction: if not integrable, `integral_undef` gives the
+integral = 0, but `isGaussian` says it equals `exp(½ t² C(f,f)) > 0`. -/
+private lemma gaussian_linear_exp_integrable
+    (mass : ℝ) (hmass : 0 < mass)
+    (μ : Measure (Configuration (TorusTestFunction L)))
+    [IsProbabilityMeasure μ]
+    (hGCL : IsTorusGaussianContinuumLimit L μ mass hmass)
+    (t : ℝ) (f : TorusTestFunction L) :
+    Integrable (fun ω : Configuration (TorusTestFunction L) =>
+      Real.exp (t * ω f)) μ := by
+  by_contra h_not_int
+  have h_zero := integral_undef h_not_int
+  have h := hGCL.isGaussian (t • f)
+  simp only [show ∀ ω : Configuration (TorusTestFunction L), ω (t • f) = t * ω f
+    from fun ω => ContinuousLinearMap.map_smul_of_tower ω t f] at h
+  linarith [Real.exp_pos ((1 / 2) * ∫ ω : Configuration (TorusTestFunction L),
+    (t * ω f) ^ 2 ∂μ)]
+
+/-- **Gaussian exponential sum integrability (domination bound).**
+
+For a Gaussian measure, `ω ↦ exp(∑ Mᵢ |ω(Jᵢ)|)` is integrable.
+This provides the locally uniform domination bound needed for
+`analyticOnNhd_integral`.
+
+The proof uses `exp(∑ Mᵢ|xᵢ|) = ∏ exp(Mᵢ|xᵢ|)` and bounds each factor
+by `exp(Mᵢ xᵢ) + exp(-Mᵢ xᵢ)`, whose integral is finite by the Gaussian
+hypothesis (`gaussian_linear_exp_integrable`). For the product integrability,
+Hölder's inequality with `n` exponents reduces to `Lⁿ`-integrability of
+each factor, which holds since all exponential moments of Gaussians are
+finite. -/
+private lemma gaussian_exp_sum_abs_integrable
+    (mass : ℝ) (hmass : 0 < mass)
+    (μ : Measure (Configuration (TorusTestFunction L)))
+    [IsProbabilityMeasure μ]
+    (hGCL : IsTorusGaussianContinuumLimit L μ mass hmass)
+    (n : ℕ) (M : Fin n → ℝ) (J : Fin n → TorusTestFunction L) :
+    Integrable (fun ω : Configuration (TorusTestFunction L) =>
+      Real.exp (∑ i : Fin n, M i * |ω (J i)|)) μ := by
+  induction n with
+  | zero =>
+    simp only [Finset.univ_eq_empty, Finset.sum_empty, Real.exp_zero]
+    exact integrable_const 1
+  | succ n ih =>
+    -- Split: ∑_{i<n+1} = M₀|ω(J₀)| + ∑_{i<n} M_{i+1}|ω(J_{i+1})|
+    -- exp(a + b) = exp(a) · exp(b), so our function is a product f₁ · f₂.
+    -- Product integrability via AM-GM: f₁·f₂ ≤ (f₁² + f₂²)/2 for nonneg f₁,f₂.
+    -- f₁² = exp(2M₀|x₀|), f₂² = exp(2∑Mᵢ|xᵢ|), both integrable.
+    -- Helper: exp(c|x|) ≤ exp(cx) + exp(-cx)
+    have exp_abs_le : ∀ (c x : ℝ), Real.exp (c * |x|) ≤
+        Real.exp (c * x) + Real.exp (-c * x) := by
+      intro c x
+      rcases le_or_gt 0 x with hx | hx
+      · rw [abs_of_nonneg hx]
+        linarith [Real.exp_pos (-c * x)]
+      · rw [abs_of_neg hx]
+        have : c * (-x) = -c * x := by ring
+        rw [this]
+        linarith [Real.exp_pos (c * x)]
+    -- Helper: exp(c|x|) is integrable for any c, using gaussian_linear_exp_integrable
+    have exp_abs_int : ∀ (c : ℝ) (f : TorusTestFunction L),
+        Integrable (fun ω => Real.exp (c * |ω f|)) μ := by
+      intro c f
+      apply Integrable.mono'
+        ((gaussian_linear_exp_integrable L mass hmass μ hGCL c f).add
+         (gaussian_linear_exp_integrable L mass hmass μ hGCL (-c) f))
+      · exact (Real.measurable_exp.comp (measurable_const.mul
+            (configuration_eval_measurable f |>.abs))).aestronglyMeasurable
+      · exact ae_of_all _ (fun ω => by
+          rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
+          exact exp_abs_le c (ω f))
+    -- f₁² = exp(2M₀|ω(J₀)|) is integrable
+    have hf₁_sq : Integrable (fun ω => Real.exp (2 * M 0 * |ω (J 0)|)) μ :=
+      exp_abs_int (2 * M 0) (J 0)
+    -- f₂² = exp(2·∑ Mᵢ|ωᵢ|) = exp(∑ (2Mᵢ)|ωᵢ|) is integrable by IH
+    have hf₂_sq : Integrable (fun ω => Real.exp (∑ i : Fin n,
+        2 * M i.succ * |ω (J i.succ)|)) μ :=
+      ih (fun i => 2 * M i.succ) (fun i => J i.succ)
+    -- The bound function: (f₁² + f₂²) / 2
+    set bound : Configuration (TorusTestFunction L) → ℝ :=
+      fun ω => (Real.exp (2 * M 0 * |ω (J 0)|) +
+                Real.exp (∑ i : Fin n, 2 * M i.succ * |ω (J i.succ)|)) / 2
+    have hbound_int : Integrable bound μ := (hf₁_sq.add hf₂_sq).div_const 2
+    -- Our function ≤ bound (AM-GM: a·b ≤ (a²+b²)/2 for nonneg a,b)
+    have hle : ∀ ω, Real.exp (∑ i : Fin (n + 1), M i * |ω (J i)|) ≤ bound ω := by
+      intro ω
+      rw [Fin.sum_univ_succ, Real.exp_add]
+      -- a · b ≤ (a² + b²) / 2 for nonneg a, b
+      have ham : ∀ (a b : ℝ), 0 ≤ a → 0 ≤ b → a * b ≤ (a ^ 2 + b ^ 2) / 2 := by
+        intro a b ha hb; nlinarith [sq_nonneg (a - b)]
+      calc Real.exp (M 0 * |ω (J 0)|) *
+              Real.exp (∑ i : Fin n, M i.succ * |ω (J i.succ)|)
+          ≤ (Real.exp (M 0 * |ω (J 0)|) ^ 2 +
+              Real.exp (∑ i : Fin n, M i.succ * |ω (J i.succ)|) ^ 2) / 2 :=
+            ham _ _ (Real.exp_pos _).le (Real.exp_pos _).le
+        _ = (Real.exp (2 * M 0 * |ω (J 0)|) +
+              Real.exp (∑ i : Fin n, 2 * M i.succ * |ω (J i.succ)|)) / 2 := by
+            have hsq1 : Real.exp (M 0 * |ω (J 0)|) ^ 2 =
+                Real.exp (2 * M 0 * |ω (J 0)|) := by
+              rw [sq, ← Real.exp_add]; ring_nf
+            have hsq2 : Real.exp (∑ i : Fin n, M i.succ * |ω (J i.succ)|) ^ 2 =
+                Real.exp (∑ i : Fin n, 2 * M i.succ * |ω (J i.succ)|) := by
+              rw [sq, ← Real.exp_add, ← Finset.sum_add_distrib]
+              congr 1; exact Finset.sum_congr rfl (fun i _ => by ring)
+            rw [hsq1, hsq2]
+    -- Measurability of our function
+    have hmeas : AEStronglyMeasurable
+        (fun ω => Real.exp (∑ i : Fin (n + 1), M i * |ω (J i)|)) μ :=
+      (Real.measurable_exp.comp (Finset.measurable_sum _ (fun i _ =>
+        measurable_const.mul (configuration_eval_measurable (J i) |>.abs)))).aestronglyMeasurable
+    -- Conclude by domination
+    exact hbound_int.mono' hmeas (ae_of_all _ (fun ω => by
+      rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
+      exact hle ω))
+
+/-- **Rewriting lemma**: the complex generating functional equals an integral
+where the integrand is manifestly entire in `z`.
+
+By linearity of `ω` (a continuous linear functional), the integrand
+`exp(I·(ω(∑ xᵢJᵢ) + I·ω(∑ yᵢJᵢ)))` simplifies to `exp(∑ I·zᵢ·ω(Jᵢ))`
+where `zᵢ = xᵢ + iyᵢ`. The latter form exhibits entire dependence on `z`. -/
+private lemma torusGeneratingFunctionalℂ_eq_integral_exp
+    (μ : Measure (Configuration (TorusTestFunction L)))
+    [IsProbabilityMeasure μ]
+    (n : ℕ) (J : Fin n → TorusTestFunction L) (z : Fin n → ℂ) :
+    torusGeneratingFunctionalℂ L μ
+      (∑ i, (z i).re • J i) (∑ i, (z i).im • J i) =
+    ∫ ω : Configuration (TorusTestFunction L),
+      Complex.exp (∑ i : Fin n, Complex.I * z i * ↑(ω (J i))) ∂μ := by
+  simp only [torusGeneratingFunctionalℂ]
+  congr 1 with ω
+  simp only [map_sum, map_smul, smul_eq_mul]
+  congr 1
+  -- Goal: I * (↑(∑ xᵢωᵢ) + I * ↑(∑ yᵢωᵢ)) = ∑ I * zᵢ * ↑ωᵢ
+  -- Step 1: Push ↑(∑...) into the sum
+  simp only [Complex.ofReal_sum, Complex.ofReal_mul]
+  -- Step 2: Distribute I over sums
+  rw [mul_add, Finset.mul_sum, ← mul_assoc, Finset.mul_sum, ← Finset.sum_add_distrib]
+  -- Step 3: Combine summands using z = re + I*im
+  congr 1 with i
+  -- Rewrite z i in terms of re + im*I, but avoid creating .re/.im of complex exprs
+  -- Instead, directly show the equality
+  have hre := Complex.ofReal_re (z i).re
+  have him := Complex.ofReal_re (z i).im
+  rw [show z i = ↑(z i).re + ↑(z i).im * Complex.I from (Complex.re_add_im (z i)).symm]
+  simp only [Complex.add_re, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
+    Complex.I_re, Complex.I_im, mul_zero, sub_zero, add_zero,
+    Complex.add_im, Complex.mul_im, mul_one, zero_add]
+  ring
+
+/-- **Analyticity of the complex generating functional.**
+
+The map `z ↦ Z_ℂ(∑ Re(zᵢ)·Jᵢ, ∑ Im(zᵢ)·Jᵢ)` is entire analytic in `z ∈ ℂⁿ`.
+
+**Proof.** By linearity of ω, the generating functional rewrites as
+`∫ exp(∑ I·zᵢ·ω(Jᵢ)) dμ` (see `torusGeneratingFunctionalℂ_eq_integral_exp`).
+The integrand `exp(∑ I·zᵢ·cᵢ)` is entire in z for each fixed ω (it is `exp`
+composed with a ℂ-linear function). The domination bound
+`‖exp(∑ I·zᵢ·ω(Jᵢ))‖ ≤ exp(∑ |Im zᵢ|·|ω(Jᵢ)|)` is integrable on compact
+sets by the Gaussian moment bound (`gaussian_exp_sum_abs_integrable`).
+By `analyticOnNhd_integral` (Morera + Osgood), the integral is entire.
+
+Reference: Reed-Simon I, Thm VI.1; Fernique (1975), §III.4. -/
+theorem torusGeneratingFunctionalℂ_analyticOnNhd
+    (mass : ℝ) (hmass : 0 < mass)
+    (μ : Measure (Configuration (TorusTestFunction L)))
+    [IsProbabilityMeasure μ]
+    (hGCL : IsTorusGaussianContinuumLimit L μ mass hmass)
+    (n : ℕ) (J : Fin n → TorusTestFunction L) :
+    AnalyticOnNhd ℂ (fun z : Fin n → ℂ =>
+      torusGeneratingFunctionalℂ L μ
+        (∑ i, (z i).re • J i) (∑ i, (z i).im • J i)) Set.univ := by
+  -- Rewrite using the manifestly analytic form
+  have h_rw : (fun z : Fin n → ℂ =>
+      torusGeneratingFunctionalℂ L μ
+        (∑ i, (z i).re • J i) (∑ i, (z i).im • J i)) =
+      fun z => ∫ ω : Configuration (TorusTestFunction L),
+        Complex.exp (∑ i : Fin n, Complex.I * z i * ↑(ω (J i))) ∂μ := by
+    ext z; exact torusGeneratingFunctionalℂ_eq_integral_exp L μ n J z
+  rw [h_rw]
+  set F : (Fin n → ℂ) → Configuration (TorusTestFunction L) → ℂ :=
+    fun z ω => Complex.exp (∑ i : Fin n, Complex.I * z i * ↑(ω (J i))) with hF_def
+  -- Condition 1: For each ω, z ↦ F(z,ω) is entire (exp ∘ ℂ-linear)
+  have hF_an : ∀ ω : Configuration (TorusTestFunction L),
+      AnalyticOnNhd ℂ (F · ω) Set.univ := by
+    intro ω z _
+    apply AnalyticAt.cexp'
+    apply Finset.univ.analyticAt_fun_sum; intro i _
+    exact (analyticAt_const.mul
+      ((ContinuousLinearMap.proj (R := ℂ) (φ := fun _ : Fin n => ℂ) i).analyticAt z)).mul
+      analyticAt_const
+  -- Condition 2: For each z, F(z,·) is AEStronglyMeasurable
+  -- exp composed with a finite sum of (const * ofReal ∘ configuration_eval) is measurable
+  -- via configuration_eval_measurable + standard composition lemmas.
+  have hF_meas : ∀ z : Fin n → ℂ, AEStronglyMeasurable (F z) μ := by
+    intro z; simp only [hF_def]
+    have h_eval_meas : ∀ i : Fin n, Measurable (fun ω : Configuration (TorusTestFunction L) =>
+        Complex.I * z i * ↑(ω (J i))) := by
+      intro i
+      have h1 : Measurable (fun ω : Configuration (TorusTestFunction L) =>
+          (ω (J i) : ℂ)) :=
+        Complex.continuous_ofReal.measurable.comp (configuration_eval_measurable (J i))
+      exact h1.const_mul _
+    exact (Complex.continuous_exp.measurable.comp
+      (Finset.measurable_sum _ (fun i _ => h_eval_meas i))).aestronglyMeasurable
+  -- Condition 3: Locally uniform domination by an integrable bound
+  have hF_dom : ∀ K : Set (Fin n → ℂ), IsCompact K →
+      ∃ bound : Configuration (TorusTestFunction L) → ℝ, Integrable bound μ ∧
+        ∀ z ∈ K, ∀ᵐ ω ∂μ, ‖F z ω‖ ≤ bound ω := by
+    intro K hK
+    obtain ⟨R, hR⟩ := hK.isBounded.exists_norm_le
+    refine ⟨fun ω => Real.exp (∑ i : Fin n, R * |ω (J i)|),
+            gaussian_exp_sum_abs_integrable L mass hmass μ hGCL n (fun _ => R) J, ?_⟩
+    intro z hz
+    apply ae_of_all μ; intro ω
+    simp only [hF_def, Complex.norm_exp]
+    -- ‖exp(∑ Izᵢωᵢ)‖ = exp(Re(∑ Izᵢωᵢ)) ≤ exp(∑ R·|ωᵢ|)
+    -- exp is monotone, so it suffices to show Re(∑ ...) ≤ ∑ R·|ωᵢ|
+    gcongr
+    rw [show (∑ i : Fin n, Complex.I * z i * ↑(ω (J i))).re =
+      ∑ i : Fin n, (Complex.I * z i * ↑(ω (J i))).re from
+      map_sum Complex.reAddGroupHom _ _]
+    apply Finset.sum_le_sum
+    intro i _
+    -- Re(I·zᵢ·↑ωᵢ) = -Im(zᵢ)·ωᵢ ≤ |Im(zᵢ)|·|ωᵢ| ≤ R·|ωᵢ|
+    calc (Complex.I * z i * ↑(ω (J i))).re
+        = -(z i).im * ω (J i) := by
+          simp [Complex.mul_re, Complex.I_re, Complex.I_im,
+                Complex.ofReal_re, Complex.ofReal_im]
+      _ ≤ |-(z i).im * ω (J i)| := le_abs_self _
+      _ = |(z i).im| * |ω (J i)| := by rw [abs_mul, abs_neg]
+      _ ≤ R * |ω (J i)| := by
+          gcongr
+          exact (Complex.abs_im_le_norm (z i)).trans
+            ((norm_le_pi_norm z i).trans (hR z hz))
+  exact _root_.analyticOnNhd_integral hF_an hF_meas hF_dom
+
+/-! ### Complex generating functional = exp(quadratic) -/
+
+/-- **Complex generating functional of a torus Gaussian as exp of a quadratic form.**
+
+For a Gaussian measure μ with covariance G_L, the complex generating functional
+evaluated on `f_re = ∑ Re(zᵢ) Jᵢ, f_im = ∑ Im(zᵢ) Jᵢ` simplifies to:
+
+  `Z_ℂ[z] = exp(-½ ∑ᵢⱼ zᵢ zⱼ G_L(Jᵢ, Jⱼ))`
+
+**Proof:** Both sides are entire analytic functions of z ∈ ℂⁿ (LHS by
+`torusGeneratingFunctionalℂ_analyticOnNhd`, RHS by exp ∘ quadratic polynomial).
+For z ∈ ℝⁿ, Im(zᵢ) = 0, so the LHS reduces to the characteristic functional
+`Z(∑ xᵢ·Jᵢ) = exp(-½ G(∑ xᵢ·Jᵢ, ∑ xⱼ·Jⱼ))` (proved), and the RHS reduces to
+`exp(-½ ∑ xᵢxⱼGᵢⱼ) = exp(-½ G(∑ xᵢ·Jᵢ, ∑ xⱼ·Jⱼ))` by bilinearity
+(`greenFunctionBilinear_finset_sum`). Agreement on ℝⁿ plus analyticity on ℂⁿ
+gives equality by the multi-variable identity principle
+(`analyticOnNhd_eq_of_eqOn_reals`). -/
+theorem torusGaussianLimit_complex_cf_quadratic
+    (mass : ℝ) (hmass : 0 < mass)
+    (μ : Measure (Configuration (TorusTestFunction L)))
+    [IsProbabilityMeasure μ]
+    (hGCL : IsTorusGaussianContinuumLimit L μ mass hmass)
+    (n : ℕ) (J : Fin n → TorusTestFunction L)
+    (z : Fin n → ℂ) :
+    torusGeneratingFunctionalℂ L μ
+      (∑ i, (z i).re • J i) (∑ i, (z i).im • J i) =
+    Complex.exp ((-1 / 2 : ℂ) * ∑ i : Fin n, ∑ j : Fin n,
+      z i * z j * (torusContinuumGreen L mass hmass (J i) (J j) : ℂ)) := by
+  set F := fun z : Fin n → ℂ =>
+    torusGeneratingFunctionalℂ L μ (∑ i, (z i).re • J i) (∑ i, (z i).im • J i)
+  set G := fun z : Fin n → ℂ =>
+    Complex.exp ((-1 / 2 : ℂ) * ∑ i : Fin n, ∑ j : Fin n,
+      z i * z j * (torusContinuumGreen L mass hmass (J i) (J j) : ℂ))
+  have hF_an : AnalyticOnNhd ℂ F Set.univ :=
+    torusGeneratingFunctionalℂ_analyticOnNhd L mass hmass μ hGCL n J
+  have hG_an : AnalyticOnNhd ℂ G Set.univ := by
+    intro z _; apply AnalyticAt.cexp'
+    apply AnalyticAt.mul analyticAt_const
+    apply Finset.univ.analyticAt_fun_sum; intro i _
+    apply Finset.univ.analyticAt_fun_sum; intro j _
+    exact ((ContinuousLinearMap.proj (R := ℂ) (φ := fun _ : Fin n => ℂ) i).analyticAt z |>.mul
+      ((ContinuousLinearMap.proj (R := ℂ) (φ := fun _ : Fin n => ℂ) j).analyticAt z)).mul
+      analyticAt_const
+  have h_eq_real : ∀ x : Fin n → ℝ,
+      F (fun i => (x i : ℂ)) = G (fun i => (x i : ℂ)) := by
+    intro x
+    simp only [F, G, Complex.ofReal_re, Complex.ofReal_im]
+    rw [show (∑ i : Fin n, (0 : ℝ) • J i) = (0 : TorusTestFunction L) from by simp]
+    rw [show torusGeneratingFunctionalℂ L μ (∑ i, x i • J i) 0 =
+        torusGeneratingFunctional L μ (∑ i, x i • J i) from by
+      simp [torusGeneratingFunctionalℂ, torusGeneratingFunctional, map_zero]]
+    rw [torusGaussianLimit_characteristic_functional L mass hmass μ hGCL]
+    congr 1; congr 1
+    simp only [torusContinuumGreen]
+    rw [greenFunctionBilinear_finset_sum mass hmass Finset.univ Finset.univ x x J J]
+    push_cast; ring
+  exact congr_fun (analyticOnNhd_eq_of_eqOn_reals hF_an hG_an h_eq_real) z
+
+/-- OS0 for the torus Gaussian continuum limit.
+
+For Gaussian μ with covariance G_L, the complex generating functional is:
+  `Z[f_re, f_im] = exp(-½ G_L(f_re + if_im, f_re + if_im))`
+This is entire in the coefficients zᵢ since it is `exp ∘ (quadratic polynomial)`.
+
+The proof uses `torusGaussianLimit_complex_cf_quadratic` to rewrite the
+generating functional as `exp(-½ ∑ᵢⱼ zᵢzⱼ Gᵢⱼ)`, then shows this is
+analytic because both exp and polynomials are entire. -/
+theorem torusGaussianLimit_os0
+    (mass : ℝ) (hmass : 0 < mass)
+    (μ : Measure (Configuration (TorusTestFunction L)))
+    [IsProbabilityMeasure μ]
+    (hGCL : IsTorusGaussianContinuumLimit L μ mass hmass) :
+    TorusOS0_Analyticity L μ := by
+  intro n J
+  have h_eq : (fun z : Fin n → ℂ =>
+      torusGeneratingFunctionalℂ L μ
+        (∑ i, (z i).re • J i) (∑ i, (z i).im • J i)) =
+      (fun z => Complex.exp ((-1 / 2 : ℂ) * ∑ i : Fin n, ∑ j : Fin n,
+        z i * z j * (torusContinuumGreen L mass hmass (J i) (J j) : ℂ))) := by
+    ext z; exact torusGaussianLimit_complex_cf_quadratic L mass hmass μ hGCL n J z
+  rw [h_eq]
+  intro z _
+  apply AnalyticAt.analyticWithinAt
+  apply AnalyticAt.cexp'
+  apply AnalyticAt.mul analyticAt_const
+  apply Finset.univ.analyticAt_fun_sum; intro i _
+  apply Finset.univ.analyticAt_fun_sum; intro j _
+  exact ((ContinuousLinearMap.proj (R := ℂ) (φ := fun _ : Fin n => ℂ) i).analyticAt z |>.mul
+    ((ContinuousLinearMap.proj (R := ℂ) (φ := fun _ : Fin n => ℂ) j).analyticAt z)).mul
+    analyticAt_const
 
 /-! ## OS1: Regularity -/
 
@@ -581,7 +909,7 @@ theorem torusGaussianLimit_satisfies_OS
     [IsProbabilityMeasure μ]
     (hGCL : IsTorusGaussianContinuumLimit L μ mass hmass) :
     SatisfiesTorusOS L μ where
-  os0 := by sorry -- Gaussian OS0 removed; provable directly (exp of quadratic)
+  os0 := torusGaussianLimit_os0 L mass hmass μ hGCL
   os1 := torusGaussianLimit_os1 L mass hmass μ hGCL
   os2_translation := torusGaussianLimit_os2_translation L mass hmass μ hGCL
   os2_D4 := torusGaussianLimit_os2_D4 L mass hmass μ hGCL
