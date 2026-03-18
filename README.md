@@ -73,7 +73,7 @@ is proved via Mitoma-Chebyshev tightness + Nelson's exponential estimate
 **`TorusInteractingOS.lean`: 0 local axioms, 0 sorry.**
 All OS0–OS2 proofs are complete within this file, but they depend on
 upstream infrastructure with remaining gaps (see `docs/torus-route-gap-audit.md`):
-- OS0 uses `osgood_separately_analytic` (axiom in `ComplexAnalysis.lean`)
+- ~~OS0 uses `osgood_separately_analytic` (axiom in `ComplexAnalysis.lean`)~~ **PROVED** — Osgood's lemma for n variables fully verified (1965 lines, 0 axioms)
 - OS2 time reflection uses `evalTorusAtSite_timeReflection` (sorry in gaussian-field)
 - OS2 lattice translation uses `evalTorusAtSite_latticeTranslation` (sorry in gaussian-field)
 - Limit existence uses `configuration_tight_of_uniform_second_moments` (gaussian-field)

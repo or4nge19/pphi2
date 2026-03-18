@@ -1,9 +1,12 @@
 # Proving `osgood_separately_analytic`
 
-## Current Status
+## Current Status — COMPLETED (2026-03-17)
 
-The axiom `osgood_separately_analytic` in `Pphi2/GeneralResults/ComplexAnalysis.lean`
-is the sole remaining axiom for `analyticOnNhd_integral`. Everything else is proved.
+**`osgood_separately_analytic` is now a fully proved theorem** (0 axioms, 0 sorrys).
+`ComplexAnalysis.lean` imports `Osgood/OsgoodN.lean` which proves Osgood's lemma
+for `Fin n → ℂ` by induction on `n`. Total: 1965 lines across 3 files.
+
+## Original problem (now solved)
 
 ```lean
 axiom osgood_separately_analytic {n : ℕ}

@@ -14,7 +14,7 @@ progressively fill in the axioms with full proofs.
 **Route B (torus): `TorusInteractingOS.lean` has 0 local axioms, 0 sorry.**
 All OS0–OS2 proofs complete within this file, but transitive dependencies
 have remaining gaps — see `docs/torus-route-gap-audit.md` for details.
-Upstream gaps: `osgood_separately_analytic` (axiom), 2 `evalTorusAtSite` sorries
+Upstream gaps: ~~`osgood_separately_analytic` (axiom)~~ **PROVED**, 2 `evalTorusAtSite` sorries
 in gaussian-field, `torusGeneratingFunctionalℂ_analyticOnNhd` (axiom),
 `configuration_tight_of_uniform_second_moments` (gaussian-field dependency).
 
@@ -64,6 +64,10 @@ Note: Three axioms are `private`: `schwartz_riemann_sum_bound` (PropagatorConver
 | 4G | `GaussianContinuumLimit/GaussianTightness.lean` | 1 axiom, 0 sorries |
 | 4G | `GaussianContinuumLimit/GaussianLimit.lean` | 1 axiom, 0 sorries |
 | 5 | `OSProofs/OS2_WardIdentity.lean` | 6 axioms |
+| — | `GeneralResults/ComplexAnalysis.lean` | **0 axioms** (`osgood_separately_analytic` proved via Osgood/) |
+| — | `GeneralResults/Osgood/Multilinear.lean` | 0 axioms (multilinear map infrastructure, from Irving) |
+| — | `GeneralResults/Osgood/Osgood2.lean` | 0 axioms (2-variable Osgood, adapted from Irving) |
+| — | `GeneralResults/Osgood/OsgoodN.lean` | **0 axioms, 0 sorries** (n-variable Osgood by induction) |
 | — | `GeneralResults/FunctionalAnalysis.lean` | 0 axioms (pure Mathlib results) |
 | — | `OSforGFF/TimeTranslation.lean` | 0 axioms, 0 sorries (Schwartz translation continuity) |
 | 6 | `OSAxioms.lean` | 0 axioms, 0 sorries |
