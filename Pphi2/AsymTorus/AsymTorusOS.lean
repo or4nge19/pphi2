@@ -31,6 +31,7 @@ The only difference: asymmetric spacings (Lt/N vs Ls/N) in each direction.
 
 import Pphi2.AsymTorus.AsymTorusInteractingLimit
 import Pphi2.GeneralResults.ComplexAnalysis
+import GaussianField.Density
 
 noncomputable section
 
@@ -174,13 +175,317 @@ private lemma asymGf_im_eq_sin_integral
 
 /-! ## Intermediate lemmas (cutoff-level invariances)
 
-These are mechanical adaptations of the symmetric torus lemmas, using
-`asymGeomSpacing Lt Ls N` instead of `circleSpacing L N`. Each follows
-the same proof structure as in TorusInteractingOS.lean.
+Self-contained copies of the lattice symmetry invariant machinery from
+`TorusInteractingOS.lean`, generalized to work with any positive spacing `a`
+(the originals are typed for `circleSpacing L N` and use private definitions).
 
-TODO: Prove these by generalizing `interactingLatticeMeasure_symmetry_invariant`
-to accept any positive spacing `a` (the current version is typed for
-`circleSpacing L N`), then instantiating with `asymGeomSpacing Lt Ls N`. -/
+The main results:
+- `asymInteractingLatticeMeasure_symmetry_invariant` — generic site symmetry
+- `asymInteractingLatticeMeasure_timeReflection_invariant` — time reflection
+- `evalAsymAtFinSite_timeReflection` — eval equivariance under Theta -/
+
+/-- Linear map on lattice field induced by a site permutation `σ`.
+Local copy of the private `latticeSitePermuteLM` from `TorusInteractingOS.lean`. -/
+private def asymLatticeSitePermuteLM (N : ℕ)
+    (σ : FinLatticeSites 2 N → FinLatticeSites 2 N) :
+    FinLatticeField 2 N →ₗ[ℝ] FinLatticeField 2 N where
+  toFun g := g ∘ σ
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+
+/-- Helper: `piCongrLeft(σ_equiv)` maps `φ ↦ φ ∘ σ⁻¹`.
+Local copy of the private lemma from `TorusInteractingOS.lean`. -/
+private lemma asymPiCongrLeft_eq_comp_symm {N : ℕ}
+    (σ_equiv : FinLatticeSites 2 N ≃ FinLatticeSites 2 N)
+    (φ : FinLatticeField 2 N) :
+    (Equiv.piCongrLeft (fun _ : FinLatticeSites 2 N => ℝ) σ_equiv) φ =
+      φ ∘ σ_equiv.symm := by
+  ext x
+  change (Equiv.piCongrLeft (fun _ => ℝ) σ_equiv) φ x = φ (σ_equiv.symm x)
+  have h := Equiv.piCongrLeft_apply_apply (P := fun _ : FinLatticeSites 2 N => ℝ)
+    σ_equiv φ (σ_equiv.symm x)
+  rwa [σ_equiv.apply_symm_apply] at h
+
+/-- **Lattice interacting measure is invariant under site symmetries (generic spacing).**
+
+For a bijective site permutation `σ` that preserves the Gaussian density,
+`∫ F(ω ∘ σ) dμ_int = ∫ F(ω) dμ_int`.
+
+This is a self-contained copy of `interactingLatticeMeasure_symmetry_invariant`
+from `TorusInteractingOS.lean`, generalized from `circleSpacing L N` to any
+positive real `a`. The proof is character-for-character the same. -/
+private theorem asymInteractingLatticeMeasure_symmetry_invariant
+    (N : ℕ) [NeZero N] (P : InteractionPolynomial) (mass : ℝ)
+    (a : ℝ) (ha : 0 < a) (hmass : 0 < mass)
+    (σ : FinLatticeSites 2 N → FinLatticeSites 2 N)
+    (hσ_bij : Function.Bijective σ)
+    (hσ_density : ∀ φ : FinLatticeField 2 N,
+      gaussianDensity 2 N a mass
+        (φ ∘ (Equiv.ofBijective σ hσ_bij).symm) =
+      gaussianDensity 2 N a mass φ)
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (F : Configuration (FinLatticeField 2 N) → E) :
+    ∫ ω, F (ω.comp (asymLatticeSitePermuteLM N σ).toContinuousLinearMap)
+      ∂(interactingLatticeMeasure 2 N P a mass ha hmass) =
+    ∫ ω, F ω ∂(interactingLatticeMeasure 2 N P a mass ha hmass) := by
+  -- Setup notation
+  set mu_GFF := latticeGaussianMeasure 2 N a mass ha hmass
+  set bw := boltzmannWeight 2 N P a mass
+  set σ_equiv := Equiv.ofBijective σ hσ_bij
+  set L_σ : FinLatticeField 2 N →ₗ[ℝ] FinLatticeField 2 N :=
+    asymLatticeSitePermuteLM N σ
+  -- Step 1: Unfold the interacting measure = Z⁻¹ • μ_GFF.withDensity(bw)
+  unfold interactingLatticeMeasure
+  simp_rw [integral_smul_measure]
+  congr 1  -- Z⁻¹ factor is the same on both sides
+  -- Step 2: Convert withDensity integrals to μ_GFF integrals with NNReal smul
+  set bw_nn := fun ω : Configuration (FinLatticeField 2 N) => Real.toNNReal (bw ω)
+  have hbw_nn_meas : Measurable bw_nn :=
+    Measurable.real_toNNReal
+      ((interactionFunctional_measurable 2 N P a mass).neg.exp)
+  change ∫ ω, F (ω.comp L_σ.toContinuousLinearMap)
+      ∂(mu_GFF.withDensity (fun ω => ↑(bw_nn ω))) =
+    ∫ ω, F ω ∂(mu_GFF.withDensity (fun ω => ↑(bw_nn ω)))
+  rw [integral_withDensity_eq_integral_smul hbw_nn_meas,
+      integral_withDensity_eq_integral_smul hbw_nn_meas]
+  -- Step 3: BW invariance at the configuration level
+  have hBW_config : ∀ ω : Configuration (FinLatticeField 2 N),
+      bw (ω.comp L_σ.toContinuousLinearMap) = bw ω := by
+    intro ω
+    suffices h : interactionFunctional 2 N P a mass
+        (ω.comp L_σ.toContinuousLinearMap) =
+        interactionFunctional 2 N P a mass ω by
+      simp only [bw, boltzmannWeight, h]
+    simp only [interactionFunctional]
+    congr 1
+    apply Fintype.sum_equiv σ_equiv.symm
+    intro x; congr 1
+    change ω (L_σ (finLatticeDelta 2 N x)) = ω (finLatticeDelta 2 N (σ_equiv.symm x))
+    congr 1; ext y
+    simp only [L_σ, asymLatticeSitePermuteLM, LinearMap.coe_mk, AddHom.coe_mk,
+      Function.comp, finLatticeDelta]
+    congr 1; exact propext σ_equiv.apply_eq_iff_eq_symm_apply
+  -- Step 4: Use BW invariance to factor the LHS integrand as G ∘ Φ
+  have hBW_nn_config : ∀ ω : Configuration (FinLatticeField 2 N),
+      bw_nn (ω.comp L_σ.toContinuousLinearMap) = bw_nn ω := by
+    intro ω; simp only [bw_nn, hBW_config]
+  set G := fun ω : Configuration (FinLatticeField 2 N) => bw_nn ω • F ω
+  have hG_eq : ∀ ω, bw_nn ω • F (ω.comp L_σ.toContinuousLinearMap) =
+      G (ω.comp L_σ.toContinuousLinearMap) := by
+    intro ω; simp only [G, hBW_nn_config]
+  simp_rw [hG_eq]
+  -- Step 5: Build configuration-level MeasurableEquiv
+  set σ_field_equiv : FinLatticeField 2 N ≃ᵐ FinLatticeField 2 N :=
+    MeasurableEquiv.piCongrLeft (fun _ : FinLatticeSites 2 N => ℝ) σ_equiv
+  set evalME := GaussianField.evalMapMeasurableEquiv 2 N
+  set Φ_equiv : Configuration (FinLatticeField 2 N) ≃ᵐ
+      Configuration (FinLatticeField 2 N) :=
+    evalME.trans (σ_field_equiv.trans evalME.symm)
+  -- Step 6: Show Φ_equiv agrees with ω ↦ ω.comp L_σ.toCLM
+  have hΦ_eq : ∀ ω : Configuration (FinLatticeField 2 N),
+      Φ_equiv ω = ω.comp L_σ.toContinuousLinearMap := by
+    intro ω
+    -- Both sides are configurations; show they agree on all test functions.
+    -- Strategy: apply evalME and use function extensionality
+    have hinj := evalME.injective
+    apply hinj
+    ext x
+    simp only [Φ_equiv, MeasurableEquiv.trans_apply, MeasurableEquiv.apply_symm_apply]
+    rw [show σ_field_equiv (evalME ω) = (evalME ω) ∘ σ_equiv.symm from
+      asymPiCongrLeft_eq_comp_symm σ_equiv (evalME ω)]
+    simp only [Function.comp, evalME]
+    change ω (finLatticeDelta 2 N (σ_equiv.symm x)) =
+      ω (L_σ (finLatticeDelta 2 N x))
+    congr 1; ext y
+    simp only [L_σ, asymLatticeSitePermuteLM, LinearMap.coe_mk, AddHom.coe_mk,
+      Function.comp, finLatticeDelta]
+    congr 1; exact propext σ_equiv.eq_symm_apply
+  -- Step 7: Rewrite G(ω.comp L_σ) as G(Φ_equiv ω)
+  simp_rw [← hΦ_eq]
+  -- Step 8: Show Φ_equiv preserves μ_GFF
+  have hΦ_mp : MeasurePreserving Φ_equiv mu_GFF mu_GFF := by
+    set ν := latticeGaussianFieldLaw 2 N a mass ha hmass
+    have h_nu_eq : ν = Measure.map evalME mu_GFF := by
+      simp only [ν, latticeGaussianFieldLaw, mu_GFF]; rfl
+    have h_evalME : MeasurePreserving evalME mu_GFF ν := by
+      rw [h_nu_eq]; exact evalME.measurable.measurePreserving mu_GFF
+    have h_evalME_symm : MeasurePreserving evalME.symm ν mu_GFF :=
+      h_evalME.symm _
+    have h_sigma : MeasurePreserving σ_field_equiv ν ν := by
+      have hν_eq : ν = normalizedGaussianDensityMeasure 2 N a mass :=
+        latticeGaussianFieldLaw_eq_normalizedGaussianDensityMeasure (d := 2) (N := N)
+          a mass ha hmass
+      rw [hν_eq, normalizedGaussianDensityMeasure]
+      apply MeasurePreserving.smul_measure
+      simp only [gaussianDensityMeasure]
+      have hσ_field_eq : ∀ φ : FinLatticeField 2 N,
+          (σ_field_equiv φ : FinLatticeField 2 N) = φ ∘ σ_equiv.symm := by
+        intro φ
+        have := asymPiCongrLeft_eq_comp_symm σ_equiv φ
+        change (MeasurableEquiv.piCongrLeft (fun _ => ℝ) σ_equiv) φ = φ ∘ σ_equiv.symm
+        rw [MeasurableEquiv.coe_piCongrLeft]; exact this
+      have hρ_inv : ∀ φ : FinLatticeField 2 N,
+          gaussianDensityWeight 2 N a mass (σ_field_equiv φ) =
+          gaussianDensityWeight 2 N a mass φ := by
+        intro φ
+        simp only [gaussianDensityWeight, hσ_field_eq, hσ_density]
+      have h_vol : MeasurePreserving σ_field_equiv
+          (volume : Measure (FinLatticeField 2 N)) volume :=
+        volume_measurePreserving_piCongrLeft _ _
+      refine ⟨σ_field_equiv.measurable, ?_⟩
+      ext s hs
+      rw [Measure.map_apply σ_field_equiv.measurable hs,
+          withDensity_apply _ (σ_field_equiv.measurable hs),
+          withDensity_apply _ hs]
+      rw [show ∫⁻ x in σ_field_equiv ⁻¹' s,
+            gaussianDensityWeight 2 N a mass x ∂volume =
+          ∫⁻ x in σ_field_equiv ⁻¹' s,
+            gaussianDensityWeight 2 N a mass (σ_field_equiv x) ∂volume from
+        setLIntegral_congr_fun (σ_field_equiv.measurable hs)
+          (fun x _ => (hρ_inv x).symm)]
+      exact h_vol.setLIntegral_comp_preimage hs
+        (gaussianDensityWeight_measurable (d := 2) (N := N) a mass)
+    exact h_evalME.trans (h_sigma.trans h_evalME_symm)
+  exact hΦ_mp.integral_comp' G
+
+/-- The finite Laplacian commutes with time reflection.
+Local copy of the private `finiteLaplacian_timeReflect_commute` from `TorusInteractingOS.lean`. -/
+private theorem asymFiniteLaplacian_timeReflect_commute (N : ℕ) [NeZero N] (a : ℝ)
+    (φ : FinLatticeField 2 N) :
+    finiteLaplacian 2 N a (φ ∘ timeReflectSites N) =
+    (finiteLaplacian 2 N a φ) ∘ timeReflectSites N := by
+  ext x
+  change finiteLaplacianFun 2 N a (φ ∘ timeReflectSites N) x =
+    finiteLaplacianFun 2 N a φ (timeReflectSites N x)
+  simp only [finiteLaplacianFun, Function.comp]
+  congr 1
+  apply Finset.sum_congr rfl
+  intro i _
+  have refl_neighbor_fwd :
+      timeReflectSites N (fun j => if j = i then x j + 1 else x j) =
+      fun j => if j = i then (timeReflectSites N x) j + (if i = (0 : Fin 2) then -1 else 1)
+        else (timeReflectSites N x) j := by
+    ext j
+    simp only [timeReflectSites]
+    fin_cases i <;> fin_cases j <;>
+      simp [Matrix.cons_val_zero, Matrix.cons_val_one]; ring
+  have refl_neighbor_bwd :
+      timeReflectSites N (fun j => if j = i then x j - 1 else x j) =
+      fun j => if j = i then (timeReflectSites N x) j - (if i = (0 : Fin 2) then -1 else 1)
+        else (timeReflectSites N x) j := by
+    ext j
+    simp only [timeReflectSites]
+    fin_cases i <;> fin_cases j <;>
+      simp [Matrix.cons_val_zero, Matrix.cons_val_one]; ring
+  rw [refl_neighbor_fwd, refl_neighbor_bwd]
+  fin_cases i <;> simp <;> ring_nf
+
+/-- The mass operator commutes with time reflection (generic spacing version).
+Local copy of the private `massOperator_timeReflect_commute` from `TorusInteractingOS.lean`. -/
+private theorem asymMassOperator_timeReflect_commute (N : ℕ) [NeZero N] (a mass : ℝ)
+    (φ : FinLatticeField 2 N) :
+    massOperator 2 N a mass (φ ∘ timeReflectSites N) =
+    (massOperator 2 N a mass φ) ∘ timeReflectSites N := by
+  have hΔ := asymFiniteLaplacian_timeReflect_commute N a φ
+  ext x
+  simp only [massOperator, ContinuousLinearMap.add_apply,
+    ContinuousLinearMap.neg_apply, ContinuousLinearMap.smul_apply,
+    ContinuousLinearMap.id_apply, Pi.add_apply, Pi.neg_apply,
+    Pi.smul_apply, smul_eq_mul, Function.comp]
+  have h := congr_fun hΔ x
+  simp only [Function.comp] at h
+  linarith
+
+/-- The lattice time-reflection linear map: `(L_refl g)(x) = g(timeReflectSites x)`. -/
+private def asymLatticeTimeReflectLM (N : ℕ) :=
+  asymLatticeSitePermuteLM N (timeReflectSites N)
+
+/-- The interacting lattice measure with any spacing `a` is time-reflection invariant.
+
+Proved by combining `asymInteractingLatticeMeasure_symmetry_invariant` with the
+time-reflection density preservation argument (mass operator commutes with reflection
++ involutivity of reflection + relabeling the Gaussian exponent sum). -/
+private theorem asymInteractingLatticeMeasure_timeReflection_invariant
+    (N : ℕ) [NeZero N] (P : InteractionPolynomial) (mass : ℝ)
+    (a : ℝ) (ha : 0 < a) (hmass : 0 < mass)
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (F : Configuration (FinLatticeField 2 N) → E) :
+    ∫ ω, F (ω.comp (asymLatticeTimeReflectLM N).toContinuousLinearMap)
+      ∂(interactingLatticeMeasure 2 N P a mass ha hmass) =
+    ∫ ω, F ω ∂(interactingLatticeMeasure 2 N P a mass ha hmass) := by
+  -- Time reflection is bijective (involutive)
+  have hbij : Function.Bijective (timeReflectSites N) := by
+    have hinv : Function.Involutive (timeReflectSites N) := by
+      intro x; simp only [timeReflectSites]
+      ext i; fin_cases i <;> simp [Matrix.cons_val_zero, Matrix.cons_val_one]
+    exact hinv.bijective
+  have hinv : Function.Involutive (timeReflectSites N) := by
+    intro x; simp only [timeReflectSites]
+    ext i; fin_cases i <;> simp [Matrix.cons_val_zero, Matrix.cons_val_one]
+  exact asymInteractingLatticeMeasure_symmetry_invariant N P mass a ha hmass
+    (timeReflectSites N) hbij
+    (by -- Density preservation: gaussianDensity(φ ∘ refl⁻¹) = gaussianDensity(φ)
+      intro φ
+      set σ_equiv := Equiv.ofBijective (timeReflectSites N) hbij
+      -- Since refl is involutive, refl⁻¹ = refl
+      have hsymm_eq : ∀ y, σ_equiv.symm y = timeReflectSites N y := by
+        intro y
+        rw [Equiv.symm_apply_eq]
+        exact (hinv y).symm
+      unfold gaussianDensity
+      congr 1; congr 1
+      have h_symm_comp : φ ∘ σ_equiv.symm = φ ∘ timeReflectSites N :=
+        funext (fun y => congr_arg φ (hsymm_eq y))
+      rw [h_symm_comp]
+      simp_rw [Function.comp]
+      -- Use commutativity: Q(φ ∘ refl) = (Qφ) ∘ refl
+      have hcomm := asymMassOperator_timeReflect_commute N a mass φ
+      simp_rw [show ∀ x,
+        massOperator 2 N a mass (φ ∘ timeReflectSites N) x =
+        (massOperator 2 N a mass φ) (timeReflectSites N x) from
+        fun x => congr_fun hcomm x]
+      -- Relabel sum x ↦ refl x using the equivalence
+      exact Fintype.sum_equiv σ_equiv
+        (fun x => φ (timeReflectSites N x) *
+          (massOperator 2 N a mass φ) (timeReflectSites N x))
+        (fun x => φ x * (massOperator 2 N a mass φ) x)
+        (fun x => by simp [σ_equiv, Equiv.ofBijective_apply]))
+    F
+
+/-- Equivariance of `evalAsymAtFinSite` under time reflection.
+
+  `evalAsymAtFinSite x (Θ f) = evalAsymAtFinSite (timeReflectSites x) f`
+
+where `Θ = asymTorusTimeReflection = mapCLM (circleReflection Lt) id`.
+Proof via `evalCLM_comp_mapCLM`, mirroring `evalTorusAtSite_timeReflection`. -/
+private theorem evalAsymAtFinSite_timeReflection (N : ℕ) [NeZero N]
+    (x : FinLatticeSites 2 N) (f : AsymTorusTestFunction Lt Ls) :
+    evalAsymAtFinSite Lt Ls N x (asymTorusTimeReflection Lt Ls f) =
+    evalAsymAtFinSite Lt Ls N (timeReflectSites N x) f := by
+  simp only [evalAsymAtFinSite, evalAsymTorusAtSite, asymTorusTimeReflection,
+    timeReflectSites]
+  simp only [Matrix.cons_val_zero, Matrix.cons_val_one]
+  rw [evalCLM_comp_mapCLM (smoothCircle_coeff_basis Lt) (smoothCircle_coeff_basis Ls)]
+  simp only [ContinuousLinearMap.comp_id]
+  -- Key: proj_{x 0} ∘ circRestr_Lt ∘ circRefl_Lt = proj_{-x 0} ∘ circRestr_Lt
+  have key : ((ContinuousLinearMap.proj (x 0)).comp
+      (circleRestriction Lt N)).comp (circleReflection Lt) =
+    (ContinuousLinearMap.proj (-(x 0))).comp (circleRestriction Lt N) := by
+    ext g
+    simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.proj_apply,
+      circleRestriction_apply, circleReflection, circlePoint]
+    congr 1
+    rw [ZMod.neg_val (x 0)]
+    split
+    · next hk => simp [hk]
+    · next hk =>
+      have hval_le : ZMod.val (x 0) ≤ N := le_of_lt (ZMod.val_lt (x 0))
+      have hN : (N : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne N)
+      rw [show (↑(N - ZMod.val (x 0)) : ℝ) * Lt / ↑N =
+          -(↑(ZMod.val (x 0)) * Lt / ↑N) + Lt from by
+        rw [Nat.cast_sub hval_le]; field_simp; ring]
+      exact (g.periodic' _).symm
+  rw [key]
 
 /-- Cutoff-level time reflection invariance of the asymmetric torus GF.
 
@@ -196,14 +501,44 @@ private theorem asymTorusInteractingMeasure_gf_timeReflection_invariant
     asymTorusGeneratingFunctional Lt Ls
       (asymTorusInteractingMeasure Lt Ls N P mass hmass)
       (asymTorusTimeReflection Lt Ls f) := by
-  sorry
-  -- Proof sketch (identical to symmetric case):
-  -- 1. evalAsymAtFinSite x (asymTorusTimeReflection f) =
-  --    evalAsymAtFinSite (timeReflectSites N x) f
-  --    (via evalCLM_comp_mapCLM, as in evalTorusAtSite_timeReflection)
-  -- 2. Unfold asymTorusInteractingMeasure, push through Measure.map
-  -- 3. Rewrite using the equivariance
-  -- 4. Apply interactingLatticeMeasure_symmetry_invariant (generalized to any spacing)
+  -- Step 1: Eval equivariance under time reflection
+  have h_lattice_refl : ∀ x : FinLatticeSites 2 N,
+      asymLatticeTestFn Lt Ls N (asymTorusTimeReflection Lt Ls f) x =
+      asymLatticeTestFn Lt Ls N f (timeReflectSites N x) := by
+    intro x
+    simp only [asymLatticeTestFn]
+    exact evalAsymAtFinSite_timeReflection Lt Ls N x f
+  -- Step 2: Unfold definitions and push through Measure.map
+  unfold asymTorusGeneratingFunctional asymTorusInteractingMeasure
+  set μ_lat := interactingLatticeMeasure 2 N P (asymGeomSpacing Lt Ls N) mass
+    (asymGeomSpacing_pos Lt Ls N) hmass
+  have hmeas : AEMeasurable (asymTorusEmbedLift Lt Ls N) μ_lat :=
+    (asymTorusEmbedLift_measurable Lt Ls N).aemeasurable
+  have hasm₁ : AEStronglyMeasurable (fun ω : Configuration (AsymTorusTestFunction Lt Ls) =>
+      Complex.exp (Complex.I * ↑(ω f))) (Measure.map (asymTorusEmbedLift Lt Ls N) μ_lat) :=
+    (Complex.measurable_exp.comp (measurable_const.mul (Complex.measurable_ofReal.comp
+      (configuration_eval_measurable f)))).aestronglyMeasurable
+  have hasm₂ : AEStronglyMeasurable (fun ω : Configuration (AsymTorusTestFunction Lt Ls) =>
+      Complex.exp (Complex.I * ↑(ω (asymTorusTimeReflection Lt Ls f))))
+      (Measure.map (asymTorusEmbedLift Lt Ls N) μ_lat) := by
+    exact (Complex.measurable_exp.comp (measurable_const.mul (Complex.measurable_ofReal.comp
+      (configuration_eval_measurable (asymTorusTimeReflection Lt Ls f))))).aestronglyMeasurable
+  rw [MeasureTheory.integral_map hmeas hasm₁, MeasureTheory.integral_map hmeas hasm₂]
+  -- Step 3: Rewrite using asymTorusEmbedLift_eval_eq
+  simp_rw [asymTorusEmbedLift_eval_eq]
+  -- Step 4: Relate lattice test fn under reflection to compose with latticeTimeReflectLM
+  have h_refl_lattice : ∀ φ : Configuration (FinLatticeField 2 N),
+      φ (asymLatticeTestFn Lt Ls N (asymTorusTimeReflection Lt Ls f)) =
+      (φ.comp (asymLatticeTimeReflectLM N).toContinuousLinearMap)
+        (asymLatticeTestFn Lt Ls N f) := by
+    intro φ
+    change φ (asymLatticeTestFn Lt Ls N (asymTorusTimeReflection Lt Ls f)) =
+      φ ((asymLatticeTimeReflectLM N) (asymLatticeTestFn Lt Ls N f))
+    congr 1; ext x; exact h_lattice_refl x
+  simp_rw [h_refl_lattice]
+  -- Step 5: Apply lattice measure time-reflection invariance
+  exact (asymInteractingLatticeMeasure_timeReflection_invariant N P mass
+    (asymGeomSpacing Lt Ls N) (asymGeomSpacing_pos Lt Ls N) hmass _).symm
 
 /-! ## Exponential moment bound for the continuum limit
 
