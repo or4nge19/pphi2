@@ -1,3 +1,9 @@
+-- Linter exceptions: this file is adapted from Geoffrey Irving's girving/ray
+-- with minimal modifications. Flexible simp and multi-goal tactics are from
+-- the original proof style.
+set_option linter.flexible false
+set_option linter.style.multiGoal false
+
 /-
 Copyright (c) 2025 Geoffrey Irving. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
