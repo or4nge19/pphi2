@@ -44,13 +44,18 @@ import Pphi2.TorusContinuumLimit.TorusInteractingLimit
 import Pphi2.TorusContinuumLimit.TorusOSAxioms
 import Pphi2.TorusContinuumLimit.TorusInteractingOS
 
--- Phase 4c: Cylinder continuum limit (Gaussian + interacting)
-import Pphi2.CylinderContinuumLimit.CylinderInteraction
-import Pphi2.CylinderContinuumLimit.CylinderHypercontractivity
-import Pphi2.CylinderContinuumLimit.CylinderUVRemoval
-import Pphi2.CylinderContinuumLimit.CylinderIRRemoval
-import Pphi2.CylinderContinuumLimit.CylinderInteractingOS
-import Pphi2.CylinderContinuumLimit.CylinderOSAxioms
+-- Phase 4b': Asymmetric torus + IR limit (Route B')
+import Pphi2.AsymTorus.AsymTorusEmbedding
+import Pphi2.AsymTorus.AsymTorusInteractingLimit
+import Pphi2.AsymTorus.AsymTorusOS
+import Pphi2.IRLimit.CylinderEmbedding
+import Pphi2.IRLimit.GreenFunctionComparison
+import Pphi2.IRLimit.UniformExponentialMoment
+import Pphi2.IRLimit.IRTightness
+import Pphi2.IRLimit.CylinderOS
+
+-- Phase 4c: Cylinder continuum limit (Route C — moved to future/)
+-- See future/CylinderContinuumLimit/ for Route C axioms and infrastructure
 
 -- Phase 5: Euclidean invariance (OS2)
 import Pphi2.OSProofs.OS2_WardIdentity
