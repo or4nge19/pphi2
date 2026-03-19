@@ -105,6 +105,133 @@ theorem wickMonomial_add_binomial (n : ℕ) (c₁ c₂ x y : ℝ) :
       ring
     | n + 2 =>
       rw [wickMonomial_succ_succ, ih (n + 1) (by omega), ih n (by omega)]
+      -- Goal: (x+y) * S₁ - (n+1)(c₁+c₂) * S₂ = Σ C(n+2,k) W_k(x) W_{n+2-k}(y)
+      -- where S₁ = Σ_{i=0}^{n+1} C(n+1,i) W_i(x) W_{n+1-i}(y)
+      --       S₂ = Σ_{i=0}^{n} C(n,i) W_i(x) W_{n-i}(y)
+      -- We use wickMonomial_mul_left on the x-part of each term,
+      -- and wickMonomial_mul_right on the y-part.
+      -- After reindexing and cancellation, we get the RHS via Pascal's rule.
+
+      -- Distribute (x+y) and (n+1)(c₁+c₂) into sums
+      simp only [Finset.mul_sum]
+      -- Convert to: Σ (x+y)*term_i - Σ (n+1)(c₁+c₂)*term_j = Σ result_k
+      -- Use sub_eq_iff_eq_add or work with individual terms
+
+      -- Apply Wick recurrences within sums using conv + sum_congr
+      -- First: (x+y) * (C * W_i * W_{n+1-i}) = C * (x*W_i) * W_{n+1-i} + C * W_i * (y*W_{n+1-i})
+      -- Then: x*W_i = W_{i+1} + i*c₁*W_{i-1} and y*W_m = W_{m+1} + m*c₂*W_{m-1}
+      -- Replace each summand using the Wick recurrence
+      have key : ∀ i ∈ range (n + 1 + 1),
+          (x + y) * (↑((n + 1).choose i) * wickMonomial i c₁ x * wickMonomial (n + 1 - i) c₂ y) =
+          ↑((n + 1).choose i) * (wickMonomial (i + 1) c₁ x + ↑i * c₁ * wickMonomial (i - 1) c₁ x) *
+            wickMonomial (n + 1 - i) c₂ y +
+          ↑((n + 1).choose i) * wickMonomial i c₁ x *
+            (wickMonomial (n + 1 - i + 1) c₂ y +
+             ↑(n + 1 - i) * c₂ * wickMonomial (n + 1 - i - 1) c₂ y) := by
+        intro i _
+        rw [show (x + y) * (↑((n + 1).choose i) * wickMonomial i c₁ x * wickMonomial (n + 1 - i) c₂ y) =
+              ↑((n + 1).choose i) * (x * wickMonomial i c₁ x) * wickMonomial (n + 1 - i) c₂ y +
+              ↑((n + 1).choose i) * wickMonomial i c₁ x * (y * wickMonomial (n + 1 - i) c₂ y) from by ring]
+        rw [wickMonomial_mul_left i, wickMonomial_mul_left (n + 1 - i)]
+      rw [Finset.sum_congr rfl key]; clear key ih
+      -- After applying the Wick recurrence to each term, we have 4 sub-sums:
+      -- A = Σ C(n+1,i) W_{i+1}(x) W_{n+1-i}(y)
+      -- B = Σ C(n+1,i) * i*c₁ * W_{i-1}(x) * W_{n+1-i}(y)
+      -- C = Σ C(n+1,i) W_i(x) W_{n+2-i}(y)
+      -- D = Σ C(n+1,i) * (n+1-i)*c₂ * W_i(x) * W_{n-i}(y)
+      -- plus the subtracted -(n+1)(c₁+c₂) * S₂.
+      -- Key: B = (n+1)c₁ * S₂, D = (n+1)c₂ * S₂, so B+D cancels exactly.
+      -- Then A + C = RHS via Pascal's rule.
+
+      -- We'll prove: LHS = A + C, and A + C = RHS
+      -- First split into A + B + C + D
+      simp only [mul_add, add_mul, Finset.sum_add_distrib]
+
+      -- Now prove B = (n+1)c₁ * S₂ by reindexing
+      -- B = Σ_{i∈range(n+2)} C(n+1,i) * i*c₁ * W_{i-1}(x) * W_{n+1-i}(y)
+      -- Define shorthand for the sums
+      -- We need to show: A + B + (C + D) - ((n+1)c₁ S₂ + c₁ S₂ + (n+1)c₂ S₂ + c₂ S₂) = RHS
+      -- i.e., A + B + C + D - (n+1)c₁ S₂ - c₁ S₂ - (n+1)c₂ S₂ - c₂ S₂ = RHS
+      -- where we'll show B = (n+1)c₁ S₂ + c₁ S₂ and D = (n+1)c₂ S₂ + c₂ S₂
+      -- Actually: the negative terms are  n*c₁*S₂ + c₁*S₂ + n*c₂*S₂ + c₂*S₂ = (n+1)(c₁+c₂)*S₂
+
+      -- Prove B = Σ (n*c₁ + c₁) * C(n,i) * W_i(x) * W_{n-i}(y)
+      -- i.e., B = (n+1)*c₁ * S₂
+      have hB : ∑ i ∈ range (n + 1 + 1),
+          ↑((n + 1).choose i) * (↑i * c₁ * wickMonomial (i - 1) c₁ x) *
+            wickMonomial (n + 1 - i) c₂ y =
+        ∑ i ∈ range (n + 1),
+          (↑n + 1) * c₁ * (↑(n.choose i) * wickMonomial i c₁ x * wickMonomial (n - i) c₂ y) := by
+        -- The i=0 term vanishes (factor i=0)
+        rw [Finset.sum_range_succ']
+        simp only [Nat.cast_zero, zero_mul, mul_zero, zero_add, add_zero]
+        apply Finset.sum_congr rfl
+        intro i hi
+        have him : i < n + 1 := Finset.mem_range.mp hi
+        -- After reindexing: i+1 term has C(n+1,i+1)*(i+1)*c₁*W_i(x)*W_{n-i}(y)
+        -- Use (i+1)*C(n+1,i+1) = (n+1)*C(n,i)
+        have hcoeff : (↑(i + 1) : ℝ) * ↑((n + 1).choose (i + 1)) = (↑n + 1) * ↑(n.choose i) := by
+          push_cast; exact choose_mul_succ n i
+        have hsub : n + 1 - (i + 1) = n - i := by omega
+        simp only [Nat.succ_sub_one, hsub]
+        -- Goal: C(n+1,i+1) * ((i+1)*c₁*W_i(x)) * W_{n-i}(y) = (n+1)*c₁*(C(n,i)*W_i(x)*W_{n-i}(y))
+        -- Use (i+1)*C(n+1,i+1) = (n+1)*C(n,i)
+        have hkey : ↑((n + 1).choose (i + 1)) * (↑(i + 1) : ℝ) = (↑n + 1) * ↑(n.choose i) := by
+          linarith [hcoeff]
+        -- Both sides are just hkey * c₁ * W_i(x) * W_{n-i}(y)
+        linear_combination (c₁ * wickMonomial i c₁ x * wickMonomial (n - i) c₂ y) * hkey
+      -- Prove D = (n+1)*c₂ * S₂
+      -- D = Σ_{i∈range(n+2)} C(n+1,i) * W_i(x) * (n+1-i)*c₂*W_{n-i}(y)
+      -- The i=n+1 term vanishes ((n+1-i)=0). For i≤n, use (n+1-i)*C(n+1,i)=(n+1)*C(n,i)
+      have hD : ∑ i ∈ range (n + 1 + 1),
+          ↑((n + 1).choose i) * wickMonomial i c₁ x *
+            (↑(n + 1 - i) * c₂ * wickMonomial (n + 1 - i - 1) c₂ y) =
+        ∑ i ∈ range (n + 1),
+          (↑n + 1) * c₂ * (↑(n.choose i) * wickMonomial i c₁ x * wickMonomial (n - i) c₂ y) := by
+        -- The last term (i=n+1) vanishes since n+1-(n+1)=0
+        rw [Finset.sum_range_succ]
+        simp only [Nat.sub_self, Nat.cast_zero, zero_mul, mul_zero, add_zero]
+        apply Finset.sum_congr rfl
+        intro i hi
+        have him : i < n + 1 := Finset.mem_range.mp hi
+        have hi_le : i ≤ n := by omega
+        have hsub1 : n + 1 - i - 1 = n - i := by omega
+        have hsub2 : (n + 1 - i : ℕ) = n + 1 - i := rfl
+        simp only [hsub1]
+        -- Need: C(n+1,i) * (n+1-i) = (n+1) * C(n,i)
+        have hcoeff : ((n + 1 - i : ℕ) : ℝ) * ↑((n + 1).choose i) = (↑n + 1) * ↑(n.choose i) :=
+          choose_mul_complement n i hi_le
+        have hkey : ↑((n + 1).choose i) * (↑(n + 1 - i) : ℝ) = (↑n + 1) * ↑(n.choose i) := by
+          linarith [hcoeff]
+        linear_combination (c₂ * wickMonomial i c₁ x * wickMonomial (n - i) c₂ y) * hkey
+      -- Now use hB and hD to cancel the c₁ and c₂ terms
+      rw [hB, hD]
+      -- After rw, positive terms include (n+1)c₁ S₂ and (n+1)c₂ S₂
+      -- Negative terms are nc₁ S₂ + c₁ S₂ + nc₂ S₂ + c₂ S₂ = (n+1)(c₁+c₂) S₂
+      -- These cancel, leaving A + C = RHS
+
+      -- Let's just suffice A + C = RHS
+      suffices h : ∑ x_1 ∈ range (n + 1 + 1),
+            ↑((n + 1).choose x_1) * wickMonomial (x_1 + 1) c₁ x * wickMonomial (n + 1 - x_1) c₂ y +
+          ∑ x_1 ∈ range (n + 1 + 1),
+            ↑((n + 1).choose x_1) * wickMonomial x_1 c₁ x * wickMonomial (n + 1 - x_1 + 1) c₂ y =
+          ∑ k ∈ range (n + 2 + 1),
+            ↑((n + 2).choose k) * wickMonomial k c₁ x * wickMonomial (n + 2 - k) c₂ y by
+        -- Cancel B+D with the negative terms, reducing to h
+        -- All the c₁*S₂ and c₂*S₂ terms cancel
+        -- LHS = A + (n+1)c₁S₂ + (C + (n+1)c₂S₂) - (nc₁S₂ + c₁S₂ + nc₂S₂ + c₂S₂)
+        --     = A + C + [(n+1)c₁S₂ + (n+1)c₂S₂ - nc₁S₂ - c₁S₂ - nc₂S₂ - c₂S₂]
+        --     = A + C + 0 = A + C
+        have hcancel :
+          ∑ i ∈ range (n + 1), (↑n + 1) * c₁ * (↑(n.choose i) * wickMonomial i c₁ x * wickMonomial (n - i) c₂ y) +
+          ∑ i ∈ range (n + 1), (↑n + 1) * c₂ * (↑(n.choose i) * wickMonomial i c₁ x * wickMonomial (n - i) c₂ y) =
+          ∑ x_1 ∈ range (n + 1), ↑n * c₁ * (↑(n.choose x_1) * wickMonomial x_1 c₁ x * wickMonomial (n - x_1) c₂ y) +
+            ∑ x_1 ∈ range (n + 1), 1 * c₁ * (↑(n.choose x_1) * wickMonomial x_1 c₁ x * wickMonomial (n - x_1) c₂ y) +
+          (∑ x_1 ∈ range (n + 1), ↑n * c₂ * (↑(n.choose x_1) * wickMonomial x_1 c₁ x * wickMonomial (n - x_1) c₂ y) +
+            ∑ x_1 ∈ range (n + 1), 1 * c₂ * (↑(n.choose x_1) * wickMonomial x_1 c₁ x * wickMonomial (n - x_1) c₂ y)) := by
+          simp only [← Finset.sum_add_distrib]
+          apply Finset.sum_congr rfl; intro i _; ring
+        linarith [h, hcancel]
       sorry
 
 /-! ## Explicit cases -/
