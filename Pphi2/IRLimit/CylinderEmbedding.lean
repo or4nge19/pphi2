@@ -89,10 +89,11 @@ theorem cylinderPullback_continuous :
 /-! ## Intertwining with symmetries
 
 The embedding commutes with time translation and time reflection.
-These follow from `periodizeCLM_comp_schwartzTranslation` and
+Proved from `periodizeCLM_comp_schwartzTranslation` and
 `periodizeCLM_comp_schwartzReflection` (in gaussian-field) combined
-with the NTP functor properties of `nuclearTensorProduct_mapCLM_general`.
-Axiomatized because the NTP functor is also axiomatized. -/
+with the NTP functor axioms `nuclearTensorProduct_mapCLM_general_pure`
+and `nuclearTensorProduct_swapCLM_pure`, extended to all elements via
+the DyninMityaginSpace expansion (pure tensor density). -/
 
 /-- Helper: two CLMs from a CylinderTestFunction NTP that agree on all pure tensors
 produce equal results on every element.
