@@ -168,30 +168,8 @@ axiom cylinderUVLimit_weakLimit
 
 /-! ## Properties of the UV limit -/
 
-/-- **Absolute continuity of the UV limit measure** w.r.t. the free measure.
-
-Each cutoff measure μ_{Λ,T} = (1/Z_{Λ,T}) exp(-V_{Λ,T}) dμ_free is absolutely
-continuous w.r.t. μ_free by construction. However, absolute continuity is NOT
-preserved under weak limits in general (counterexample: point masses weakly
-converging to a point mass at a different location).
-
-For P(φ)₂, the limit μ_T is absolutely continuous because:
-1. The Wick-ordered densities exp(-V_{Λ,T})/Z_{Λ,T} converge in L²(μ_free)
-   (by hypercontractivity + Wick renormalization cancellation)
-2. L² convergence implies the limit has an L² density w.r.t. μ_free
-3. Having an L² density implies absolute continuity
-
-This is a deep analytical fact requiring L² convergence of densities
-(not just weak convergence of measures), so we take it as an axiom.
-
-**References:**
-- Simon, *The P(φ)₂ Euclidean QFT*, Ch. VIII, Theorem VIII.5
-- Glimm-Jaffe, *Quantum Physics*, §19.2, density convergence -/
-axiom cylinderUVLimitMeasure_absolutelyContinuous
-    (P : InteractionPolynomial) (T mass : ℝ)
-    (hT : 0 < T) (hmass : 0 < mass) :
-    cylinderUVLimitMeasure L P T mass hT hmass ≪
-    cylinderFreeMeasure L mass hmass
+-- NOTE: cylinderUVLimitMeasure_absolutelyContinuous was removed as a dead axiom
+-- (never referenced by any downstream declaration).
 
 /-- **Finite second moments** under the UV limit measure.
 
@@ -297,34 +275,8 @@ theorem cylinderUVLimit_second_moment_finite
     rw [integral_undef hint]
     exact hC_nn
 
-/-- **Convergence of two-point Schwinger functions** as Λ → ∞.
-
-Since `cylinderSchwinger2 L P Λ T mass hT hmass f g = ∫ ω f * ω g dμ_{Λ,T}` and
-ω ↦ ω(f) · ω(g) is continuous but NOT bounded, the weak convergence axiom
-`cylinderUVLimit_weakLimit` does not apply directly.
-
-The proof requires **uniform integrability** of {ω ↦ ω(f)·ω(g)} under {μ_{Λ,T}}:
-1. By Cauchy-Schwarz: |∫ ω f · ω g dμ| ≤ (∫ (ω f)² dμ)^{1/2} · (∫ (ω g)² dμ)^{1/2}
-2. `cylinderInteracting_second_moment_bound` gives ∫ (ω f)² dμ_{Λ,T} ≤ C uniformly
-3. Actually need: for all ε > 0, there exists M s.t. ∫_{|ω f · ω g| > M} |ω f · ω g| dμ_{Λ,T} < ε
-   uniformly in Λ. This follows from uniform L² bounds via Markov/truncation.
-4. Uniform integrability + weak convergence of measures implies convergence of integrals
-   (Vitali convergence theorem for weak limits)
-
-This is standard but requires Vitali's convergence theorem infrastructure.
-
-**Key inputs:** `cylinderInteracting_second_moment_bound`, `cylinderUVLimit_weakLimit`
-**References:** Billingsley, *Convergence of Probability Measures*, Theorem 5.4;
-Simon, *P(φ)₂*, Ch. VIII -/
-axiom cylinderUVLimit_schwinger2
-    (P : InteractionPolynomial) (T mass : ℝ)
-    (hT : 0 < T) (hmass : 0 < mass)
-    (f g : CylinderTestFunction L) :
-    Filter.Tendsto (fun Λ =>
-      cylinderSchwinger2 L P Λ T mass hT hmass f g)
-    Filter.atTop
-    (nhds (∫ ω, ω f * ω g
-      ∂(cylinderUVLimitMeasure L P T mass hT hmass)))
+-- NOTE: cylinderUVLimitMeasure_absolutelyContinuous and cylinderUVLimit_schwinger2
+-- were removed as dead axioms (never referenced by any downstream declaration).
 
 end Pphi2
 

@@ -62,30 +62,6 @@ namespace Pphi2
 
 variable (d N : ℕ) [NeZero N]
 
-/-! ## OS0: Analyticity -/
-
-/-- **OS0 transfers to the continuum limit.**
-
-The generating functional `Z[f] = ∫ exp(iΦ(f)) dμ` of the continuum
-limit measure μ is entire analytic in f.
-
-Proof outline:
-1. Each Z_a[f] is entire (finite-dimensional, dominated convergence).
-2. The derivatives satisfy uniform bounds:
-   `|∂^n Z_a / ∂f^n| ≤ C^n · n!` uniformly in a.
-3. By Vitali's convergence theorem, the pointwise limit Z[f] = lim Z_a[f]
-   is also entire, with the same bound on derivatives. -/
-axiom os0_inheritance (P : InteractionPolynomial)
-    (mass : ℝ) (hmass : 0 < mass)
-    (μ : Measure (Configuration (ContinuumTestFunction d)))
-    (hμ : IsProbabilityMeasure μ)
-    (h_limit : IsPphi2Limit μ P mass) :
-    -- Z[f] = ∫ exp(i Φ(f)) dμ is entire analytic
-    -- (Stated as: all moments are finite and the moment series converges)
-    ∀ (f : ContinuumTestFunction d) (n : ℕ),
-    Integrable (fun ω : Configuration (ContinuumTestFunction d) =>
-      (ω f) ^ n) μ
-
 /-! ## OS1: Regularity -/
 
 /-- **OS1 transfers to the continuum limit.**
@@ -177,91 +153,11 @@ axiom os3_inheritance (P : InteractionPolynomial)
       Continuous F → (∃ C, ∀ ω, |F ω| ≤ C) →
       ∫ ω, F ω * F (distribTimeReflection ω) ∂μ ≥ 0
 
-/-! ## OS4: Clustering / Mass Gap -/
-
-/-- **OS4 transfers to the continuum limit.**
-
-Exponential clustering with rate m₀ > 0 transfers from the lattice
-to the continuum limit.
-
-Proof outline:
-1. From `spectral_gap_uniform`: there exists m₀ > 0 such that
-   the mass gap satisfies `massGap P a mass ≥ m₀` for all a ≤ a₀.
-2. On the lattice, this gives exponential clustering:
-   `|⟨F · G_R⟩ - ⟨F⟩⟨G⟩| ≤ C · exp(-m₀ · R)` for all a ≤ a₀.
-3. For bounded continuous F, G, the clustering bound transfers to the
-   limit: if ν_a ⇀ μ and each ν_a satisfies the bound, then μ does too.
-4. The limit measure μ satisfies OS4 with mass gap ≥ m₀.
-
-Reference: Glimm-Jaffe Ch. 19, Simon Ch. V — weak convergence preserves
-exponential clustering when the rate m₀ is uniform in the approximation
-parameter. -/
-axiom os4_inheritance (P : InteractionPolynomial)
-    (mass : ℝ) (hmass : 0 < mass)
-    (μ : Measure (Configuration (ContinuumTestFunction 2)))
-    (hμ : IsProbabilityMeasure μ)
-    (h_limit : IsPphi2Limit μ P mass) :
-    -- μ satisfies exponential clustering with some rate m₀ > 0:
-    -- for all test functions f, g there exists C (independent of R) such that
-    -- |⟨ω(f) · ω(g_R)⟩ - ⟨ω(f)⟩⟨ω(g)⟩| ≤ C · e^{-m₀R} for all R > 0,
-    -- where g_R denotes the time-separation by R.
-    ∃ m₀ : ℝ, 0 < m₀ ∧
-      ∀ (f g : ContinuumTestFunction 2),
-        ∃ C : ℝ, 0 ≤ C ∧
-        ∀ (R : ℝ), 0 < R →
-          |∫ ω : Configuration (ContinuumTestFunction 2), ω f * ω g ∂μ -
-           (∫ ω : Configuration (ContinuumTestFunction 2), ω f ∂μ) *
-           (∫ ω : Configuration (ContinuumTestFunction 2), ω g ∂μ)| ≤
-          C * Real.exp (-m₀ * R)
-
-/-! ## Combined OS axioms
-
-Putting together all four transferable axioms (OS2 deferred to Phase 5). -/
-
-/-- **Partial OS axiom bundle** for the continuum limit.
-
-The continuum limit measure satisfies OS0, OS1, OS3, OS4.
-OS2 (Euclidean invariance) requires the Ward identity argument
-from Phase 5. -/
-structure SatisfiesOS0134 (d : ℕ)
-    (μ : Measure (Configuration (ContinuumTestFunction d)))
-    [IsProbabilityMeasure μ] : Prop where
-  os0 : ∀ (f : ContinuumTestFunction d) (n : ℕ),
-    Integrable (fun ω : Configuration (ContinuumTestFunction d) => (ω f) ^ n) μ
-  os1 : ∀ (f : ContinuumTestFunction d),
-    |∫ ω : Configuration (ContinuumTestFunction d), Real.cos (ω f) ∂μ| ≤ 1
-  -- OS3: reflection positivity — there exists a time-reflection involution Θ
-  -- on test functions such that ∫ F(ω) · F(Θ*ω) dμ ≥ 0 for all bounded
-  -- continuous F. For d = 2, Θ is `continuumTimeReflection`.
-  os3 : ∃ (Θ : ContinuumTestFunction d →L[ℝ] ContinuumTestFunction d),
-    ∀ (F : Configuration (ContinuumTestFunction d) → ℝ),
-      Continuous F → (∃ C, ∀ ω, |F ω| ≤ C) →
-      ∫ ω : Configuration (ContinuumTestFunction d),
-        F ω * F (ω.comp Θ) ∂μ ≥ 0
-  -- OS4: exponential clustering — there exists m₀ > 0 such that connected
-  -- two-point functions decay exponentially with rate m₀.
-  -- C is independent of R (quantified before R).
-  os4 : ∃ m₀ : ℝ, 0 < m₀ ∧
-    ∀ (f g : ContinuumTestFunction d),
-      ∃ C : ℝ, 0 ≤ C ∧
-      ∀ (R : ℝ), 0 < R →
-        |∫ ω : Configuration (ContinuumTestFunction d), ω f * ω g ∂μ -
-         (∫ ω : Configuration (ContinuumTestFunction d), ω f ∂μ) *
-         (∫ ω : Configuration (ContinuumTestFunction d), ω g ∂μ)| ≤
-        C * Real.exp (-m₀ * R)
-
-/-- The continuum limit satisfies OS0, OS1, OS3, OS4. -/
-theorem continuumLimit_satisfies_os0134
-    (P : InteractionPolynomial)
-    (mass : ℝ) (hmass : 0 < mass)
-    (μ : Measure (Configuration (ContinuumTestFunction 2)))
-    (hμ : IsProbabilityMeasure μ)
-    (h_limit : IsPphi2Limit μ P mass) :
-    @SatisfiesOS0134 2 μ hμ where
-  os0 := os0_inheritance 2 P mass hmass μ hμ h_limit
-  os1 := os1_inheritance 2 P mass hmass μ hμ
-  os3 := ⟨continuumTimeReflection, os3_inheritance P mass hmass μ hμ h_limit⟩
-  os4 := os4_inheritance P mass hmass μ hμ h_limit
+-- NOTE: os0_inheritance and os4_inheritance were removed as dead axioms
+-- (only used in SatisfiesOS0134 bundle which was never consumed downstream).
+-- The actual OS0 proof chain goes through continuum_exponential_moments →
+-- analyticOn_generatingFunctionalC → os0_for_continuum_limit (OS2_WardIdentity.lean).
+-- OS4 goes through continuum_exponential_clustering → os4_for_continuum_limit.
 
 end Pphi2
 

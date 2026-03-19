@@ -77,22 +77,9 @@ axiom second_moment_uniform (P : InteractionPolynomial)
     ∫ ω : Configuration (ContinuumTestFunction d),
       (ω f) ^ 2 ∂(continuumMeasure d N P a mass ha hmass) ≤ C
 
-/-- **Equicontinuity of moments in the test function.**
-
-  `∫ |Φ_a(f) - Φ_a(g)|² dν_a ≤ C · ‖f - g‖²_s`
-
-uniformly in a, where ‖·‖_s is a Schwartz seminorm of sufficiently
-high order s.
-
-This ensures the family of measures is "equicontinuous" in the test
-function variable, which is needed for tightness on the full space S'. -/
-axiom moment_equicontinuity (P : InteractionPolynomial)
-    (mass : ℝ) (hmass : 0 < mass) :
-    ∃ (C : ℝ) (k n : ℕ), 0 < C ∧
-    ∀ (f g : ContinuumTestFunction d) (a : ℝ) (ha : 0 < a), a ≤ 1 →
-    ∫ ω : Configuration (ContinuumTestFunction d),
-      (ω f - ω g) ^ 2 ∂(continuumMeasure d N P a mass ha hmass) ≤
-    C * (SchwartzMap.seminorm ℝ k n (f - g)) ^ 2
+-- NOTE: moment_equicontinuity was removed as a dead axiom (never referenced
+-- by any other declaration). The tightness argument uses second_moment_uniform
+-- + Mitoma-Chebyshev directly.
 
 /-! ## Tightness -/
 
