@@ -87,6 +87,27 @@ theorem cylinderPullback_continuous :
 
 -- Note: Measurability of cylinderPullback follows from continuity
 -- once OpensMeasurableSpace is available for the configuration space.
--- This instance is typically derived from the DyninMityaginSpace structure.
+
+/-! ## Intertwining with symmetries
+
+The embedding commutes with time translation and time reflection.
+These follow from `periodizeCLM_comp_schwartzTranslation` and
+`periodizeCLM_comp_schwartzReflection` (in gaussian-field) combined
+with the NTP functor properties of `nuclearTensorProduct_mapCLM_general`.
+Axiomatized because the NTP functor is also axiomatized. -/
+
+/-- The embedding intertwines cylinder time translation with torus time translation:
+`embed(T_{0,τ} f) = T_{τ,0}(embed f)`. -/
+axiom cylinderToTorusEmbed_comp_timeTranslation (τ : ℝ)
+    (f : CylinderTestFunction Ls) :
+    cylinderToTorusEmbed Lt Ls (cylinderTranslation Ls 0 τ f) =
+    asymTorusTranslation Lt Ls (τ, 0) (cylinderToTorusEmbed Lt Ls f)
+
+/-- The embedding intertwines cylinder time reflection with torus time reflection:
+`embed(Θ f) = Θ_torus(embed f)`. -/
+axiom cylinderToTorusEmbed_comp_timeReflection
+    (f : CylinderTestFunction Ls) :
+    cylinderToTorusEmbed Lt Ls (cylinderTimeReflection Ls f) =
+    asymTorusTimeReflection Lt Ls (cylinderToTorusEmbed Lt Ls f)
 
 end Pphi2

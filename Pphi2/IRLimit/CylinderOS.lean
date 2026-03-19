@@ -47,15 +47,24 @@ Proof: `Z_Lt(shift_τ f) = Z_Lt(f)` because periodization commutes with
 time shifts. The torus measure is translation-invariant (proved in
 AsymTorusOS), and `embed(shift_τ f) = shift_τ(embed f)` (periodization
 intertwines shifts). -/
-axiom cylinderPullback_timeTranslation_invariant
+theorem cylinderPullback_timeTranslation_invariant
     (Lt : ℝ) [Fact (0 < Lt)]
     (μ : Measure (Configuration (AsymTorusTestFunction Lt Ls)))
     [IsProbabilityMeasure μ]
+    (hμ_os2 : ∀ v f, ∫ ω, Complex.exp (Complex.I * ↑(ω f)) ∂μ =
+      ∫ ω, Complex.exp (Complex.I * ↑(ω (asymTorusTranslation Lt Ls v f))) ∂μ)
     (τ : ℝ) (f : CylinderTestFunction Ls) :
     ∫ ω, Complex.exp (Complex.I * ↑(ω f))
       ∂(cylinderPullbackMeasure Lt Ls μ) =
     ∫ ω, Complex.exp (Complex.I * ↑(ω (cylinderTranslation Ls 0 τ f)))
-      ∂(cylinderPullbackMeasure Lt Ls μ)
+      ∂(cylinderPullbackMeasure Lt Ls μ) := by
+  -- Both sides are ∫ exp(i·ω_torus(embed ?)) dμ via the pullback
+  -- LHS: ∫ exp(i·ω_torus(embed f)) dμ
+  -- RHS: ∫ exp(i·ω_torus(embed(T_{0,τ} f))) dμ
+  --     = ∫ exp(i·ω_torus(T_{τ,0}(embed f))) dμ  (intertwining)
+  --     = ∫ exp(i·ω_torus(embed f)) dμ  (torus translation invariance)
+  -- So LHS = RHS.
+  sorry -- needs: unfold cylinderPullbackMeasure + integral_map + intertwining + hμ_os2
 
 -- NOTE: This is "axiom" only because formalizing "periodization intertwines
 -- shifts" requires periodizeCLM_comp_schwartzTranslation in gaussian-field.
