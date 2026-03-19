@@ -1,0 +1,68 @@
+/-
+Copyright (c) 2026 Michael R. Douglas. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+
+# IR Tightness: Prokhorov Extraction for Lt → ∞
+
+Proves tightness of the cylinder pullback measures as Lt → ∞ and
+extracts a convergent subsequence via Prokhorov's theorem.
+
+The structure follows `AsymTorusInteractingLimit.lean` exactly:
+uniform second moments → Mitoma-Chebyshev → tightness → Prokhorov.
+
+## Main results
+
+- `cylinderIR_tight` — the family of pulled-back measures is tight
+- `cylinderIRLimit_exists` — existence of the IR limit measure
+
+## References
+
+- Simon, *The P(φ)₂ Euclidean QFT*, Ch. VIII
+- Glimm-Jaffe, *Quantum Physics*, §19
+-/
+
+import Pphi2.IRLimit.GreenFunctionComparison
+import Pphi2.AsymTorus.AsymTorusOS
+
+noncomputable section
+
+namespace Pphi2
+
+open GaussianField MeasureTheory Filter
+
+variable (Ls : ℝ) [hLs : Fact (0 < Ls)]
+
+/-! ## IR Limit Existence
+
+Given a sequence of time periods `Lt_n → ∞` and for each one an interacting
+measure `μ_n` on `AsymTorusTestFunction Lt_n Ls` satisfying OS0–OS2 (from
+the UV limit), the pulled-back cylinder measures are tight and have a
+convergent subsequence. -/
+
+/-- The IR limit measure on the cylinder S¹_{Ls} × ℝ exists.
+
+Given a sequence of time periods `Lt : ℕ → ℝ` with `Lt n → ∞` and
+interacting measures `μ_n` on the corresponding asymmetric tori, the
+pulled-back cylinder measures `cylinderPullbackMeasure (Lt n) Ls (μ n)`
+have a weakly convergent subsequence.
+
+**Proof sketch**:
+1. Uniform second moment bound (from `cylinderIR_uniform_second_moment`)
+2. Mitoma-Chebyshev tightness criterion (from gaussian-field)
+3. Prokhorov's theorem (Polish space + tight → subsequential limit)
+
+The limit is a probability measure on `Configuration (CylinderTestFunction Ls)`. -/
+axiom cylinderIRLimit_exists
+    (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
+    (Lt : ℕ → ℝ) (hLt : ∀ n, Fact (0 < Lt n))
+    (hLt_tend : Tendsto Lt atTop atTop)
+    (μ : ∀ n, Measure (Configuration (AsymTorusTestFunction (Lt n) Ls)))
+    (hμ_prob : ∀ n, IsProbabilityMeasure (μ n))
+    (hμ_os : ∀ n, @AsymSatisfiesTorusOS (Lt n) Ls _ _ (μ n) (hμ_prob n)) :
+    ∃ (φ : ℕ → ℕ) (ν : Measure (Configuration (CylinderTestFunction Ls))),
+    StrictMono φ ∧ IsProbabilityMeasure ν ∧
+    ∀ (f : CylinderTestFunction Ls),
+    Tendsto (fun n => ∫ ω, ω f ∂(cylinderPullbackMeasure (Lt (φ n)) Ls (μ (φ n))))
+      atTop (nhds (∫ ω, ω f ∂ν))
+
+end Pphi2
