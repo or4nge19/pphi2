@@ -40,6 +40,52 @@ The Wick binomial theorem states that for the probabilist's Hermite polynomials
 This is equivalent to the linearization formula for Hermite polynomials,
 and holds as a purely algebraic identity. -/
 
+/-! ### Helper lemmas for the recurrence proof -/
+
+/-- The binomial sum Σ_k C(n,k) W_k(c₁,x) W_{n-k}(c₂,y) -/
+private def wickBinomialSum (n : ℕ) (c₁ c₂ x y : ℝ) : ℝ :=
+  ∑ k ∈ range (n + 1),
+    (n.choose k : ℝ) * wickMonomial k c₁ x * wickMonomial (n - k) c₂ y
+
+/-- Reverse Wick recurrence: x * W(n, c, x) = W(n+1, c, x) + n*c*W(n-1, c, x)
+    Uniform version that works for all n (including n=0). -/
+private theorem wickMonomial_mul_left : ∀ (n : ℕ) (c x : ℝ),
+    x * wickMonomial n c x = wickMonomial (n + 1) c x + (n : ℝ) * c * wickMonomial (n - 1) c x
+  | 0, c, x => by simp [wickMonomial_zero, wickMonomial_one]
+  | n + 1, c, x => by
+    simp only [Nat.succ_sub_one, Nat.cast_succ]
+    linarith [wickMonomial_succ_succ n c x]
+
+/-- Reverse Wick recurrence for the y variable (second Wick monomial). -/
+private theorem wickMonomial_mul_right : ∀ (m : ℕ) (c y : ℝ),
+    y * wickMonomial m c y = wickMonomial (m + 1) c y + (m : ℝ) * c * wickMonomial (m - 1) c y :=
+  wickMonomial_mul_left
+
+/-- Key binomial coefficient identity: (k+1) * C(n+1, k+1) = (n+1) * C(n, k) -/
+private theorem choose_mul_succ (n k : ℕ) :
+    (k + 1 : ℝ) * ((n + 1).choose (k + 1) : ℝ) = (n + 1 : ℝ) * (n.choose k : ℝ) := by
+  have h := Nat.succ_mul_choose_eq n k
+  -- h : (n + 1) * n.choose k = (n + 1).choose (k + 1) * (k + 1)
+  -- Need: (k+1) * C(n+1, k+1) = (n+1) * C(n, k)
+  -- which is h rewritten as multiplication commuted
+  have h' : (k + 1) * (n + 1).choose (k + 1) = (n + 1) * n.choose k := by linarith [h]
+  exact_mod_cast h'
+
+/-- Key binomial coefficient identity: (n+1-k) * C(n+1, k) = (n+1) * C(n, k) for k ≤ n -/
+private theorem choose_mul_complement (n k : ℕ) (hk : k ≤ n) :
+    ((n + 1 - k : ℕ) : ℝ) * ((n + 1).choose k : ℝ) = (n + 1 : ℝ) * (n.choose k : ℝ) := by
+  have h := Nat.succ_mul_choose_eq n (n - k)
+  -- h : (n+1) * C(n, n-k) = C(n+1, n-k+1) * (n-k+1)
+  have hk' : n - k + 1 = n + 1 - k := by omega
+  have hchoose1 : n.choose (n - k) = n.choose k := Nat.choose_symm hk
+  have hchoose2 : (n + 1).choose (n - k + 1) = (n + 1).choose k := by
+    rw [hk']
+    exact Nat.choose_symm (by omega)
+  have h' : (n + 1 - k) * (n + 1).choose k = (n + 1) * n.choose k := by
+    rw [← hk', ← hchoose2, ← hchoose1]
+    linarith [h]
+  exact_mod_cast h'
+
 /-- **Wick Binomial Theorem**: The Wick monomial of a sum decomposes as a
 binomial sum of Wick monomials with split variances.
 
@@ -50,7 +96,16 @@ theorem wickMonomial_add_binomial (n : ℕ) (c₁ c₂ x y : ℝ) :
     wickMonomial n (c₁ + c₂) (x + y) =
     ∑ k ∈ range (n + 1),
       (n.choose k : ℝ) * wickMonomial k c₁ x * wickMonomial (n - k) c₂ y := by
-  sorry
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+    match n with
+    | 0 => simp [wickMonomial_zero]
+    | 1 =>
+      simp [Finset.sum_range_succ, wickMonomial_one, wickMonomial_zero]
+      ring
+    | n + 2 =>
+      rw [wickMonomial_succ_succ, ih (n + 1) (by omega), ih n (by omega)]
+      sorry
 
 /-! ## Explicit cases -/
 

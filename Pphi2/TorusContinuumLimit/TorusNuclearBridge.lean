@@ -18,6 +18,7 @@ import Minlos.PietschBridge
 import Minlos.Main
 import Nuclear.NuclearSpace
 import Torus.Restriction
+import SchwartzNuclear.HermiteNuclear
 import Mathlib.Topology.Separation.Basic
 
 noncomputable section
@@ -57,12 +58,25 @@ private theorem WithSeminorms.equiv
 /-- `TorusTestFunction L` is Hilbert-nuclear. -/
 instance torusTestFunction_isHilbertNuclear :
     IsHilbertNuclear (TorusTestFunction L) := by
-  sorry -- Chain: DyninMityaginSpace → NuclearSpace → IsNuclear → IsHilbertNuclear
-  -- Needs: ℕ-indexed seminorms from Countable ι + WithSeminorms reindexing
+  -- Chain: DyninMityaginSpace → NuclearSpace → IsNuclear → IsHilbertNuclear
+  have hIN : IsNuclear (TorusTestFunction L) :=
+    nuclearSpace_to_isNuclear
+      (hN := GaussianField.DyninMityaginSpace.toNuclearSpace _)
+  -- Use RapidDecaySeq's ℕ-indexed seminorms directly
+  -- (TorusTestFunction L is definitionally RapidDecaySeq)
+  let q₀ : ℕ → Seminorm ℝ (TorusTestFunction L) :=
+    GaussianField.RapidDecaySeq.rapidDecaySeminorm
+  have hq₀_ws : WithSeminorms q₀ :=
+    GaussianField.RapidDecaySeq.rapidDecay_withSeminorms
+  have hq₀_cont : ∀ n, Continuous (q₀ n) :=
+    fun n => hq₀_ws.continuous_seminorm n
+  exact isHilbertNuclear_of_nuclear hIN q₀ hq₀_ws hq₀_cont
 
 instance torusTestFunction_separableSpace :
-    TopologicalSpace.SeparableSpace (TorusTestFunction L) := by
-  sorry -- from DyninMityaginSpace basis density
+    TopologicalSpace.SeparableSpace (TorusTestFunction L) :=
+  -- TorusTestFunction L is definitionally RapidDecaySeq, which is separable
+  -- via the countable Schauder basis (rapidDecaySeq_separableSpace)
+  GaussianField.rapidDecaySeq_separableSpace
 
 instance : Nonempty (TorusTestFunction L) := ⟨0⟩
 

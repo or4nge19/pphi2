@@ -269,7 +269,10 @@ Proof sketch:
 This holds at weak coupling where the cluster expansion guarantees uniqueness.
 At strong coupling, both constructions still produce valid OS measures, but
 uniqueness (and hence equality) requires additional phase selection arguments. -/
-axiom same_continuum_measure
+/-- **Main theorem: the two constructions produce the same measure.**
+
+Proved from `measure_determined_by_schwinger` + `schwinger_agreement`. -/
+theorem same_continuum_measure
     (P : InteractionPolynomial) (mass coupling : ℝ)
     (hmass : 0 < mass) (hP : isPhi4 P coupling)
     (h_weak : IsWeakCoupling P mass coupling)
@@ -278,8 +281,17 @@ axiom same_continuum_measure
     (hμ_latt_limit : @IsPphi2ContinuumLimit μ_latt hμ_latt P mass)
     (μ_cont : @Measure FieldConfig instMeasurableSpaceConfiguration)
     (hμ_cont : IsProbabilityMeasure μ_cont)
-    (hμ_cont_limit : @IsPhi4ContinuumLimit μ_cont hμ_cont P mass coupling) :
-    μ_latt = μ_cont
+    (hμ_cont_limit : @IsPhi4ContinuumLimit μ_cont hμ_cont P mass coupling)
+    -- Exponential moment hypotheses (from Fernique/Nelson bounds)
+    (hμ_latt_exp : ∀ f : TestFun, ∃ t : ℝ, 0 < t ∧
+      Integrable (fun ω : FieldConfig => Real.exp (t * (ω f) ^ 2)) μ_latt)
+    (hμ_cont_exp : ∀ f : TestFun, ∃ t : ℝ, 0 < t ∧
+      Integrable (fun ω : FieldConfig => Real.exp (t * (ω f) ^ 2)) μ_cont) :
+    μ_latt = μ_cont :=
+  measure_determined_by_schwinger μ_latt μ_cont hμ_latt hμ_cont
+    hμ_latt_exp hμ_cont_exp
+    (fun n f => schwinger_agreement P mass coupling hmass hP h_weak
+      μ_latt hμ_latt hμ_latt_limit μ_cont hμ_cont hμ_cont_limit n f)
 
 /-! ## Axiom transfer: OS2 from Phi4 to pphi2
 
