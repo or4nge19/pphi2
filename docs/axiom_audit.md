@@ -1,7 +1,7 @@
 # Comprehensive Axiom Audit: pphi2 + gaussian-field
 
-**Updated**: 2026-03-18
-**pphi2**: 61 axioms, 8 sorries | **gaussian-field**: 0 axioms, 1 sorry
+**Updated**: 2026-03-19
+**pphi2**: 33 axioms, 0 sorries (active build) | **gaussian-field**: 19 axioms, 0 sorries
 
 Note: pphi2 count includes 3 private axioms (`schwartz_riemann_sum_bound`,
 `fourier_representation_convolution`, `gaussian_rp_cov_perfect_square`).
@@ -398,6 +398,24 @@ Notes on ⚠️ axioms:
 
 ---
 
+### Route B' IR Limit (7 axioms, added 2026-03-19)
+
+| # | Name | File:Line | Rating | Verified | Notes |
+|---|------|----------|--------|----------|-------|
+| 1 | `cylinderToTorusEmbed_comp_timeTranslation` | CylinderEmbedding:99 | ✅ Standard | ✅ Gemini (2026-03-19) | Periodization intertwines time translation. Reindexing sum over ℤ. |
+| 2 | `cylinderToTorusEmbed_comp_timeReflection` | CylinderEmbedding:106 | ✅ Standard | ✅ Gemini (2026-03-19) | Periodization intertwines time reflection. Reindex k → -k. |
+| 3 | `cylinderIR_uniform_second_moment` | GreenFunctionComparison:52 | ✅ Standard | ✅ Gemini (2026-03-19) | Pullback → OS1 regularity → method of images. Uniform in Lt ≥ 1. |
+| 4 | `cylinderIR_uniform_exponential_moment` | UniformExponentialMoment:53 | ✅ Standard | ✅ Gemini (2026-03-19) | Nelson/Fröhlich + method of images. Sufficient for Vitali/Montel. |
+| 5 | `cylinderIRLimit_exists` | IRTightness:60 | ✅ Standard | ✅ Gemini (2026-03-19) | Mitoma tightness → Prokhorov → Lévy continuity. Char. functional convergence correct. |
+| 6 | `cylinderIR_os0` | CylinderOS:130 | ✅ Standard | ✅ Gemini (2026-03-19) | Uniform exp moments → Vitali/Montel → analyticity. |
+| 7 | `cylinderIR_os3` | CylinderOS:144 | ✅ Standard | ✅ Gemini (2026-03-19) | No wrap-around for Lt > 2R confirmed valid. Density of C_c^∞ confirmed. |
+
+**Gemini review notes (2026-03-19):**
+- All 7 axioms verified correct with no modifications needed.
+- The Re() in OS3 is redundant (M_{ij} is Hermitian so c†Mc is real) but harmless.
+- Characteristic functional convergence is the standard notion for nuclear spaces.
+- The "no wrap-around" argument for OS3 is the key mechanism for transferring torus RP to cylinder.
+
 ## References
 
 - Glimm-Jaffe, *Quantum Physics: A Functional Integral Point of View* (1987)
@@ -414,4 +432,4 @@ Notes on ⚠️ axioms:
 - Trèves, *Topological Vector Spaces, Distributions, and Kernels* — tensor product CLMs
 - Fernique (1975) — Gaussian measures on nuclear spaces
 
-**Audit Date**: 2026-03-03
+**Audit Date**: 2026-03-19
