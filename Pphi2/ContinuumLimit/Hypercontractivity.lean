@@ -181,26 +181,97 @@ theorem gaussian_hypercontractivity_continuum
 These axioms replace the compound axioms `exponential_moment_bound` and
 `interactionFunctional_mean_nonpos` with cleaner, elementary statements. -/
 
+/-- **Wick constant = GFF variance at a site.**
+
+The Wick ordering constant `c_a = (1/|Λ|) Σ_m λ_m⁻¹` equals the variance
+of the field `ω(δ_x)` under the lattice Gaussian free field:
+`wickConstant = ⟨T(δ_x), T(δ_x)⟩ = E[(ω(δ_x))²]`.
+
+This follows from the spectral decomposition of the lattice covariance
++ Parseval identity (the Fourier eigenvectors satisfy `Σ_k |e_k(x)|² = 1`)
++ translation invariance (`G(x,x)` is independent of x).
+
+Reference: Glimm-Jaffe §1.3, Simon §I.2. -/
+axiom wickConstant_eq_variance (a mass : ℝ) (ha : 0 < a) (hmass : 0 < mass)
+    (x : FinLatticeSites d N) :
+    (wickConstant d N a mass : ℝ) =
+    @inner ℝ ell2' _
+      (latticeCovariance d N a mass ha hmass (finLatticeDelta d N x))
+      (latticeCovariance d N a mass ha hmass (finLatticeDelta d N x))
+
+/-- **Hermite orthogonality under 1D Gaussian.**
+
+The probabilist's Hermite polynomial (= Wick monomial) of order n ≥ 1
+has zero mean under the Gaussian with matching variance:
+`∫ He_n(t; σ_sq) dN(0, σ_sq)(t) = 0`.
+
+Also states integrability (polynomials of Gaussian rv's are integrable).
+
+This is a standard 1D probability result: the Hermite polynomials form
+an orthogonal system in L²(N(0,σ_sq)), with He_0 = 1 being the constant.
+So ∫ He_n · He_0 dN(0,σ_sq) = 0 for n ≥ 1.
+
+Reference: Janson, *Gaussian Hilbert Spaces*, Prop. 1.1;
+Simon (1974), §I.3. -/
+axiom gaussian_hermite_zero_mean
+    (σ_sq : ℝ) (hσ : 0 < σ_sq)
+    (n : ℕ) (hn : 1 ≤ n) :
+    Integrable (fun t => wickMonomial n σ_sq t)
+      (ProbabilityTheory.gaussianReal 0 σ_sq.toNNReal) ∧
+    ∫ t, wickMonomial n σ_sq t
+      ∂(ProbabilityTheory.gaussianReal 0 σ_sq.toNNReal) = 0
+
 /-- **Hermite orthogonality for the lattice Gaussian measure.**
 
 Wick monomials `:x^n:_c` of order n ≥ 1 have zero mean under the Gaussian
 measure with matching variance parameter c = wickConstant. This combines:
-1. The variance of `ω(δ_x)` under `μ_{GFF}` equals `wickConstant`
-   (the diagonal of the lattice Green's function)
-2. Hermite polynomial orthogonality: `∫ He_n(t/√c) dN(0,c)(t) = 0` for n ≥ 1
+1. `wickConstant_eq_variance`: the variance of `ω(δ_x)` equals `wickConstant`
+2. `pairing_is_gaussian`: the marginal of `ω(δ_x)` is `N(0, wickConstant)`
+3. `gaussian_hermite_zero_mean`: Hermite orthogonality for 1D Gaussians
 
-Also states integrability, which holds because all Gaussian moments are finite
-(polynomial of a Gaussian random variable).
+Also states integrability (polynomial of a Gaussian random variable).
 
 Reference: Simon (1974), §I.3; Glimm-Jaffe (1987), §1.3. -/
-axiom wickMonomial_latticeGaussian (d N : ℕ) [NeZero N]
+theorem wickMonomial_latticeGaussian (d N : ℕ) [NeZero N]
     (n : ℕ) (hn : 1 ≤ n) (a mass : ℝ) (ha : 0 < a) (hmass : 0 < mass)
     (x : FinLatticeSites d N) :
     Integrable (fun ω : Configuration (FinLatticeField d N) =>
         wickMonomial n (wickConstant d N a mass) (ω (finLatticeDelta d N x)))
       (latticeGaussianMeasure d N a mass ha hmass) ∧
     ∫ ω, wickMonomial n (wickConstant d N a mass) (ω (finLatticeDelta d N x))
-      ∂(latticeGaussianMeasure d N a mass ha hmass) = 0
+      ∂(latticeGaussianMeasure d N a mass ha hmass) = 0 := by
+  set μ := latticeGaussianMeasure d N a mass ha hmass
+  set T := latticeCovariance d N a mass ha hmass
+  set δx := finLatticeDelta d N x
+  set c := wickConstant d N a mass
+  have hc_pos : 0 < c := wickConstant_pos d N a mass ha hmass
+  -- wickConstant = ‖T(δ_x)‖²
+  have h_var := wickConstant_eq_variance d N a mass ha hmass x
+  -- The marginal of ω(δ_x) under μ_GFF is N(0, wickConstant)
+  have h_gauss : μ.map (fun ω : Configuration (FinLatticeField d N) => ω δx) =
+      ProbabilityTheory.gaussianReal 0 (c : ℝ).toNNReal := by
+    have := GaussianField.pairing_is_gaussian T δx
+    rwa [show @inner ℝ ell2' _ (T δx) (T δx) = c from h_var.symm] at this
+  have h_meas_eval : Measurable (fun ω : Configuration (FinLatticeField d N) => ω δx) :=
+    configuration_eval_measurable δx
+  -- 1D Hermite orthogonality under N(0, c)
+  obtain ⟨h_int_1d, h_zero_1d⟩ := gaussian_hermite_zero_mean c hc_pos n hn
+  -- Key: the composition (wickMonomial n c) ∘ (eval δx) is the integrand
+  set g := fun t : ℝ => wickMonomial n c t
+  have hg_comp : (fun ω : Configuration (FinLatticeField d N) =>
+      wickMonomial n c (ω δx)) = g ∘ (fun ω => ω δx) := rfl
+  -- g integrable under pushforward = N(0,c)
+  have h_int_push : Integrable g (μ.map (fun ω => ω δx)) := h_gauss ▸ h_int_1d
+  constructor
+  · -- Integrability: pull back through the pushforward
+    rw [hg_comp]
+    exact h_int_push.comp_measurable h_meas_eval
+  · -- Integral = 0: ∫ g(ω δx) dμ = ∫ g d(pushforward) = ∫ g d N(0,c) = 0
+    rw [hg_comp]
+    rw [show ∫ x_1, (g ∘ fun ω => ω δx) x_1 ∂μ =
+      ∫ t, g t ∂(μ.map (fun ω => ω δx)) from
+      (integral_map h_meas_eval.aemeasurable h_int_push.aestronglyMeasurable).symm]
+    rw [h_gauss, h_zero_1d]
 
 -- `wickPolynomial_uniform_bounded_below` is proved in WickPolynomial.lean
 
