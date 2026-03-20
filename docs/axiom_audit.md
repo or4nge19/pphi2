@@ -414,6 +414,20 @@ Notes on ⚠️ axioms:
 - All 7 axioms verified correct with no modifications needed.
 - The Re() in OS3 is redundant (M_{ij} is Hermitian so c†Mc is real) but harmless.
 - Characteristic functional convergence is the standard notion for nuclear spaces.
+- **UPDATE**: `cylinderToTorusEmbed_comp_timeTranslation` and `_comp_timeReflection`
+  are now **PROVED** via NTP pure tensor density technique.
+
+### Factored axioms (added 2026-03-20)
+
+| # | Name | File:Line | Rating | Verified | Notes |
+|---|------|----------|--------|----------|-------|
+| 1 | `wickConstant_eq_variance` | Hypercontractivity:197 | ✅ Standard | ✅ Gemini (2026-03-20) | Wick constant = GFF variance. Spectral decomposition + Parseval. |
+| 2 | `gaussian_hermite_zero_mean` | Hypercontractivity:223 | ✅ Standard | ✅ Gemini (2026-03-20) | Hermite orthogonality under matching Gaussian. Standard 1D probability. |
+| 3 | `configuration_continuum_polishSpace` | Convergence:183 | ✅ Standard | ✅ Gemini (2026-03-20) | S'(ℝ^d) Polish. Gel'fand-Vilenkin: nuclear Fréchet dual is Polish. |
+| 4 | `configuration_continuum_borelSpace` | Convergence:187 | ✅ Standard | — | Borel σ-algebra on S'(ℝ^d). Standard topology. |
+| 5 | `fourierMultiplier_preserves_real` | FourierMultiplier:244 (g-f) | ✅ Standard | ✅ Gemini (2026-03-20) | Even real symbol → real output. Requires σ even (corrected). |
+| 6 | `fourierMultiplierCLM_translation_comm` | FourierMultiplier:289 (g-f) | ✅ Standard | — | M_σ commutes with translation. Phase factor commutativity. |
+| 7 | `fourierMultiplierCLM_even_reflection_comm` | FourierMultiplier:301 (g-f) | ✅ Standard | — | M_σ commutes with reflection for even σ. Even symbol invariance. |
 - The "no wrap-around" argument for OS3 is the key mechanism for transferring torus RP to cylinder.
 
 ## References
