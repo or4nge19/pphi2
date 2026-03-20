@@ -136,7 +136,7 @@ private theorem covariance_le_mass_inv_sq_norm (a mass : ℝ) (ha : 0 < a) (hmas
               star_trivial] at hinner
             -- hinner: ∑ i, e_k(i) * e_j(i) = if j = k then 1 else 0
             rw [← hinner]
-            apply Finset.sum_congr rfl; intro x _; ring
+            apply Finset.sum_congr rfl; intro x _; exact mul_comm _ _
           rw [show (∑ x, (e_k : FinLatticeSites d N → ℝ) x *
               (massOperator d N a mass (e_k : FinLatticeSites d N → ℝ)) x) =
               ∑ x, e_k x * (massOperator d N a mass e_k) x from rfl] at hquad
@@ -207,11 +207,14 @@ by a constant depending only on f.
 More precisely: `|f(y)| ≤ C_n (1+|y|)^{-n}` for all n, so
 `a^d Σ_x f(ax)² ≤ C² · a^d Σ_x (1+a|x|)^{-2n}`, and for 2n > d the sum converges
 to at most `∫ (1+|y|)^{-2n} dy < ∞`. -/
-private axiom schwartz_riemann_sum_bound
+private theorem schwartz_riemann_sum_bound
     (f : ContinuumTestFunction d) :
     ∃ C : ℝ, 0 < C ∧ ∀ (a : ℝ) (ha : 0 < a), a ≤ 1 →
     ∀ (N : ℕ) [NeZero N],
-    a ^ d * ∑ x : FinLatticeSites d N, (evalAtSite d N a f x) ^ 2 ≤ C
+    a ^ d * ∑ x : FinLatticeSites d N, (evalAtSite d N a f x) ^ 2 ≤ C := by
+  -- Schwartz decay: |f(y)| ≤ p(f) · (1+|y|)^{-M} for M > d
+  -- Riemann sum a^d Σ_x (1+a|x|)^{-2M} bounded by ∫ (1+|y|)^{-2M} dy
+  sorry
 
 theorem embeddedTwoPoint_uniform_bound (mass : ℝ) (hmass : 0 < mass)
     (f : ContinuumTestFunction d) :
