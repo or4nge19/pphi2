@@ -1,6 +1,7 @@
 # `Convergence.lean` — Informal Summary
 
 > **Source**: [`Pphi2/ContinuumLimit/Convergence.lean`](../../Pphi2/ContinuumLimit/Convergence.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

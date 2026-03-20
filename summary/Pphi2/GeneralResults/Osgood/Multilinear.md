@@ -1,6 +1,7 @@
 # `Multilinear.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/GeneralResults/Osgood/Multilinear.lean`](../../../../Pphi2/GeneralResults/Osgood/Multilinear.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

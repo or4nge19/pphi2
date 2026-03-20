@@ -1,6 +1,7 @@
 # `GaussianFourier.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/TransferMatrix/GaussianFourier.lean`](../../Pphi2/TransferMatrix/GaussianFourier.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

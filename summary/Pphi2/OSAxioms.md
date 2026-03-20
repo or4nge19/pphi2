@@ -1,6 +1,7 @@
 # `OSAxioms.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/OSAxioms.lean`](../../Pphi2/OSAxioms.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

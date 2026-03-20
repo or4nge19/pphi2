@@ -1,6 +1,7 @@
 # `ComplexTestFunction.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/OSforGFF/ComplexTestFunction.lean`](../../../Pphi2/OSforGFF/ComplexTestFunction.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

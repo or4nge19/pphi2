@@ -1,6 +1,7 @@
 # `SpectralGap.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/TransferMatrix/SpectralGap.lean`](../../Pphi2/TransferMatrix/SpectralGap.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

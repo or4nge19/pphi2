@@ -1,6 +1,7 @@
 # `CovarianceSplit.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/NelsonEstimate/CovarianceSplit.lean`](../../../Pphi2/NelsonEstimate/CovarianceSplit.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

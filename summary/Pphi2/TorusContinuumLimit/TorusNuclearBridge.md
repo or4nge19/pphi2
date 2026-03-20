@@ -1,6 +1,7 @@
 # `TorusNuclearBridge.lean` — Informal Summary
 
 > **Source**: [`Pphi2/TorusContinuumLimit/TorusNuclearBridge.lean`](../../Pphi2/TorusContinuumLimit/TorusNuclearBridge.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

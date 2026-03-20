@@ -1,6 +1,7 @@
 # `PropagatorConvergence.lean` — Informal Summary
 
 > **Source**: [`Pphi2/GaussianContinuumLimit/PropagatorConvergence.lean`](../../Pphi2/GaussianContinuumLimit/PropagatorConvergence.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

@@ -1,6 +1,7 @@
 # `TorusOSAxioms.lean` — Informal Summary
 
 > **Source**: [`Pphi2/TorusContinuumLimit/TorusOSAxioms.lean`](../../Pphi2/TorusContinuumLimit/TorusOSAxioms.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

@@ -1,6 +1,7 @@
 # `MeasureUniqueness.lean` — Informal Summary
 
 > **Source**: [`Pphi2/TorusContinuumLimit/MeasureUniqueness.lean`](../../Pphi2/TorusContinuumLimit/MeasureUniqueness.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

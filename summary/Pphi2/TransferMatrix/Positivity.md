@@ -1,6 +1,7 @@
 # `Positivity.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/TransferMatrix/Positivity.lean`](../../Pphi2/TransferMatrix/Positivity.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

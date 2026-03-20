@@ -1,6 +1,7 @@
 # `Osgood2.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/GeneralResults/Osgood/Osgood2.lean`](../../../../Pphi2/GeneralResults/Osgood/Osgood2.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

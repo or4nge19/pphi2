@@ -1,6 +1,7 @@
 # `RoughErrorBound.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/NelsonEstimate/RoughErrorBound.lean`](../../../Pphi2/NelsonEstimate/RoughErrorBound.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

@@ -1,6 +1,7 @@
 # `EmbeddedCovariance.lean` — Informal Summary
 
 > **Source**: [`Pphi2/GaussianContinuumLimit/EmbeddedCovariance.lean`](../../Pphi2/GaussianContinuumLimit/EmbeddedCovariance.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

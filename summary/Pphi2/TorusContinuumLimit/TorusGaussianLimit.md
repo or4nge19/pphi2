@@ -1,6 +1,7 @@
 # `TorusGaussianLimit.lean` — Informal Summary
 
 > **Source**: [`Pphi2/TorusContinuumLimit/TorusGaussianLimit.lean`](../../Pphi2/TorusContinuumLimit/TorusGaussianLimit.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

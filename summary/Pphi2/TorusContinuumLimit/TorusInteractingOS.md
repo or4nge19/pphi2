@@ -1,6 +1,7 @@
 # `TorusInteractingOS.lean` — Informal Summary
 
 > **Source**: [`Pphi2/TorusContinuumLimit/TorusInteractingOS.lean`](../../Pphi2/TorusContinuumLimit/TorusInteractingOS.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

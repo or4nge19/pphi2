@@ -1,6 +1,7 @@
 # `L2Multiplication.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/TransferMatrix/L2Multiplication.lean`](../../Pphi2/TransferMatrix/L2Multiplication.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

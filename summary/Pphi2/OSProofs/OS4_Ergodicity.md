@@ -1,6 +1,7 @@
 # `OS4_Ergodicity.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/OSProofs/OS4_Ergodicity.lean`](../../Pphi2/OSProofs/OS4_Ergodicity.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

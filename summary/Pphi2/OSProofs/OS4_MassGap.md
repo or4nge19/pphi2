@@ -1,6 +1,7 @@
 # `OS4_MassGap.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/OSProofs/OS4_MassGap.lean`](../../Pphi2/OSProofs/OS4_MassGap.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

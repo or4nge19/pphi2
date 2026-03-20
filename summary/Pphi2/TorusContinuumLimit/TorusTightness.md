@@ -1,6 +1,7 @@
 # `TorusTightness.lean` — Informal Summary
 
 > **Source**: [`Pphi2/TorusContinuumLimit/TorusTightness.lean`](../../Pphi2/TorusContinuumLimit/TorusTightness.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

@@ -1,6 +1,7 @@
 # `TorusPropagatorConvergence.lean` — Informal Summary
 
 > **Source**: [`Pphi2/TorusContinuumLimit/TorusPropagatorConvergence.lean`](../../Pphi2/TorusContinuumLimit/TorusPropagatorConvergence.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

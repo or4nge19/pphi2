@@ -1,6 +1,7 @@
 # `AxiomInheritance.lean` — Informal Summary
 
 > **Source**: [`Pphi2/ContinuumLimit/AxiomInheritance.lean`](../../Pphi2/ContinuumLimit/AxiomInheritance.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

@@ -1,6 +1,7 @@
 # `LatticeMeasure.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/InteractingMeasure/LatticeMeasure.lean`](../../../Pphi2/InteractingMeasure/LatticeMeasure.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

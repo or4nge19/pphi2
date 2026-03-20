@@ -1,6 +1,7 @@
 # `GaussianTightness.lean` — Informal Summary
 
 > **Source**: [`Pphi2/GaussianContinuumLimit/GaussianTightness.lean`](../../Pphi2/GaussianContinuumLimit/GaussianTightness.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

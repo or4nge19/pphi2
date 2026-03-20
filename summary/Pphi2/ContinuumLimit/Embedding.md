@@ -1,6 +1,7 @@
 # `Embedding.lean` — Informal Summary
 
 > **Source**: [`Pphi2/ContinuumLimit/Embedding.lean`](../../Pphi2/ContinuumLimit/Embedding.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

@@ -1,6 +1,7 @@
 # `Tightness.lean` — Informal Summary
 
 > **Source**: [`Pphi2/ContinuumLimit/Tightness.lean`](../../Pphi2/ContinuumLimit/Tightness.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

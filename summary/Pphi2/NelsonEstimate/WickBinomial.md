@@ -1,6 +1,7 @@
 # `WickBinomial.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/NelsonEstimate/WickBinomial.lean`](../../../Pphi2/NelsonEstimate/WickBinomial.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

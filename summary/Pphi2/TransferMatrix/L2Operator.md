@@ -1,6 +1,7 @@
 # `L2Operator.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/TransferMatrix/L2Operator.lean`](../../Pphi2/TransferMatrix/L2Operator.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

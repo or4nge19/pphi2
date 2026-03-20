@@ -1,6 +1,7 @@
 # `Jentzsch.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/TransferMatrix/Jentzsch.lean`](../../Pphi2/TransferMatrix/Jentzsch.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

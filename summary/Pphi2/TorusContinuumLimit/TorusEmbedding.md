@@ -1,6 +1,7 @@
 # `TorusEmbedding.lean` — Informal Summary
 
 > **Source**: [`Pphi2/TorusContinuumLimit/TorusEmbedding.lean`](../../Pphi2/TorusContinuumLimit/TorusEmbedding.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

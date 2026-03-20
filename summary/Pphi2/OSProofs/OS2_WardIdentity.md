@@ -1,6 +1,7 @@
 # `OS2_WardIdentity.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/OSProofs/OS2_WardIdentity.lean`](../../Pphi2/OSProofs/OS2_WardIdentity.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

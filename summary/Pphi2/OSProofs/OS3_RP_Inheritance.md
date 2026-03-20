@@ -1,6 +1,7 @@
 # `OS3_RP_Inheritance.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/OSProofs/OS3_RP_Inheritance.lean`](../../Pphi2/OSProofs/OS3_RP_Inheritance.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

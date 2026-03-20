@@ -1,6 +1,7 @@
 # `Main.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/Main.lean`](../../Pphi2/Main.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

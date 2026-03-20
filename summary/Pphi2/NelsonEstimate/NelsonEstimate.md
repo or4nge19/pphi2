@@ -1,6 +1,7 @@
 # `NelsonEstimate.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/NelsonEstimate/NelsonEstimate.lean`](../../../Pphi2/NelsonEstimate/NelsonEstimate.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

@@ -1,6 +1,7 @@
 # `OS3_RP_Lattice.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/OSProofs/OS3_RP_Lattice.lean`](../../Pphi2/OSProofs/OS3_RP_Lattice.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

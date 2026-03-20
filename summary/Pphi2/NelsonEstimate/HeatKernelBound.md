@@ -1,6 +1,7 @@
 # `HeatKernelBound.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/NelsonEstimate/HeatKernelBound.lean`](../../../Pphi2/NelsonEstimate/HeatKernelBound.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

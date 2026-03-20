@@ -1,6 +1,7 @@
 # `Hypercontractivity.lean` — Informal Summary
 
 > **Source**: [`Pphi2/ContinuumLimit/Hypercontractivity.lean`](../../Pphi2/ContinuumLimit/Hypercontractivity.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

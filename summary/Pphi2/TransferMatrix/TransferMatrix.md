@@ -1,6 +1,7 @@
 # `TransferMatrix.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/TransferMatrix/TransferMatrix.lean`](../../Pphi2/TransferMatrix/TransferMatrix.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

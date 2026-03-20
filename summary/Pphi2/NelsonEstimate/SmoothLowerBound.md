@@ -1,6 +1,7 @@
 # `SmoothLowerBound.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/NelsonEstimate/SmoothLowerBound.lean`](../../../Pphi2/NelsonEstimate/SmoothLowerBound.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

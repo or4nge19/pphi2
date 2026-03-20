@@ -1,6 +1,7 @@
 # `Bridge.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/Bridge.lean`](../../Pphi2/Bridge.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

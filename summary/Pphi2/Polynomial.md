@@ -1,6 +1,7 @@
 # `Polynomial.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/Polynomial.lean`](../../Pphi2/Polynomial.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

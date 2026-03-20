@@ -1,6 +1,7 @@
 # `Counterterm.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/WickOrdering/Counterterm.lean`](../../../Pphi2/WickOrdering/Counterterm.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview

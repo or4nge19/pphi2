@@ -1,6 +1,7 @@
 # `WickPolynomial.lean` -- Informal Summary
 
 > **Source**: [`Pphi2/WickOrdering/WickPolynomial.lean`](../../../Pphi2/WickOrdering/WickPolynomial.lean)
+>
 > **Generated**: 2026-03-20
 
 ## Overview
