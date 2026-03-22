@@ -33,6 +33,7 @@ This logarithmic divergence is the UV divergence that Wick ordering removes.
 -/
 
 import Lattice.Covariance
+import Pphi2.GeneralResults.LatticeFourierIndexing
 import Pphi2.WickOrdering.WickPolynomial
 
 noncomputable section
@@ -127,6 +128,19 @@ theorem wickConstant_antitone_mass (a : ℝ) (ha : 0 < a)
     linarith [pow_le_pow_left₀ (le_of_lt hm₁) hm₂ 2]
   · -- 0 + m₁² ≤ 0 + m₂²
     linarith [pow_le_pow_left₀ (le_of_lt hm₁) hm₂ 2]
+
+/-- In two dimensions, the Wick constant is the average of the product DFT
+eigenvalue formula coming from the 1D lattice modes. -/
+theorem wickConstant_two_eq_dft_eigenvalue_average (a mass : ℝ) :
+    (wickConstant 2 N a mass : ℝ) =
+      (1 / Fintype.card (FinLatticeSites 2 N) : ℝ) *
+        ∑ m₁ : Fin N, ∑ m₂ : Fin N,
+          (latticeEigenvalue1d N a m₁ + latticeEigenvalue1d N a m₂ + mass ^ 2)⁻¹ := by
+  unfold wickConstant
+  rw [← Fin.sum_univ_eq_sum_range]
+  congr 1
+  exact sum_latticeEigenvalue_two_eq_sum_latticeEigenvalue1d_pair (N := N) (a := a)
+    (mass := mass) (F := fun t => t⁻¹)
 
 end Pphi2
 
