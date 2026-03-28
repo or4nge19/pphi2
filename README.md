@@ -62,7 +62,7 @@ OS axioms. See [ROUTES.md](ROUTES.md) for the detailed comparison.
 ### Route A: ℝ² (Euclidean plane) — OS0–OS4
 The full construction targets S'(ℝ²) and proves all five OS axioms.
 The continuum limit involves both UV (a → 0) and IR (volume → ∞) limits.
-**24 axioms, 0 sorries.**
+**20 axioms, 0 sorries.**
 
 ### Route B: T²_L (symmetric torus) — OS0–OS2
 Finite-volume warm-up isolating the UV limit. Lattice (ℤ/Nℤ)² with
@@ -118,7 +118,7 @@ OS0–OS2). Only needs new work for OS3 (RP) and the Lt → ∞ limit.
 Direct Nelson/Simon construction with natural time axis ℝ for OS reconstruction.
 The field is a distribution (not a function), requiring isonormal Gaussian extension.
 OS3 uses Laplace factorization of the cylinder Green's function.
-**23 axioms + 0 sorries.**
+**21 axioms + 0 sorries** (preserved in `future/`, not in active build).
 
 ### Which OS axiom comes from which route?
 | OS axiom | Best route | Why |
@@ -203,13 +203,11 @@ weak limits via `torusMatrixRP_of_weakLimit`.
 See [status.md](status.md) for a complete inventory of all axioms and sorries,
 organized by difficulty and priority.
 
-For [Convergence.lean](Pphi2/ContinuumLimit/Convergence.lean), the current
-extraction axiom `prokhorov_configuration_sequential` is intentionally
-temporary. The planned replacement is a weighted-Sobolev route: prove uniform
-interacting Sobolev moments by Holder/Cauchy-Schwarz transfer from the free
-Gaussian measure, derive tightness via Markov bounds and compact weighted
-embeddings, apply the already-proved Polish-space theorem
-`prokhorov_sequential`, then lift back to configuration-space convergence. See
+For [Convergence.lean](Pphi2/ContinuumLimit/Convergence.lean),
+`prokhorov_configuration_sequential` is now a **proved theorem** using
+gaussian-field's `prokhorov_configuration` (which embeds Configuration into
+ℕ → ℝ via the DM basis, avoiding Polish/Borel). The old axiomatized
+Polish/Borel instances were removed as inconsistent. See
 [SobolevProkhorovPlan.lean](Pphi2/ContinuumLimit/SobolevProkhorovPlan.lean).
 
 ## Nontrivial infrastructure notes
