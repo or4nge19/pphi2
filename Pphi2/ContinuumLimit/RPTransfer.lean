@@ -148,49 +148,18 @@ theorem latticeEmbedLift_intertwines_reflection (a : ℝ) (ha : 0 < a)
   congr 1; ext y; congr 1
   exact evalAtSite_reflection N hN_odd a f y
 
-/-! ## RP transfer theorem
+/-! ## Application to OS3
 
-From lattice RP + intertwining, the continuum-embedded measure has RP. -/
+The proved intertwining identity `latticeEmbedLift_intertwines_reflection`
+is the key ingredient for proving `os3_for_continuum_limit` (axiom in
+`OS2_WardIdentity.lean`). The proof would proceed:
 
-/-- **RP of continuum-embedded lattice measures.**
+1. Change of variables: `∫ G d(ι_* μ) = ∫ G∘ι dμ` via `integral_map`
+2. Intertwining: `F(Θ*(ι φ)) = F(ι(Θ_latt φ))` (proved above)
+3. Lattice OS3: the RP matrix for the lattice measure is ≥ 0
 
-Each `continuumMeasure 2 N P a mass ha hmass` satisfies reflection positivity:
-`∫ F(ω) · F(Θ*ω) dν ≥ 0` for all bounded continuous F.
-
-Proof:
-1. Change of variables: `∫ F·(F∘Θ*) d(ι_* μ) = ∫ (F∘ι)·((F∘ι)∘Θ_latt) dμ`
-   (using intertwining: `F(Θ*(ι φ)) = F(ι(Θ_latt φ))`)
-2. Lattice RP: `∫ G·(G∘Θ_latt) dμ ≥ 0` where `G = F ∘ ι`
-   (from `lattice_rp` in OS3_RP_Lattice.lean) -/
-theorem continuum_embedded_measure_rp'
-    (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
-    (a : ℝ) (ha : 0 < a) :
-    ∀ (F : Configuration (ContinuumTestFunction 2) → ℝ),
-      Continuous F → (∃ C, ∀ ω, |F ω| ≤ C) →
-      0 ≤ ∫ ω, F ω * F (distribTimeReflection ω)
-        ∂(continuumMeasure 2 N P a mass ha hmass) := by
-  intro F hF_cont ⟨C, hC⟩
-  -- Step 1: Change of variables: ∫ G d(ι_* μ) = ∫ G∘ι dμ
-  set ι := latticeEmbedLift 2 N a ha
-  set μ_latt := interactingLatticeMeasure 2 N P a mass ha hmass
-  -- The integrand G(ω) = F(ω) · F(Θ*ω)
-  set G : Configuration (ContinuumTestFunction 2) → ℝ :=
-    fun ω => F ω * F (distribTimeReflection ω)
-  change 0 ≤ ∫ ω, G ω ∂(Measure.map ι μ_latt)
-  -- Step 2: Change of variables via integral_map
-  -- ∫ G d(ι_* μ) = ∫ G∘ι dμ
-  -- Then: (G∘ι)(φ) = F(ι φ) · F(Θ*(ι φ)) = F(ι φ) · F(ι(Θ_latt φ))
-  -- This is a non-negative integrand (F(ι φ)² after rewriting) IF Θ* acts trivially.
-  -- In general it's F(ι φ) · F(ι(Θφ)), which is the RP test for G_latt = F∘ι.
-  --
-  -- The gap: lattice_rp requires PositiveTimeSupported, but F is arbitrary.
-  -- The standard RP inequality ∫ F·(F∘Θ) ≥ 0 for all F follows from RP for
-  -- positive-time F by density. This requires a "strong RP" reformulation of
-  -- lattice_rp, or a direct proof that ∫ G·(G∘Θ) dμ_latt ≥ 0 for all G.
-  --
-  -- For now, this remains the single sorry in the RP chain.
-  -- Mathematical content: change of variables (integral_map) + lattice RP.
-  sorry
+Steps 1-2 give `Re(Z_continuum[f-Θg]) = Re(Z_lattice[ι*(f-Θg)])`.
+Step 3 gives nonnegativity of the lattice RP matrix. -/
 
 end Pphi2
 
