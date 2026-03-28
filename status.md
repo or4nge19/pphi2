@@ -11,7 +11,12 @@ The proof architecture is: axiomatize key analytic/probabilistic results with
 detailed proof sketches, prove the logical structure connecting them, and
 progressively fill in the axioms with full proofs.
 
-**Current counter (`./scripts/count_axioms.sh`, 2026-03-26): 31 axioms, 1 sorry.**
+**Current counter (2026-03-28): 29 axioms, 1 sorry.**
+
+Recent reductions:
+- `gaussian_hermite_zero_mean` — **PROVED** (PR#1, Hermite orthonormality from Mathlib)
+- `wickConstant_eq_variance` — **PROVED** (PR#1, product DFT Parseval + translation invariance)
+- `periodicResolvent_convergence_rate` — **PROVED** (PR#1, hyperbolic identity manipulation)
 
 **Route B (torus): `TorusInteractingOS.lean` has 0 local axioms, 0 sorries.**
 All OS0–OS2 proofs complete within this file. Transitive dependencies are
