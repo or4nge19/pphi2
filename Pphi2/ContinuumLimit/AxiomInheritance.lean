@@ -115,6 +115,18 @@ noncomputable def continuumTimeReflection :
     ContinuumTestFunction 2 →L[ℝ] ContinuumTestFunction 2 :=
   SchwartzMap.compCLMOfContinuousLinearEquiv ℝ timeReflCLE
 
+/-- Evaluation of `continuumTimeReflection`: negates the 0th coordinate.
+`(Θf)(p) = f((-p₀, p₁, ...))`. -/
+@[simp]
+theorem continuumTimeReflection_apply_coord (f : ContinuumTestFunction 2)
+    (p : EuclideanSpace ℝ (Fin 2)) :
+    (continuumTimeReflection f) p =
+    f ((WithLp.equiv 2 (Fin 2 → ℝ)).symm (fun i =>
+      if i = (0 : Fin 2) then -(WithLp.equiv 2 (Fin 2 → ℝ) p i)
+      else WithLp.equiv 2 (Fin 2 → ℝ) p i)) := by
+  simp [continuumTimeReflection, timeReflCLE, timeReflLinear,
+    SchwartzMap.compCLMOfContinuousLinearEquiv, LinearEquiv.ofInvolutive]
+
 /-- Time reflection on distributions (the dual action).
 
 For `ω ∈ S'(ℝ²)`, `(Θ*ω)(f) = ω(Θf)` where `Θf(t,x) = f(-t,x)`.

@@ -80,30 +80,39 @@ Equivalently, for all ω and f:
 
 This is a reindexing of the finite sum: `Σ_x ω(e_x) · (Θf)(a·x) = Σ_x ω(e_{Θx}) · f(a·x)`. -/
 
-/-- **The embedding intertwines time reflection.**
+/-! ## Helper lemmas for the intertwining identity -/
 
-  `distribTimeReflection (latticeEmbedLift a ha ω) f
-   = latticeEmbedLift a ha (latticeConfigReflection N ω) f`
+omit [NeZero N] in
+lemma siteTimeReflection_involutive :
+    Function.Involutive (siteTimeReflection N : FinLatticeSites 2 N → FinLatticeSites 2 N) := by
+  intro x; ext i; simp [siteTimeReflection]; split <;> simp [neg_neg]
 
-Proof: With centered coordinates (`signedVal`), the intertwining reduces to:
-  `f(physicalPosition a (Θx)) = (Θf)(physicalPosition a x)`
-which holds because `signedVal(-x_0) = -signedVal(x_0)` for odd N
-(from `signedVal_neg`), so `physicalPosition a (Θx) = Θ(physicalPosition a x)`.
+lemma fieldTimeReflection_single (x : FinLatticeSites 2 N) :
+    fieldTimeReflection N (Pi.single x 1) =
+    Pi.single (siteTimeReflection N x) (1 : ℝ) := by
+  have hinv := siteTimeReflection_involutive N
+  have hbij : siteTimeReflection N (siteTimeReflection N x) = x := hinv x
+  ext y
+  simp only [fieldTimeReflection, Function.comp, Pi.single_apply]
+  by_cases h : y = siteTimeReflection N x
+  · simp [h, hbij]
+  · simp only [h, ite_false]
+    have : siteTimeReflection N y ≠ x := fun heq => h (by rw [← heq, hinv y])
+    simp [this]
 
-The sum reindexing `Σ_x ω(e_x)·(Θf)(pos(x)) = Σ_x ω(e_{Θx})·f(pos(x))`
-then follows by substituting `x' = Θx` (bijective since Θ is an involution). -/
 theorem latticeEmbedLift_intertwines_reflection (a : ℝ) (ha : 0 < a)
     (hN_odd : Odd N)
     (ω : Configuration (FinLatticeField 2 N))
     (f : ContinuumTestFunction 2) :
     distribTimeReflection (latticeEmbedLift 2 N a ha ω) f =
     latticeEmbedLift 2 N a ha (latticeConfigReflection N ω) f := by
-  -- Both sides unfold to a^2 * Σ_x ω(e_?) · f(pos(?))
-  -- LHS: a^2 * Σ_x ω(e_x) · (Θf)(pos(x))
-  -- RHS: a^2 * Σ_x ω(e_{Θx}) · f(pos(x))
-  -- These are equal by reindexing x ↦ Θx in the LHS sum.
-  -- The key: (Θf)(pos(x)) = f(Θ(pos(x))) = f(pos(Θx))
-  -- because signedVal(-x₀) = -signedVal(x₀) for odd N.
+  -- Unfold both sides to sums and use the helper lemmas.
+  -- LHS = (ι ω)(Θf) = a^2 * Σ_x ω(e_x) * (Θf)(pos(x))
+  -- RHS = (ι(Θω))(f) = a^2 * Σ_x (Θω)(e_x) * f(pos(x))
+  --      = a^2 * Σ_x ω(fieldTimeRefl(e_x)) * f(pos(x))
+  --      = a^2 * Σ_x ω(e_{Θx}) * f(pos(x))  (by fieldTimeReflection_single)
+  -- Reindex LHS: x' = Θx gives Σ_{x'} ω(e_{Θx'}) * (Θf)(pos(Θx'))
+  -- Need: (Θf)(pos(Θx')) = f(pos(x'))  (by position intertwining + signedVal_neg)
   sorry
 
 /-! ## RP transfer theorem
