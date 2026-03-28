@@ -55,12 +55,19 @@ theorem cylinderPullback_second_moment_eq
 
 /-- **OS1 second moment bound**: OS1 regularity implies a second moment bound.
 
-From `‖Z_ℂ[0, tf]‖ ≤ exp(c · q(tf))` we get `∫ exp(-t·ω(f)) dμ ≤ exp(c·t·q(f))`
-which at t=1 gives `∫ exp(ω(f)) dμ ≤ exp(c·q(f))`. Since `x² ≤ 2·exp(|x|)`,
-`∫ (ω f)² dμ ≤ 2 · ∫ exp(|ω f|) dμ ≤ 4 · exp(c·q(f))`.
+**Key trick**: The second moment `E[(ω f)²]` is quadratic in f because ω
+is a linear functional: `E[(ω(tf))²] = t² · E[(ω f)²]`. So we only need
+to bound `E[(ω g)²]` for `g` on the unit ball `{g : q(g) ≤ 1}`, where the
+OS1 exponential bound gives a finite constant.
 
-For a continuous seminorm q, `exp(c·q(f))` is bounded by `C·q'(f)²` on
-the unit ball of q', giving the quadratic bound. -/
+**Proof**:
+1. OS1 gives `‖Z_ℂ[0, g]‖ ≤ exp(c · q(g))`, hence `E[exp(-ω(g))] ≤ exp(c · q(g))`
+2. Similarly `E[exp(ω(g))] ≤ exp(c · q(g))`, so `E[cosh(ω(g))] ≤ exp(c · q(g))`
+3. Since `x² ≤ 2·cosh(x)`: `E[(ω g)²] ≤ 2·exp(c · q(g))`
+4. For `g = f/q(f)` (unit ball): `E[(ω(f/q(f)))²] ≤ 2·exp(c)`
+5. By quadraticity: `E[(ω f)²] = q(f)² · E[(ω(f/q(f)))²] ≤ 2·exp(c) · q(f)²`
+
+This gives `C = 2·exp(c)` with the SAME seminorm q from OS1. -/
 theorem os1_implies_second_moment_bound
     (Lt : ℝ) [Fact (0 < Lt)]
     (μ : Measure (Configuration (AsymTorusTestFunction Lt Ls)))
@@ -70,7 +77,19 @@ theorem os1_implies_second_moment_bound
     0 < C ∧ Continuous q ∧
     ∀ f : AsymTorusTestFunction Lt Ls,
       ∫ ω : Configuration (AsymTorusTestFunction Lt Ls), (ω f) ^ 2 ∂μ ≤ C * q f ^ 2 := by
-  sorry
+  -- Extract OS1 data: continuous q and constant c with exp bound
+  obtain ⟨q, hq_cont, c, hc_pos, hos1⟩ := hos.os1
+  -- C = 4 · exp(c) works (using x² ≤ 2·cosh(x) ≤ 2·exp(|x|))
+  exact ⟨4 * Real.exp c, q, mul_pos (by norm_num) (Real.exp_pos c), hq_cont, fun f => by
+    -- The proof:
+    -- (a) E[(ω f)²] ≤ 2 · E[exp(|ω f|)] (from x² ≤ 2·exp(|x|))
+    -- (b) E[exp(|ω f|)] ≤ E[exp(ω f)] + E[exp(-ω f)] (triangle)
+    -- (c) E[exp(±ω f)] ≤ exp(c · q(f)) (from OS1 at f_re=0, f_im=±f)
+    -- (d) Combined: E[(ω f)²] ≤ 4·exp(c·q(f))
+    -- (e) Quadraticity: E[(ω(tf))²] = t²·E[(ω f)²], so setting t = q(f)
+    --     and g = f/q(f): E[(ω f)²] = q(f)²·E[(ω g)²] ≤ q(f)²·4·exp(c)
+    --     (since q(g) = 1, so exp(c·q(g)) = exp(c))
+    sorry⟩
 
 /-- Uniform second moment bound for the cylinder pullback measures.
 
