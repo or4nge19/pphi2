@@ -50,10 +50,8 @@ This follows from:
 -/
 
 import Pphi2.ContinuumLimit.Tightness
-import Mathlib.MeasureTheory.Measure.Prokhorov
-import Mathlib.MeasureTheory.Measure.LevyProkhorovMetric
-import Mathlib.Topology.Sequences
-import Mathlib.Topology.Metrizable.Basic
+import GaussianField.ConfigurationEmbedding
+import SchwartzNuclear.HermiteNuclear
 
 noncomputable section
 
@@ -61,7 +59,7 @@ open GaussianField MeasureTheory Filter BoundedContinuousFunction
 
 namespace Pphi2
 
-variable (d N : ℕ) [NeZero N]
+variable (d N : ℕ) [NeZero N] [Fact (0 < d)]
 
 /-! ## Prokhorov's theorem
 
@@ -163,30 +161,23 @@ extraction principle on this space, avoiding any global Polish-space claim for
 the full weak-* dual topology.
 -/
 
-/-- **S'(ℝ^d) is a Polish space.**
+/-! ### Prokhorov extraction on configuration space
 
-The space of tempered distributions S'(ℝ^d) = WeakDual ℝ 𝓢(ℝ^d) is Polish
-(complete separable metrizable). This follows from the Sobolev embedding:
-𝓢(ℝ^d) ↪ H^{-s}(ℝ^d) for s > d/2, and H^{-s} is a separable Hilbert space
-whose dual is Polish.
+NOTE: The weak-* dual `Configuration(ContinuumTestFunction d)` is NOT Polish
+(the weak-* topology is not metrizable for infinite-dimensional spaces).
+Previous versions axiomatized `PolishSpace` and `BorelSpace` instances, but
+these are **inconsistent**.
 
-Alternatively: 𝓢(ℝ^d) is a nuclear Fréchet space, hence its strong dual
-is a countable union of Banach spaces, which is Polish.
-
-Reference: Gel'fand-Vilenkin, *Generalized Functions* Vol. 4, §III.4;
-Reed-Simon I, §V.3. -/
-axiom configuration_continuum_polishSpace :
-    PolishSpace (Configuration (ContinuumTestFunction d))
-
-/-- S'(ℝ^d) has a Borel σ-algebra compatible with the weak-* topology. -/
-axiom configuration_continuum_borelSpace :
-    BorelSpace (Configuration (ContinuumTestFunction d))
+Instead, we use `GaussianField.prokhorov_configuration` (proved in gaussian-field)
+which embeds `Configuration E` into `ℕ → ℝ` via the DM basis and applies
+standard Prokhorov there, avoiding Polish/Borel entirely. -/
 
 /-- Sequential Prokhorov extraction on configuration space.
 
-Proved from `prokhorov_sequential` (for Polish spaces) using the
-`PolishSpace` and `BorelSpace` instances for S'(ℝ^d). -/
+Uses `GaussianField.prokhorov_configuration` (proved in gaussian-field)
+which works for any `DyninMityaginSpace E` without needing Polish/Borel. -/
 theorem prokhorov_configuration_sequential
+    [Fact (0 < d)]
     (μ : ℕ → Measure (Configuration (ContinuumTestFunction d)))
     (hμ_prob : ∀ n, IsProbabilityMeasure (μ n))
     (hμ_tight : ∀ ε : ℝ, 0 < ε →
@@ -196,9 +187,12 @@ theorem prokhorov_configuration_sequential
       StrictMono φ ∧ IsProbabilityMeasure ν ∧
       ∀ (f : Configuration (ContinuumTestFunction d) → ℝ), Continuous f →
         (∃ C, ∀ x, |f x| ≤ C) →
-        Tendsto (fun n => ∫ ω, f ω ∂(μ (φ n))) atTop (nhds (∫ ω, f ω ∂ν)) :=
-  @prokhorov_sequential _ _ _ (configuration_continuum_polishSpace (d := d))
-    (configuration_continuum_borelSpace (d := d)) μ hμ_prob hμ_tight
+        Tendsto (fun n => ∫ ω, f ω ∂(μ (φ n))) atTop (nhds (∫ ω, f ω ∂ν)) := by
+  have hd : 0 < d := Fact.out
+  haveI : Nonempty (Fin d) := Fin.pos_iff_nonempty.mp hd
+  haveI : Nontrivial (EuclideanSpace ℝ (Fin d)) := inferInstance
+  haveI : DyninMityaginSpace (ContinuumTestFunction d) := schwartz_dyninMityaginSpace
+  exact prokhorov_configuration μ hμ_prob hμ_tight
 
 /-! ## The continuum limit -/
 
@@ -302,7 +296,7 @@ theorem pphi2_limit_exists (P : InteractionPolynomial)
         Tendsto (fun n : ℕ => 1 / (n + 1 : ℝ)) Filter.atTop (nhds 0))
   · intro k
     positivity
-  · refine ⟨?_, ?_, ?_, ?_⟩
+  · refine ⟨?_, ?_, ?_, ?_, ?_⟩
     · intro n f
       exact (tendsto_const_nhds :
         Filter.Tendsto
@@ -342,6 +336,8 @@ theorem pphi2_limit_exists (P : InteractionPolynomial)
           rw [integral_dirac' _ _ hmeas]
           norm_num [show (0 : Configuration (ContinuumTestFunction 2)) g = 0 from rfl]
         rw [this f, this (schwartzTranslate 2 v f)]
+    · -- Weak convergence: constant sequence at δ₀ → trivial
+      intro g _ _; exact tendsto_const_nhds
 
 end Pphi2
 

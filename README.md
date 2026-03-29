@@ -76,7 +76,7 @@ OS axioms. See [ROUTES.md](ROUTES.md) for the detailed comparison.
 ### Route A: ℝ² (Euclidean plane) — OS0–OS4
 The full construction targets S'(ℝ²) and proves all five OS axioms.
 The continuum limit involves both UV (a → 0) and IR (volume → ∞) limits.
-**25 axioms, 0 sorries.**
+**20 axioms, 0 sorries.**
 
 ### Route B: T²_L (symmetric torus) — OS0–OS2
 Finite-volume warm-up isolating the UV limit. Lattice (ℤ/Nℤ)² with
@@ -108,7 +108,7 @@ The construction proceeds in two limits:
    μ_{P,Lt,Ls} on T_{Lt,Ls} converge weakly to a measure μ_{P,Ls} on the
    cylinder S¹_{Ls} × ℝ. Tightness follows from uniform-in-Lt moment bounds
    via the **method of images** (gaussian-field `Cylinder/MethodOfImages.lean`).
-   The IR limit files are in `IRLimit/` with 5 axioms and 0 sorries.
+   The IR limit files are in `IRLimit/` with 4 axioms and 0 sorries.
    OS2 (time reflection) of the limit measure is **proved** via characteristic
    functional convergence.
 
@@ -126,13 +126,19 @@ The cylinder S¹_{Ls} × ℝ has a natural time axis ℝ, enabling:
 OS0–OS2). Only needs new work for OS3 (RP) and the Lt → ∞ limit.
 **Status:** UV limit (Step 1) complete — `AsymTorusOS.lean` has **0 axioms,
 0 sorry** for OS0–OS2. Cylinder IR limit (Step 2) in progress — `IRLimit/` has
-**5 axioms, 0 sorries**. OS2 is proved; compact-support, finite-rank, and general cylinder covariance convergence are now proved against a global physically normalized cylinder form obtained from `cylinderGreen` by explicit temporal `2π` rescaling, with the embedded torus covariance family under uniform bilinear seminorm control. What remains axiomatized in the IR lane is now exactly the uniform second-moment bound, uniform exponential moment, Prokhorov extraction, and OS0/OS3.
+**4 axioms, 0 sorries**. OS2 time reflection is proved via characteristic-functional
+convergence, and compact-support, finite-rank, and general cylinder covariance
+convergence are proved against a global physically normalized cylinder form
+obtained from `cylinderGreen` by explicit temporal `2π` rescaling, with uniform
+bilinear seminorm control of the embedded torus covariance family. Spatial
+translation is exact at each finite `Lt`; what remains axiomatized in the IR
+lane is the uniform second-moment bound, uniform exponential moment, and OS0/OS3.
 
 ### Route C: S¹_L × ℝ (cylinder, direct) — OS0–OS3
 Direct Nelson/Simon construction with natural time axis ℝ for OS reconstruction.
 The field is a distribution (not a function), requiring isonormal Gaussian extension.
 OS3 uses Laplace factorization of the cylinder Green's function.
-**23 axioms + 1 sorry.**
+**21 axioms + 0 sorries** (preserved in `future/`, not in active build).
 
 ### Which OS axiom comes from which route?
 | OS axiom | Best route | Why |
@@ -194,20 +200,18 @@ consistency checks:
 ## Current status
 
 All six phases are structurally complete and the full project builds
-(`lake build`, 3805 jobs).
+(`lake build`).
 
-- **pphi2:** 32 axioms, 0 sorries (active build; 21 Route C axioms preserved in `future/`)
-- **gaussian-field** (upstream): 14 axioms, 0 sorries (including Cylinder/ modules)
-- **Route B (torus):** 1 axiom, 1 sorry — most developed route (down from 7 axioms)
-- **Route B' IR limit:** 5 axioms, 0 sorries — pure/finite-rank/general covariance convergence to the global physical cylinder form is proved, together with the explicit temporal `2π` normalization bridge and uniform bilinear seminorm control; what remains here is the uniform second-moment bound, uniform exponential moment, Prokhorov extraction, and OS0/OS3
+- **pphi2:** 26 axioms, 0 sorries in the active build; Route C's 21 axioms remain preserved in `future/`
+- **Route B (torus):** 0 axioms, 0 sorries — the most developed route
+- **Route B' IR limit:** 4 axioms, 0 sorries — pure/finite-rank/general covariance convergence to the global physical cylinder form is proved, together with the explicit temporal `2π` normalization bridge and uniform bilinear seminorm control; what remains here is the uniform second-moment bound, uniform exponential moment, and OS0/OS3
 - **Shared foundations layer:** `Common/QFT/Euclidean/Formulations.lean` and
-  `Common/QFT/Euclidean/ReconstructionInterfaces.lean` now separate concrete
+  `Common/QFT/Euclidean/ReconstructionInterfaces.lean` separate concrete
   measure models, tensor-moment Schwinger data, distributional Schwinger data,
-  explicit reconstruction hypotheses, and backend-independent reconstruction
-  rules.
-- **Local `Phi4` core:** `Phi4.lean` now tracks the locally buildable Euclidean /
+  explicit reconstruction hypotheses, and backend-independent reconstruction rules
+- **Local `Phi4` core:** `Phi4.lean` tracks the locally buildable Euclidean /
   tensor-Schwinger pipeline only; the OS/reconstruction lane is kept explicit
-  and optional rather than silently assumed in the active umbrella.
+  and optional rather than silently assumed in the active umbrella
 
 The torus continuum limit (`TorusContinuumLimit/`) provides a cleaner alternative
 to the S'(ℝ^d) approach: by fixing the physical volume L and taking only N→∞,
@@ -225,13 +229,11 @@ weak limits via `torusMatrixRP_of_weakLimit`.
 See [status.md](status.md) for a complete inventory of all axioms and sorries,
 organized by difficulty and priority.
 
-For [Convergence.lean](Pphi2/ContinuumLimit/Convergence.lean), the current
-extraction axiom `prokhorov_configuration_sequential` is intentionally
-temporary. The planned replacement is a weighted-Sobolev route: prove uniform
-interacting Sobolev moments by Holder/Cauchy-Schwarz transfer from the free
-Gaussian measure, derive tightness via Markov bounds and compact weighted
-embeddings, apply the already-proved Polish-space theorem
-`prokhorov_sequential`, then lift back to configuration-space convergence. See
+For [Convergence.lean](Pphi2/ContinuumLimit/Convergence.lean),
+`prokhorov_configuration_sequential` is now a **proved theorem** using
+gaussian-field's `prokhorov_configuration` (which embeds Configuration into
+ℕ → ℝ via the DM basis, avoiding Polish/Borel). The old axiomatized
+Polish/Borel instances were removed as inconsistent. See
 [SobolevProkhorovPlan.lean](Pphi2/ContinuumLimit/SobolevProkhorovPlan.lean).
 
 ## Nontrivial infrastructure notes

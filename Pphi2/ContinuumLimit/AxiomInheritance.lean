@@ -115,6 +115,18 @@ noncomputable def continuumTimeReflection :
     ContinuumTestFunction 2 →L[ℝ] ContinuumTestFunction 2 :=
   SchwartzMap.compCLMOfContinuousLinearEquiv ℝ timeReflCLE
 
+/-- Evaluation of `continuumTimeReflection`: negates the 0th coordinate.
+`(Θf)(p) = f((-p₀, p₁, ...))`. -/
+@[simp]
+theorem continuumTimeReflection_apply_coord (f : ContinuumTestFunction 2)
+    (p : EuclideanSpace ℝ (Fin 2)) :
+    (continuumTimeReflection f) p =
+    f ((WithLp.equiv 2 (Fin 2 → ℝ)).symm (fun i =>
+      if i = (0 : Fin 2) then -(WithLp.equiv 2 (Fin 2 → ℝ) p i)
+      else WithLp.equiv 2 (Fin 2 → ℝ) p i)) := by
+  simp [continuumTimeReflection, timeReflCLE, timeReflLinear,
+    SchwartzMap.compCLMOfContinuousLinearEquiv, LinearEquiv.ofInvolutive]
+
 /-- Time reflection on distributions (the dual action).
 
 For `ω ∈ S'(ℝ²)`, `(Θ*ω)(f) = ω(Θf)` where `Θf(t,x) = f(-t,x)`.
@@ -132,26 +144,23 @@ theorem distribTimeReflection_apply
     (f : ContinuumTestFunction 2) :
     distribTimeReflection ω f = ω (continuumTimeReflection f) := rfl
 
-/-- **OS3 transfers to the continuum limit** (abstract RP form).
+/-- `distribTimeReflection` is continuous on Configuration space.
 
-The continuum limit measure is reflection-positive in the abstract sense
-(`IsRP`). This follows from:
-1. Each lattice measure satisfies RP (from `lattice_rp_matrix`)
-2. The continuum-embedded measures converge weakly to μ (from Prokhorov)
-3. RP is closed under weak limits (`rp_closed_under_weak_limit`, proved)
+Each evaluation `(distribTimeReflection ω) f = ω (continuumTimeReflection f)`
+is continuous in ω (it's `WeakDual.eval_continuous` at the fixed test function
+`continuumTimeReflection f`). Continuity of `distribTimeReflection` follows
+from the universal property of the weak-* topology. -/
+theorem distribTimeReflection_continuous :
+    Continuous distribTimeReflection := by
+  apply WeakDual.continuous_of_continuous_eval
+  intro f
+  change Continuous (fun ω : GaussianField.Configuration (ContinuumTestFunction 2) =>
+    (distribTimeReflection ω) f)
+  simp only [distribTimeReflection_apply]
+  exact WeakDual.eval_continuous (continuumTimeReflection f)
 
-The function class S consists of bounded continuous real functions on S'(ℝ²)
-that depend only on evaluations at positive-time test functions. -/
-axiom os3_inheritance (P : InteractionPolynomial)
-    (mass : ℝ) (hmass : 0 < mass)
-    (μ : Measure (Configuration (ContinuumTestFunction 2)))
-    (hμ : IsProbabilityMeasure μ)
-    (h_limit : IsPphi2Limit μ P mass) :
-    -- For all bounded continuous F depending on positive-time evaluations:
-    -- ∫ F(ω) · F(Θ*ω) dμ(ω) ≥ 0
-    ∀ (F : Configuration (ContinuumTestFunction 2) → ℝ),
-      Continuous F → (∃ C, ∀ ω, |F ω| ≤ C) →
-      ∫ ω, F ω * F (distribTimeReflection ω) ∂μ ≥ 0
+-- OS3 inheritance is now `os3_for_continuum_limit` in `OS2_WardIdentity.lean`,
+-- stated directly in the standard `OS3_ReflectionPositivity` form.
 
 -- NOTE: os0_inheritance and os4_inheritance were removed as dead axioms
 -- (only used in SatisfiesOS0134 bundle which was never consumed downstream).

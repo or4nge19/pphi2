@@ -33,6 +33,25 @@ open GaussianField MeasureTheory
 variable (Ls : ℝ) [hLs : Fact (0 < Ls)]
 variable (mass : ℝ) (hmass : 0 < mass)
 
+/-- **Pullback identity**: second moment under the cylinder pullback equals
+second moment of the embedded test function under the torus measure. -/
+theorem cylinderPullback_second_moment_eq
+    (Lt : ℝ) [Fact (0 < Lt)]
+    (μ : Measure (Configuration (AsymTorusTestFunction Lt Ls)))
+    [IsProbabilityMeasure μ]
+    (f : CylinderTestFunction Ls) :
+    ∫ ω : Configuration (CylinderTestFunction Ls),
+      (ω f) ^ 2 ∂(cylinderPullbackMeasure Lt Ls μ) =
+    ∫ ω : Configuration (AsymTorusTestFunction Lt Ls),
+      (ω (cylinderToTorusEmbed Lt Ls f)) ^ 2 ∂μ := by
+  have hmeas : Measurable (cylinderPullback Lt Ls) :=
+    configuration_measurable_of_eval_measurable _
+      (fun φ => configuration_eval_measurable _)
+  change ∫ ω, (ω f) ^ 2 ∂(Measure.map (cylinderPullback Lt Ls) μ) = _
+  rw [integral_map hmeas.aemeasurable
+    ((configuration_eval_measurable f).pow_const 2 |>.aestronglyMeasurable)]
+  congr 1
+
 /-- Uniform second moment bound for the cylinder pullback measures.
 
 For any cylinder test function f, the second moment under the
@@ -40,15 +59,19 @@ pulled-back torus interacting measure is bounded by a continuous
 seminorm of f, uniformly in the time period Lt ≥ 1.
 
 **Proof chain**:
-1. `∫ (ω f)² dν_Lt = ∫ (ω(embed f))² dμ` (pullback identity)
-2. OS1 regularity of μ gives `∫ (ω g)² dμ ≤ C₁ · q₁(g)²` for a
-   continuous seminorm q₁ on `AsymTorusTestFunction Lt Ls`
-3. Method of images: `q₁(embed f) ≤ C₂ · q₂(f)` uniformly in Lt ≥ 1
+1. `∫ (ω f)² dν_Lt = ∫ (ω(embed f))² dμ` (pullback identity, proved above)
+2. The interacting measure's second moment is bounded quadratically:
+   `∫ (ω g)² dμ_int ≤ C₁ · G_{Lt,Ls}(g, g)` (density transfer via
+   Cauchy-Schwarz: `E_int[X²] ≤ (1/Z)·E_GFF[X⁴]^{1/2}·E_GFF[e^{-2V}]^{1/2}`
+   with X⁴ bounded by hypercontractivity and e^{-2V} by Nelson's estimate)
+3. `G_{Lt,Ls}(embed f, embed f) ≤ C₂ · q(f)²` uniformly in Lt ≥ 1
    (from `torusGreen_uniform_bound` in gaussian-field)
 
 Combined: `∫ (ω f)² dν_Lt ≤ C · q(f)²` with C, q independent of Lt.
 
-The bound is the core tightness input for the IR limit. -/
+NOTE: The quadratic bound requires the specific interacting measure structure
+(Nelson estimate + Gaussian hypercontractivity + density transfer), not just
+abstract OS axioms. OS1 alone gives only an exponential bound. -/
 axiom cylinderIR_uniform_second_moment
     (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass) :
     ∃ (C : ℝ) (q : Seminorm ℝ (CylinderTestFunction Ls)),

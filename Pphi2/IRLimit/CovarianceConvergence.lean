@@ -5530,7 +5530,8 @@ private theorem asymTorusContinuumGreen_embed_sub_right
     asymTorusContinuumGreen_embed_symm (Ls := Ls) Lt mass hmass h f,
     asymTorusContinuumGreen_embed_symm (Ls := Ls) Lt mass hmass h g,
     asymTorusContinuumGreen_embed_sub_left (Ls := Ls) Lt mass hmass f g h]
-
+-- This finite-rank approximation proof expands several bilinear estimates and
+-- needs a larger heartbeat budget than the default elaborator limit.
 set_option maxHeartbeats 800000 in
 /-- Extend the compact-support finite-rank convergence theorem to arbitrary cylinder test functions
 by approximating both arguments in a seminorm that simultaneously controls the torus-side uniform
