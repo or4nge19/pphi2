@@ -25,7 +25,7 @@ Recent reductions (2026-03-29):
 - `os3_inheritance` — **REMOVED** (incorrectly stated for ALL bounded continuous F)
   Replaced by `os3_for_continuum_limit` axiom in standard `OS3_ReflectionPositivity` form
 - `continuum_embedded_measure_rp` — **REMOVED** (dead code after OS3 restructuring)
-- `gaussianContinuumMeasures_tight` sorry — **ELIMINATED** (added `[Fact (0 < d)]`)
+- `gaussianContinuumMeasures_tight` sorry — **ELIMINATED by proving the theorem for `d > 0`** via `configuration_tight_of_uniform_second_moments`; the excluded `d = 0` case is a separate Dynin-Mityagin / Schwartz-space infrastructure issue
 - `signedVal` + `signedVal_neg` — **PROVED** (centered coordinates for lattice embedding)
 - `latticeEmbedLift_intertwines_reflection` — **PROVED** (embedding commutes with time reflection)
 - `distribTimeReflection_continuous` — **PROVED** (WeakDual.continuous_of_continuous_eval)
@@ -393,7 +393,7 @@ refactoring (functionality consolidated into L2Operator axioms).
 | Axiom | File | Difficulty | Description |
 |-------|------|-----------|-------------|
 | `propagator_convergence` | PropagatorConvergence | Medium | Lattice Riemann sum of Green's function → continuum Fourier integral. Dominated convergence + Schwartz decay. |
-| ~~`gaussianContinuumMeasures_tight`~~ | GaussianTightness | **PROVED** | Tightness via `configuration_tight_of_uniform_second_moments` + integrability through lattice embedding. Sorry for degenerate d=0 case. |
+| ~~`gaussianContinuumMeasures_tight`~~ | GaussianTightness | **PROVED for `d > 0`** | Tightness via `configuration_tight_of_uniform_second_moments` + integrability through lattice embedding. The excluded `d = 0` case is a separate Dynin-Mityagin / Schwartz-space infrastructure issue. |
 | `gaussianLimit_isGaussian` | GaussianLimit | Medium | Weak limits of Gaussian measures are Gaussian. Bochner-Minlos + pointwise convergence of characteristic functionals. |
 
 **Proved theorems (GaussianContinuumLimit/):**
@@ -403,13 +403,13 @@ refactoring (functionality consolidated into L2Operator axioms).
 - `gaussianContinuumLimit_exists`: Subsequential weak limit via Prokhorov extraction.
 - `gaussianContinuumLimit_nontrivial`: `∫ (ω f)² dμ > 0` from `continuumGreenBilinear_pos`.
 - `gaussian_feeds_interacting_tightness`: Bridge — Gaussian bound feeds Cauchy-Schwarz density transfer.
-- `gaussianContinuumMeasures_tight`: Tightness of embedded GFF measures via `configuration_tight_of_uniform_second_moments`.
+- `gaussianContinuumMeasures_tight`: Tightness of embedded GFF measures via `configuration_tight_of_uniform_second_moments`, now proved for `d > 0`.
 - `gaussianContinuumMeasure_sq_integrable`: Integrability of `(ω f)²` through lattice embedding via `pairing_product_integrable`.
 
 **Sorries (provable):**
 - `embeddedTwoPoint_eq_latticeSum`: Pushforward integral → lattice double sum (Fubini + Gaussian integration).
 - `embeddedTwoPoint_uniform_bound`: `E[Φ_a(f)²] ≤ C` from eigenvalue bound + Riemann sum.
-- `gaussianContinuumMeasures_tight` (d=0 case): DyninMityaginSpace for 0-dim Schwartz space (degenerate).
+- Optional full generality for `gaussianContinuumMeasures_tight` (`d = 0` case): add a dedicated `DyninMityaginSpace (ContinuumTestFunction 0)` instance, then audit `GaussianLimit.lean` and `ContinuumLimit/Convergence.lean` for other `d > 0` dependencies.
 - `continuumGreenBilinear_pos`: `G(f,f) > 0` from Fourier injectivity on Schwartz space.
 
 Note: `os1_inheritance` is a theorem (not axiom) — OS1 transfers trivially since |cos(·)| ≤ 1.
@@ -746,7 +746,7 @@ infrastructure. Assessment date: 2026-03-04.
 | `second_moment_uniform` | Tightness | Uniform second moments for interacting measure. |
 | `moment_equicontinuity` | Tightness | Equicontinuity of moments in f. |
 | `continuumMeasures_tight` | Tightness | Tightness via Mitoma for interacting measures on S'(ℝ²). |
-| ~~`gaussianContinuumMeasures_tight`~~ | GaussianTightness | **PROVED** — Tightness via DM + barrel theorem. |
+| ~~`gaussianContinuumMeasures_tight`~~ | GaussianTightness | **PROVED for `d > 0`** — Tightness via `configuration_tight_of_uniform_second_moments`; the remaining `d = 0` case is a separate Dynin-Mityagin / Schwartz-space infrastructure issue. |
 | `gaussianLimit_isGaussian` | GaussianLimit | Weak limits of Gaussians are Gaussian (S'(ℝ²) version). |
 
 ### Recommended attack order
