@@ -43,17 +43,8 @@ namespace Pphi2
 
 /-! ## Spacetime and test function setup for d=2 -/
 
-/-- Spacetime for P(Φ)₂: Euclidean ℝ². -/
-abbrev SpaceTime2 := EuclideanSpace ℝ (Fin 2)
-
-/-- Real test functions: S(ℝ²). Same as `ContinuumTestFunction 2`. -/
-abbrev TestFunction2 := ContinuumTestFunction 2
-
 /-- Complex test functions: S(ℝ², ℂ). -/
 abbrev TestFunction2ℂ := SchwartzMap SpaceTime2 ℂ
-
-/-- Field configurations: S'(ℝ²) = WeakDual ℝ S(ℝ²). -/
-abbrev FieldConfig2 := Configuration (ContinuumTestFunction 2)
 
 /-- The distribution pairing ⟨ω, f⟩ for ω ∈ S'(ℝ²), f ∈ S(ℝ²). -/
 def distribPairing (ω : FieldConfig2) (f : TestFunction2) : ℝ := ω f
@@ -188,53 +179,6 @@ noncomputable def euclideanAction2ℂ (g : E2) : TestFunction2ℂ →L[ℝ] Test
   SchwartzMap.compCLMOfAntilipschitz ℝ
     (euclideanInverse_hasTemperateGrowth g) (euclideanInverse_antilipschitz g)
 
-/-! ## Time reflection -/
-
-/-- Time reflection on ℝ²: (t, x) ↦ (-t, x).
-
-This negates the first coordinate (time) and preserves the second
-(space). It is an element of O(2) and an involution. -/
-def timeReflection2 (p : SpaceTime2) : SpaceTime2 :=
-  (WithLp.equiv 2 (Fin 2 → ℝ)).symm
-    (fun i => if i = 0 then -(WithLp.equiv 2 (Fin 2 → ℝ) p) i
-              else (WithLp.equiv 2 (Fin 2 → ℝ) p) i)
-
-/-- Time reflection is an involution: Θ² = id. -/
-theorem timeReflection2_involution (p : SpaceTime2) :
-    timeReflection2 (timeReflection2 p) = p := by
-  simp only [timeReflection2]
-  ext i
-  simp
-  split <;> simp
-
-/-- Time reflection is a linear map on SpaceTime2. -/
-def timeReflectionLinear : SpaceTime2 →ₗ[ℝ] SpaceTime2 where
-  toFun := timeReflection2
-  map_add' p q := by
-    ext i
-    simp [timeReflection2, WithLp.equiv, Equiv.symm]
-    split <;> ring
-  map_smul' c p := by
-    ext i
-    simp [timeReflection2, WithLp.equiv, Equiv.symm, smul_eq_mul]
-
-/-- Time reflection as a continuous linear equivalence (it's an involution). -/
-noncomputable def timeReflectionCLE : SpaceTime2 ≃L[ℝ] SpaceTime2 :=
-  (LinearEquiv.ofInvolutive timeReflectionLinear
-    timeReflection2_involution).toContinuousLinearEquiv
-
-/-- The pullback of time reflection on real test functions:
-  `(Θf)(t, x) = f(-t, x)`.
-
-Constructed using `SchwartzMap.compCLMOfContinuousLinearEquiv` from Mathlib,
-which composes a Schwartz function with a continuous linear equivalence. -/
-noncomputable def compTimeReflection2 : TestFunction2 →L[ℝ] TestFunction2 :=
-  SchwartzMap.compCLMOfContinuousLinearEquiv ℝ timeReflectionCLE
-
-/-- Θf agrees with composition: (compTimeReflection2 f)(p) = f(timeReflection2 p). -/
-theorem compTimeReflection2_apply (f : TestFunction2) (p : SpaceTime2) :
-    compTimeReflection2 f p = f (timeReflection2 p) := rfl
-
 /-- Translation of a real test function by a ∈ ℝ²:
   `(translate a f)(x) = f(x - a)`.
 
@@ -247,26 +191,6 @@ noncomputable def SchwartzMap.translate (a : SpaceTime2) : TestFunction2 →L[�
         (Function.HasTemperateGrowth.const a))
     (show AntilipschitzWith 1 (fun x : SpaceTime2 => x - a) from
       fun x y => by simp [edist_sub_right])
-
-/-! ## Positive-time test functions -/
-
-/-- A spacetime point has positive time if its first coordinate is positive. -/
-def hasPositiveTime2 (p : SpaceTime2) : Prop :=
-  (WithLp.equiv 2 (Fin 2 → ℝ) p) 0 > 0
-
-/-- The submodule of real test functions supported at positive time. -/
-def positiveTimeSubmodule2 : Submodule ℝ TestFunction2 where
-  carrier := { f : TestFunction2 | tsupport f ⊆ { p | hasPositiveTime2 p } }
-  zero_mem' := by
-    simp only [Set.mem_setOf_eq, tsupport]
-    exact (closure_minimal Function.support_zero.subset isClosed_empty).trans (Set.empty_subset _)
-  add_mem' := fun {f g} hf hg =>
-    (tsupport_add f g).trans (Set.union_subset hf hg)
-  smul_mem' := fun c f hf =>
-    (tsupport_smul_subset_right (fun _ : SpaceTime2 => c) f).trans hf
-
-/-- Type of real test functions supported at positive time t > 0. -/
-abbrev PositiveTimeTestFunction2 := positiveTimeSubmodule2
 
 /-! ## OS Axiom Definitions -/
 

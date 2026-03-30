@@ -16,14 +16,17 @@ and backend-independent reconstruction rules. This keeps the current scalar
 positive-measure construction explicit while opening a path to broader
 Euclidean/Minkowski interfaces.
 
-**Active build totals (2026-03-29): 26 axioms, 0 sorries.**
+**Active build totals (2026-03-30): 25 axioms, 0 sorries.**
 
-Recent reductions (2026-03-29):
+Recent reductions (2026-03-30):
 - `configuration_continuum_polishSpace` — **REMOVED** (inconsistent: weak-* dual is not Polish)
 - `configuration_continuum_borelSpace` — **REMOVED** (inconsistent: same reason)
   Replaced by `prokhorov_configuration` from gaussian-field (proved, avoids Polish/Borel)
 - `os3_inheritance` — **REMOVED** (incorrectly stated for ALL bounded continuous F)
-  Replaced by `os3_for_continuum_limit` axiom in standard `OS3_ReflectionPositivity` form
+- `os3_for_continuum_limit` — **PROVED** by strengthening `IsPphi2Limit` with
+  inline reflection positivity of the approximating continuum measures and
+  passing the RP matrix entries to the limit via characteristic-functional
+  convergence
 - `continuum_embedded_measure_rp` — **REMOVED** (dead code after OS3 restructuring)
 - `gaussianContinuumMeasures_tight` sorry — **ELIMINATED by proving the theorem for `d > 0`** via `configuration_tight_of_uniform_second_moments`; the excluded `d = 0` case is a separate Dynin-Mityagin / Schwartz-space infrastructure issue
 - `signedVal` + `signedVal_neg` — **PROVED** (centered coordinates for lattice embedding)
@@ -41,22 +44,6 @@ Earlier reductions (PR#1 from Matteo Cipollina):
 - `gaussian_hermite_zero_mean` — **PROVED** (Hermite orthonormality from Mathlib)
 - `wickConstant_eq_variance` — **PROVED** (product DFT Parseval + translation invariance)
 - `periodicResolvent_convergence_rate` — **PROVED** (hyperbolic identity manipulation)
-
-### Next steps for `os3_for_continuum_limit`
-
-The axiom `os3_for_continuum_limit` (OS3 for the continuum limit) is provable via
-weak convergence + lattice OS3. The gap: `IsPphi2Limit` doesn't carry OS3 of the
-approximating measures. Per Gemini analysis, the recommended fix is:
-
-**Add `approx_os3 : ∀ k, @OS3_ReflectionPositivity (ν k) (ν_is_prob k)` to
-`IsPphi2Limit`.** This makes `IsPphi2Limit` a complete certificate that a valid
-P(φ)₂ construction was performed. The burden shifts to the construction site
-(`continuumLimit`), which must supply lattice OS3 (from `lattice_rp`) through
-the embedding intertwining (proved in `RPTransfer.lean`).
-
-Circular import note: `IsPphi2Limit` (in `Embedding.lean`) cannot import
-`OSAxioms.lean`. The OS3 condition must be stated inline using the generating
-functional, or the imports must be restructured.
 
 **Route B (torus): `TorusInteractingOS.lean` has 0 local axioms, 0 sorries.**
 All OS0–OS2 proofs complete within this file. Transitive dependencies are
@@ -111,12 +98,12 @@ telescoping sum bound.
 | 4 | `ContinuumLimit/Embedding.lean` | 0 axioms (`IsPphi2Limit` is a def) |
 | 4 | `ContinuumLimit/Hypercontractivity.lean` | 0 axioms, 0 sorries (`wickConstant_eq_variance` now proved generically; `wickConstant_eq_variance_two_dim` remains as a 2D corollary) |
 | 4 | `ContinuumLimit/Tightness.lean` | 1 axiom |
-| 4 | `ContinuumLimit/Convergence.lean` | 3 axioms, 0 sorries, 2 proved theorems |
+| 4 | `ContinuumLimit/Convergence.lean` | 1 axiom, 0 sorries (`continuumLimit` and `pphi2_limit_exists` proved) |
 | 4 | `ContinuumLimit/AxiomInheritance.lean` | **0 axioms, 0 sorries** (os3_inheritance removed; OS3 now in OS2_WardIdentity) |
 | 4 | `ContinuumLimit/RPTransfer.lean` | 0 axioms, 0 sorries (intertwining proved, signedVal) |
 | 4G | `GaussianContinuumLimit/EmbeddedCovariance.lean` | 0 axioms, 0 sorries |
 | 4G | `GaussianContinuumLimit/PropagatorConvergence.lean` | 1 axiom, 0 sorries (`schwartz_riemann_sum_bound` proved) |
-| 4G | `GaussianContinuumLimit/GaussianTightness.lean` | 0 axioms, 1 sorry |
+| 4G | `GaussianContinuumLimit/GaussianTightness.lean` | 0 axioms, 0 sorries |
 | 4G | `GaussianContinuumLimit/GaussianLimit.lean` | 1 axiom, 0 sorries |
 | 5 | `OSProofs/OS2_WardIdentity.lean` | 6 axioms |
 | — | `GeneralResults/ComplexAnalysis.lean` | **0 axioms** (`osgood_separately_analytic` proved via Osgood/) |
@@ -384,7 +371,7 @@ refactoring (functionality consolidated into L2Operator axioms).
 | `continuumLimit_nontrivial` | Convergence | Hard | ∫ (ω f)² dμ > 0 for some f. Free field two-point function gives lower bound. |
 | `continuumLimit_nonGaussian` | Convergence | Hard | Connected 4-point function ≠ 0. Perturbation theory gives O(λ) contribution. |
 | `os0_inheritance` | AxiomInheritance | Medium | OS0 transfers: uniform moment bounds + pointwise convergence → limit has all moments finite. |
-| `os3_for_continuum_limit` | OS2_WardIdentity | Medium | Standard OS3 (RP matrix ≥ 0 for positive-time test fns). Provable by adding `approx_os3` to `IsPphi2Limit`. |
+| ~~`os3_for_continuum_limit`~~ | OS2_WardIdentity | ✅ **Proved** | Standard OS3 from inline approximant RP in `IsPphi2Limit` + entrywise characteristic-functional convergence. |
 | `os4_inheritance` | AxiomInheritance | Med/Hard | Exponential clustering survives weak limits. Uniform spectral gap + weak convergence. |
 | ~~`continuumLimit_satisfies_os0134`~~ | AxiomInheritance | **Theorem** | Assembly of os0/os1/os3/os4 inheritance results. |
 

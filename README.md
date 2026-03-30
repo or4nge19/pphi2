@@ -202,16 +202,13 @@ consistency checks:
 All six phases are structurally complete and the full project builds
 (`lake build`).
 
-- **pphi2:** 26 axioms, 0 sorries in the active build; Route C's 21 axioms remain preserved in `future/`
+- **pphi2:** 25 axioms, 0 sorries in the active build; `os3_for_continuum_limit` is now a theorem, and Route C's 21 axioms remain preserved in `future/`
 - **Route B (torus):** 0 axioms, 0 sorries — the most developed route
 - **Route B' IR limit:** 4 axioms, 0 sorries — pure/finite-rank/general covariance convergence to the global physical cylinder form is proved, together with the explicit temporal `2π` normalization bridge and uniform bilinear seminorm control; what remains here is the uniform second-moment bound, uniform exponential moment, and OS0/OS3
 - **Shared foundations layer:** `Common/QFT/Euclidean/Formulations.lean` and
   `Common/QFT/Euclidean/ReconstructionInterfaces.lean` separate concrete
   measure models, tensor-moment Schwinger data, distributional Schwinger data,
   explicit reconstruction hypotheses, and backend-independent reconstruction rules
-- **Local `Phi4` core:** `Phi4.lean` tracks the locally buildable Euclidean /
-  tensor-Schwinger pipeline only; the OS/reconstruction lane is kept explicit
-  and optional rather than silently assumed in the active umbrella
 
 The torus continuum limit (`TorusContinuumLimit/`) provides a cleaner alternative
 to the S'(ℝ^d) approach: by fixing the physical volume L and taking only N→∞,

@@ -10,4 +10,3 @@ interfaces into the build graph so `lake build Common` succeeds.
 -/
 import Common.QFT.Euclidean.Formulations
 import Common.QFT.Euclidean.ReconstructionInterfaces
-import Common.Mathlib.Probability.Distributions.Gaussian.CameronMartinAPI
