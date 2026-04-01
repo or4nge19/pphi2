@@ -3,3 +3,4 @@
 .env
 .mcp.json
 .venv-transcribe/
+dev-scripts
