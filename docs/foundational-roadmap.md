@@ -1,14 +1,12 @@
 # Foundations Roadmap
 
-This note records how to turn the existing `P(Φ)₂` formalization into a more
-foundational library without overclaiming what has been formalized.
+This note records one avenue to turn the existing `P(Φ)₂` formalization into a more foundational library capable of hosting multiple Euclidean and Minkowski formulations, together with explicit comparison theorems between them.
 
-The current project already proves a serious theorem: a constructive bosonic
+The current project already proves that a constructive bosonic
 scalar Euclidean field theory in the Glimm-Jaffe/Nelson framework, realized as
-a positive probability measure on `S'(ℝ²)` satisfying OS0-OS4. That theorem
-should be preserved and clarified, not downgraded.
+a positive probability measure on `S'(ℝ²)` satisfying OS0-OS4.
 
-What the recent discussions make clear is different:
+Some distinctions that would help to make the project more foundational:
 
 - A positive-measure Euclidean model is not the same thing as a general QFT.
 - The original Osterwalder-Schrader axioms are stated for Schwinger functions,
@@ -20,12 +18,9 @@ What the recent discussions make clear is different:
   positive-measure formulation even when they still have meaningful Euclidean or
   Minkowski correlation data.
 
-The right response is therefore not to abandon formalization, but to formalize
-the distinctions themselves.
-
 ## Formulation layers
 
-The repository should separate four layers of Euclidean QFT data.
+The repository may benefit frim separating four layers of Euclidean QFT data.
 
 1. `MeasureModel`
    A concrete positive probability measure on a configuration space, with
@@ -51,12 +46,12 @@ The repository should separate four layers of Euclidean QFT data.
    lives and should remain explicit. The hypothesis should appear as a named
    predicate on the Schwinger package, not as an anonymous bare `Prop`.
 
-These layers are now scaffolded in
+These layers are now tentatively sketched in
 `Common/QFT/Euclidean/Formulations.lean`, with the backend-independent
 linear-growth / reconstruction-rule surfaces factored separately into
 `Common/QFT/Euclidean/ReconstructionInterfaces.lean`.
 
-## Immediate refactor program
+## Initial suggested refactor program
 
 1. Extract shared formulation interfaces from `Phi4/OSAxioms.lean` into
    `Common/QFT`.
@@ -115,19 +110,3 @@ skeptical of "formalized QFT" as a slogan.
   (hyperfunctions or related variants) if they clarify reconstruction, but do
   not make them part of the core until the comparison maps are understood.
 
-## What this changes in practice
-
-This roadmap does not repudiate the current scalar construction. It changes the
-question the repository is answering.
-
-Old question:
-"How much of a constructive scalar measure-based QFT can be formalized?"
-
-Better question:
-"What is the minimal formal interface that can host multiple Euclidean and
-Minkowski formulations, together with explicit comparison theorems between
-them?"
-
-Answering the second question would make the current work legible not only as a
-completed constructive theorem, but as the first well-understood instance of a
-broader foundations program.
