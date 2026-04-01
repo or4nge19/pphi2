@@ -31,11 +31,15 @@ the Glimm-Jaffe/Nelson construction of a positive probability measure on
 models exhaust all QFTs, or that this interface already captures gauge fields,
 fermions, chemical potential, or topological terms.
 
-To make the library useful beyond constructive scalar theory, the next
-foundational step is to factor the development through explicit formulation
-layers: concrete measure models, Schwinger-function models, and the additional
-reconstruction input needed to pass from Euclidean data to Minkowski data. See
-`docs/foundational-roadmap.md`.
+We are working toward a framework for defining QFTs on general spacetimes
+(compact manifolds, lattices, manifolds with boundary) with separated spacetime
+geometry and field content. An exploratory organizational proposal is in
+[`docs/foundational-roadmap.md`](docs/foundational-roadmap.md), with a
+technical reference for the current formulation-layer code in
+[`docs/formulation-layer.md`](docs/formulation-layer.md) and open design
+questions (general manifolds, multiple fields, fermions, signed/complex
+measures) in
+[`docs/formulation-layer-questions.md`](docs/formulation-layer-questions.md).
 
 ## Proof approach
 

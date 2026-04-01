@@ -20,7 +20,7 @@ Some distinctions that would help to make the project more foundational:
 
 ## Formulation layers
 
-The repository may benefit frim separating four layers of Euclidean QFT data.
+The repository may benefit from separating four layers of Euclidean QFT data.
 
 1. `MeasureModel`
    A concrete positive probability measure on a configuration space, with
