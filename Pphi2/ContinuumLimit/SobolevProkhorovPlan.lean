@@ -8,7 +8,9 @@ weighted Sobolev space.
 Current status:
 - `continuumLimit` uses `prokhorov_configuration_sequential` (axiom).
 - We keep that axiom for now so the main development can continue.
-- The items below define the intended theorem-level API for later work.
+- The items below define the intended theorem-level API for later work, with the
+  unweighted pieces expected to align with Mathlib's Fourier/distributional
+  Sobolev API once that lands upstream.
 
 ## Strategy
 
@@ -31,6 +33,17 @@ Current status:
 - The most expensive prerequisites are functional-analytic infrastructure:
   weighted Sobolev definitions, compact embeddings, and compatibility with the
   project's `Configuration` model.
+- Upstream alignment: the unweighted distributional layer should target the
+  incoming `Mathlib.Analysis.Distribution.Sobolev` API (`MemSobolev`,
+  `besselPotential`, `SchwartzMap.memSobolev`, `memSobolev_zero`,
+  `memSobolev_two_iff_fourier`) rather than project-local shadow names.
+- The genuinely project-specific missing object is therefore the weighted
+  negative-Sobolev compactness layer and its interaction with configurations;
+  if the unweighted prerequisite is missing locally, the right move is to adopt
+  or upstream it, not duplicate it.
+- PR `#32305` is broader weak-derivative/open-set Sobolev infrastructure and is
+  likely useful later for local `W^{k,p}` arguments, but it is not the
+  immediate dependency for the `S'(R^2)` tightness route.
 - This file intentionally contains no declarations yet (no new axioms/sorries).
 
 ## Proposed Theorem Signatures (for future implementation)

@@ -42,9 +42,9 @@ group of the lattice. Full invariance is restored in the continuum limit:
 -/
 
 import Pphi2.OSAxioms
+import Pphi2.EuclideanComplex
 import Pphi2.GeneralResults.FunctionalAnalysis
 import Pphi2.OSforGFF.TimeTranslation
-import Pphi2.OSforGFF.ComplexTestFunction
 import Lattice.Symmetry
 import Mathlib.Analysis.Distribution.SchwartzSpace.Deriv
 
@@ -613,7 +613,7 @@ Proof: Euler's formula gives `exp(it) = cos(t) + i·sin(t)`, so
 private lemma generatingFunctional_re_eq_integral_cos
     (μ : Measure FieldConfig2) [IsProbabilityMeasure μ] (g : TestFunction2) :
     (generatingFunctional μ g).re = ∫ ω : FieldConfig2, Real.cos (ω g) ∂μ := by
-  unfold generatingFunctional
+  simp only [Pphi2.generatingFunctional, EuclideanOS.generatingFunctional]
   have hint : Integrable (fun ω : FieldConfig2 => Complex.exp (Complex.I * ↑(ω g))) μ :=
     (integrable_const (1 : ℂ)).mono
       ((Complex.measurable_ofReal.comp (configuration_eval_measurable g)).const_mul Complex.I
@@ -652,7 +652,7 @@ theorem os3_for_continuum_limit (P : InteractionPolynomial)
   rcases h_limit with ⟨_a, ν, _hprob, _ha_tend, _ha_pos, _hmom, _hneg, hcf, _hlat, _hweakconv,
     happrox_os3⟩
   intro n f c
-  unfold generatingFunctional
+  simp only [EuclideanOS.generatingFunctional]
   have hentry :
       ∀ i j : Fin n,
         Filter.Tendsto
@@ -979,14 +979,9 @@ theorem complex_gf_invariant_of_real_gf_invariant
   have hJg_decomp : euclideanAction2ℂ g J =
       schwartzOfReal (euclideanAction2 g (schwartzRe J)) +
       (Complex.I : ℂ) • schwartzOfReal (euclideanAction2 g (schwartzIm J)) := by
-    calc
-      euclideanAction2ℂ g J
-          = schwartzOfReal (schwartzRe (euclideanAction2ℂ g J)) +
-              (Complex.I : ℂ) • schwartzOfReal (schwartzIm (euclideanAction2ℂ g J)) :=
-            schwartz_decompose (euclideanAction2ℂ g J)
-      _ = schwartzOfReal (euclideanAction2 g (schwartzRe J)) +
-          (Complex.I : ℂ) • schwartzOfReal (euclideanAction2 g (schwartzIm J)) := by
-            simp
+    simpa [euclideanAction2, euclideanAction2ℂ, continuumEuclideanAction,
+      continuumEuclideanActionComplex] using
+      (schwartz_decompose_actionComplex (B := plane2Background) g J)
   have hF_I : F Complex.I = generatingFunctionalℂ μ
       (schwartzOfReal (schwartzRe J) + (Complex.I : ℂ) • schwartzOfReal (schwartzIm J)) := by
     simp [F, ψ, JF, Fin.sum_univ_two]
@@ -1186,7 +1181,7 @@ theorem pphi2_generating_functional_real (P : InteractionPolynomial)
   --            = ∫ exp(i(-ω)f) dμ                                [(-ω)f = -(ωf)]
   --            = ∫ exp(iωf) d(map(-) μ)                          [change of vars]
   --            = ∫ exp(iωf) dμ = Z[f]                            [h_sym]
-  unfold generatingFunctional
+  simp only [Pphi2.generatingFunctional, EuclideanOS.generatingFunctional]
   set g := fun ω : FieldConfig2 => Complex.exp (Complex.I * ↑(ω f))
   -- Step 1: conj(∫ g dμ) = ∫ conj(g) dμ via integral_conj
   have hconj : starRingEnd ℂ (∫ ω, g ω ∂μ) = ∫ ω, starRingEnd ℂ (g ω) ∂μ :=
@@ -1239,11 +1234,10 @@ theorem generatingFunctional_translate_continuous
     (μ : Measure FieldConfig2) [IsProbabilityMeasure μ]
     (f g : TestFunction2) :
     Continuous (fun t : ℝ =>
-      generatingFunctional μ (f + SchwartzMap.translate
-        ((WithLp.equiv 2 (Fin 2 → ℝ)).symm ![t, 0]) g)) := by
+      generatingFunctional μ (f + SchwartzMap.translate (timeTranslationVector2 t) g)) := by
   -- Define the test function as a function of t
   set h : ℝ → TestFunction2 := fun t =>
-    f + SchwartzMap.translate ((WithLp.equiv 2 (Fin 2 → ℝ)).symm ![t, 0]) g with hh_def
+    f + SchwartzMap.translate (timeTranslationVector2 t) g with hh_def
   -- The generating functional is ∫ exp(i * ω(h(t))) dμ(ω)
   -- Apply DCT: F t ω = exp(i * ω(h(t))), bound = 1
   change Continuous (fun t => ∫ ω : FieldConfig2, Complex.exp (Complex.I * ↑(ω (h t))) ∂μ)
@@ -1279,19 +1273,17 @@ theorem generatingFunctional_translate_continuous
       haveI : Fact (0 < 2) := ⟨by norm_num⟩
       -- translate(t,0) g and timeTranslationSchwartz(-t) g agree pointwise
       have h_eq : (fun t => SchwartzMap.translate
-          ((WithLp.equiv 2 (Fin 2 → ℝ)).symm ![t, 0]) g) =
+          (timeTranslationVector2 t) g) =
           (fun t => TimeTranslation.timeTranslationSchwartz (-t) g) := by
         funext t
         ext x
-        simp only [SchwartzMap.translate, SchwartzMap.compCLMOfAntilipschitz_apply,
-          Function.comp_apply, TimeTranslation.timeTranslationSchwartz,
+        simp only [SchwartzMap.translate_apply, TimeTranslation.timeTranslationSchwartz,
           TimeTranslation.timeTranslationSchwartzCLM,
           SchwartzMap.compCLMOfAntilipschitz_apply, Function.comp_apply]
         congr 1
         -- Need: x - (t, 0) = timeShift(-t)(x) as elements of SpaceTime 2
         ext i
-        simp only [TimeTranslation.timeShift]
-        fin_cases i <;> simp [Matrix.cons_val_zero, Matrix.cons_val_one, sub_eq_add_neg]
+        fin_cases i <;> simp [TimeTranslation.timeShift, sub_eq_add_neg]
       rw [h_eq]
       exact (TimeTranslation.continuous_timeTranslationSchwartz g).comp (continuous_neg)
 
@@ -1304,7 +1296,7 @@ theorem norm_generatingFunctional_le_one
     (μ : Measure FieldConfig2) [IsProbabilityMeasure μ]
     (f : TestFunction2) :
     ‖generatingFunctional μ f‖ ≤ 1 := by
-  unfold generatingFunctional
+  simp only [Pphi2.generatingFunctional, EuclideanOS.generatingFunctional]
   calc ‖∫ ω, Complex.exp (Complex.I * ↑(ω f)) ∂μ‖
       ≤ ∫ ω, ‖Complex.exp (Complex.I * ↑(ω f))‖ ∂μ :=
         norm_integral_le_integral_norm _
@@ -1346,23 +1338,22 @@ theorem os4_clustering_implies_ergodicity (P : InteractionPolynomial)
     ring
   -- Step 2: Define the integrand h(t) = Re(Z[f + τ_{(t,0)} g])
   set h_fun : ℝ → ℝ := fun t =>
-    (generatingFunctional μ (f + SchwartzMap.translate
-      ((WithLp.equiv 2 (Fin 2 → ℝ)).symm ![t, 0]) g)).re
+    (generatingFunctional μ (f + SchwartzMap.translate (timeTranslationVector2 t) g)).re
   -- Step 3: Show Z[f + τ_t g] → Z[f]·Z[g] in ℂ using clustering
   have h_Z_tend : Filter.Tendsto
       (fun t : ℝ => generatingFunctional μ (f + SchwartzMap.translate
-        ((WithLp.equiv 2 (Fin 2 → ℝ)).symm ![t, 0]) g))
+        (timeTranslationVector2 t) g))
       Filter.atTop (nhds (generatingFunctional μ f * generatingFunctional μ g)) := by
     rw [Metric.tendsto_atTop]
     intro ε hε
     obtain ⟨R, hR, h_bound⟩ := h_cluster f g ε hε
     use R + 1
     intro t ht
-    have h_norm_ge : ‖(WithLp.equiv 2 (Fin 2 → ℝ)).symm ![t, 0]‖ > R := by
+    have h_norm_ge : ‖timeTranslationVector2 t‖ > R := by
       have h1 := PiLp.norm_apply_le
-        ((WithLp.equiv 2 (Fin 2 → ℝ)).symm ![t, 0]) (0 : Fin 2)
-      have h2 : ((WithLp.equiv 2 (Fin 2 → ℝ)).symm ![t, 0]).ofLp (0 : Fin 2) = t := by
-        simp [WithLp.equiv_symm_apply, WithLp.ofLp_toLp, Matrix.cons_val_zero]
+        (timeTranslationVector2 t) (0 : Fin 2)
+      have h2 : (timeTranslationVector2 t).ofLp (0 : Fin 2) = t := by
+        simp
       rw [h2, Real.norm_eq_abs] at h1
       linarith [le_abs_self t]
     rw [Complex.dist_eq]
