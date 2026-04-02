@@ -47,6 +47,8 @@ characteristic functionals `exp(-½ σ²_n(f))` converge pointwise to
 
 import Pphi2.GaussianContinuumLimit.GaussianTightness
 import Pphi2.ContinuumLimit.Convergence
+import Pphi2.TorusContinuumLimit.MeasureUniqueness
+import Mathlib.Probability.Moments.Variance
 
 noncomputable section
 
@@ -127,14 +129,14 @@ characteristic functional is `exp(-½ σ²(f))`, which is Gaussian by
 the Bochner-Minlos theorem.
 
 Reference: Fernique (1975), §III.4; Simon, *The P(φ)₂ Euclidean QFT* Ch. I. -/
-axiom gaussianLimit_isGaussian
+theorem gaussianLimit_isGaussian
     (μ_seq : ℕ → Measure (Configuration (ContinuumTestFunction d)))
     (hμ_prob : ∀ n, IsProbabilityMeasure (μ_seq n))
     -- Each μ_n is Gaussian: the characteristic functional is exp(-½ σ²_n(f))
     (hμ_gauss : ∀ n (f : ContinuumTestFunction d),
       ∫ ω : Configuration (ContinuumTestFunction d),
         Real.exp (ω f) ∂(μ_seq n) =
-      Real.exp ((1/2) * ∫ ω, (ω f) ^ 2 ∂(μ_seq n)))
+      Real.exp ((1 / 2) * ∫ ω, (ω f) ^ 2 ∂(μ_seq n)))
     -- Weak convergence to μ
     (μ : Measure (Configuration (ContinuumTestFunction d)))
     [IsProbabilityMeasure μ]
@@ -145,7 +147,66 @@ axiom gaussianLimit_isGaussian
     ∀ (f : ContinuumTestFunction d),
       ∫ ω : Configuration (ContinuumTestFunction d),
         Real.exp (ω f) ∂μ =
-      Real.exp ((1/2) * ∫ ω, (ω f) ^ 2 ∂μ)
+      Real.exp ((1 / 2) * ∫ ω, (ω f) ^ 2 ∂μ) := by
+  intro f
+  set eval_f := fun ω : Configuration (ContinuumTestFunction d) => ω f
+  have h_eval_meas : Measurable eval_f := configuration_eval_measurable f
+  have h_push_gauss : ∀ n, (μ_seq n).map eval_f =
+      ProbabilityTheory.gaussianReal 0
+        (∫ ω : Configuration (ContinuumTestFunction d), (ω f) ^ 2 ∂(μ_seq n)).toNNReal := by
+    intro n
+    haveI := hμ_prob n
+    simpa [eval_f] using
+      (GaussianField.eval_map_eq_gaussianReal
+        (μ := μ_seq n) (hμ_gauss := hμ_gauss n) f)
+  have h_push_conv :
+      ∀ (g : ℝ → ℝ), Continuous g → (∃ C, ∀ x, |g x| ≤ C) →
+        Tendsto (fun n => ∫ x, g x ∂((μ_seq n).map eval_f))
+          atTop (nhds (∫ x, g x ∂(μ.map eval_f))) := by
+    intro g hg_cont hg_bdd
+    simp_rw [integral_map h_eval_meas.aemeasurable hg_cont.measurable.aestronglyMeasurable]
+    exact hconv (g ∘ eval_f)
+      (hg_cont.comp (WeakDual.eval_continuous f))
+      (by
+        obtain ⟨C, hC⟩ := hg_bdd
+        exact ⟨C, fun x => hC (x f)⟩)
+  haveI : IsProbabilityMeasure (μ.map eval_f) :=
+    Measure.isProbabilityMeasure_map h_eval_meas.aemeasurable
+  obtain ⟨v, hv⟩ := GaussianField.weakLimit_centered_gaussianReal
+    (fun n => (μ_seq n).map eval_f)
+    (fun n =>
+      (∫ ω : Configuration (ContinuumTestFunction d), (ω f) ^ 2 ∂(μ_seq n)).toNNReal)
+    (fun n => by
+      exact Measure.isProbabilityMeasure_map h_eval_meas.aemeasurable)
+    h_push_gauss
+    (μ.map eval_f)
+    h_push_conv
+  have h_integral_exp : ∫ ω, Real.exp (eval_f ω) ∂μ =
+      ∫ x, Real.exp x ∂(ProbabilityTheory.gaussianReal 0 v) := by
+    rw [← integral_map h_eval_meas.aemeasurable Real.measurable_exp.aestronglyMeasurable, hv]
+  have h_exp_val : ∫ x, Real.exp x ∂(ProbabilityTheory.gaussianReal 0 v) =
+      Real.exp (↑v / 2) := by
+    have := congr_fun
+      (ProbabilityTheory.mgf_id_gaussianReal (μ := 0) (v := v)) 1
+    simp only [ProbabilityTheory.mgf, one_mul, zero_add, one_pow, mul_one, id] at this
+    exact this
+  have h_second_moment : ∫ ω, (eval_f ω) ^ 2 ∂μ = ↑v := by
+    have h1 : ∫ ω, (eval_f ω) ^ 2 ∂μ =
+        ∫ x, x ^ 2 ∂(μ.map eval_f) :=
+      (integral_map h_eval_meas.aemeasurable
+        (continuous_pow 2).aestronglyMeasurable).symm
+    rw [h1, hv]
+    have h_mean :
+        ∫ x, x ∂(ProbabilityTheory.gaussianReal (0 : ℝ) v) = 0 :=
+      ProbabilityTheory.integral_id_gaussianReal
+    have h_var := ProbabilityTheory.variance_of_integral_eq_zero
+      (measurable_id.aemeasurable (μ := ProbabilityTheory.gaussianReal (0 : ℝ) v)) h_mean
+    simp only [id] at h_var
+    rw [← h_var]
+    exact ProbabilityTheory.variance_fun_id_gaussianReal
+  rw [h_integral_exp, h_exp_val, h_second_moment]
+  congr 1
+  ring
 
 /-! ## Gaussian continuum limit predicate -/
 

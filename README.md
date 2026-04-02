@@ -27,13 +27,12 @@ and Simon, with contributions from Guerra-Rosen-Simon and others.
 
 This repository currently formalizes one specific Euclidean-QFT formulation:
 the Glimm-Jaffe/Nelson construction of a positive probability measure on
-`S'(ℝ²)` for bosonic scalar `P(Φ)₂`. It does not claim that positive-measure
-models exhaust all QFTs, or that this interface already captures gauge fields,
+`S'(ℝ²)` for bosonic scalar `P(Φ)₂`. It does not yet formalizes gauge fields,
 fermions, chemical potential, or topological terms.
 
-We are working toward a framework for defining QFTs on general spacetimes
+A framework for defining QFTs on general spacetimes
 (compact manifolds, lattices, manifolds with boundary) with separated spacetime
-geometry and field content. An exploratory organizational proposal is in
+geometry and field content is a WIP. An exploratory organizational proposal is in
 [`docs/foundational-roadmap.md`](docs/foundational-roadmap.md), with a
 technical reference for the current formulation-layer code in
 [`docs/formulation-layer.md`](docs/formulation-layer.md) and open design
@@ -206,7 +205,7 @@ consistency checks:
 All six phases are structurally complete and the full project builds
 (`lake build`).
 
-- **pphi2:** 25 axioms, 0 sorries in the active build; `os3_for_continuum_limit` is now a theorem, and Route C's 21 axioms remain preserved in `future/`
+- **pphi2:** 24 axioms, 0 sorries in the active build; `os3_for_continuum_limit` and `gaussianLimit_isGaussian` are now theorems, and Route C's 21 axioms remain preserved in `future/`
 - **Route B (torus):** 0 axioms, 0 sorries — the most developed route
 - **Route B' IR limit:** 4 axioms, 0 sorries — pure/finite-rank/general covariance convergence to the global physical cylinder form is proved, together with the explicit temporal `2π` normalization bridge and uniform bilinear seminorm control; what remains here is the uniform second-moment bound, uniform exponential moment, and OS0/OS3
 - **Shared foundations layer:** `Common/QFT/Euclidean/Formulations.lean` and

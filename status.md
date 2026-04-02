@@ -16,9 +16,12 @@ and backend-independent reconstruction rules. This keeps the current scalar
 positive-measure construction explicit while opening a path to broader
 Euclidean/Minkowski interfaces.
 
-**Active build totals (2026-04-01): 25 axioms, 0 sorries.**
+**Current counter (`./scripts/count_axioms.sh`, 2026-04-02): 24 axioms, 0 sorries.**
 
-Recent reductions (2026-03-30):
+Recent reductions (2026-04-02):
+- `gaussianLimit_isGaussian` — **PROVED** by reducing continuum Gaussianity to
+  1D evaluation marginals and a generic weak-limit theorem for centered real
+  Gaussians
 - `configuration_continuum_polishSpace` — **REMOVED** (inconsistent: weak-* dual is not Polish)
 - `configuration_continuum_borelSpace` — **REMOVED** (inconsistent: same reason)
   Replaced by `prokhorov_configuration` from gaussian-field (proved, avoids Polish/Borel)
@@ -104,7 +107,7 @@ telescoping sum bound.
 | 4G | `GaussianContinuumLimit/EmbeddedCovariance.lean` | 0 axioms, 0 sorries |
 | 4G | `GaussianContinuumLimit/PropagatorConvergence.lean` | 1 axiom, 0 sorries (`schwartz_riemann_sum_bound` proved) |
 | 4G | `GaussianContinuumLimit/GaussianTightness.lean` | 0 axioms, 0 sorries |
-| 4G | `GaussianContinuumLimit/GaussianLimit.lean` | 1 axiom, 0 sorries |
+| 4G | `GaussianContinuumLimit/GaussianLimit.lean` | 0 axioms, 0 sorries |
 | 5 | `OSProofs/OS2_WardIdentity.lean` | 6 axioms |
 | — | `GeneralResults/ComplexAnalysis.lean` | **0 axioms** (`osgood_separately_analytic` proved via Osgood/) |
 | — | `GeneralResults/Osgood/Multilinear.lean` | 0 axioms (multilinear map infrastructure, from Irving) |
