@@ -318,9 +318,8 @@ lemma iteratedFDeriv_timeTranslationSchwartz
     -- LHS: if i.val = 0 then h else 0
     -- RHS: h * (Pi.single timeIndex 1) i = h * (if i = timeIndex then 1 else 0)
     simp only [PiLp.smul_apply, smul_eq_mul]
-    split_ifs with hi1
-    · sorry -- TODO: Mathlib 4.29 PiLp.single simp loop
-    · sorry -- TODO: Mathlib 4.29 PiLp.single simp loop
+    simp only [PiLp.single]
+    split_ifs with hi1 <;> simp_all [Pi.single_apply, Fin.ext_iff]
   have h_eq : ∀ z, timeTranslationSchwartz h f z = f (z + h • unitTimeDir) := by
     intro z
     rw [timeTranslationSchwartz_apply, timeShift_eq_add_const, h_shift_eq]
