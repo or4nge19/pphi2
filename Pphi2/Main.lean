@@ -49,6 +49,12 @@ The proof proceeds in six phases:
   for `bareMassParameter_positive` / `massParameter_positive` /
   `pphi2_exists_os_and_massParameter_positive`
 
+## Formalization layering
+
+Continuum types and Euclidean motions are built from Mathlib objects via `Backgrounds/EuclideanPlane`;
+lattice periodicity uses Mathlib `ZMod` (see `InteractingMeasure/LatticeEuclideanTime`). Overview:
+`docs/mathlib_prerequisite_layering.md`.
+
 ## References
 
 - Glimm-Jaffe, *Quantum Physics: A Functional Integral Point of View*
@@ -85,8 +91,9 @@ theorem pphi2_main (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
     (μ : Measure (Configuration (ContinuumTestFunction 2)))
     (hμ : IsProbabilityMeasure μ)
     (h_limit : IsPphi2Limit μ P mass) :
-    @SatisfiesFullOS μ hμ :=
-  continuumLimit_satisfies_fullOS P mass hmass μ hμ h_limit
+    @SatisfiesFullOS μ hμ := by
+  haveI : NeZero 1 := ⟨by decide⟩
+  exact continuumLimit_satisfies_fullOS 1 P mass hmass μ hμ h_limit
 
 /-- **Existence of the P(Φ)₂ Euclidean measure.**
 
