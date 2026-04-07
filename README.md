@@ -70,8 +70,9 @@ The construction proceeds in six phases:
 
 5. **Euclidean invariance** — Restore full E(2) symmetry via a Ward identity
    argument. The rotation-breaking operator has scaling dimension 4 > d = 2,
-   so the anomaly is RG-irrelevant and vanishes as O(a²) in the continuum limit.
-   Super-renormalizability ensures no logarithmic corrections.
+   so the anomaly is RG-irrelevant and vanishes in the continuum limit; in the
+   super-renormalizable `P(Φ)₂` setting one allows at most polynomial
+   `|log a|` corrections, still multiplied by the vanishing `a²` factor.
 
 6. **Assembly** — Combine all axioms into the main theorem.
 
@@ -83,7 +84,7 @@ OS axioms. See [ROUTES.md](ROUTES.md) for the detailed comparison.
 ### Route A: ℝ² (Euclidean plane) — OS0–OS4
 The full construction targets S'(ℝ²) and proves all five OS axioms.
 The continuum limit involves both UV (a → 0) and IR (volume → ∞) limits.
-**23 axioms, 0 sorries** (pphi2) + **3 axioms** (gaussian-field) = **26 combined** (axioms only).
+**21 axioms, 0 sorries** (pphi2) + **3 axioms** (gaussian-field) = **24 combined** (axioms only).
 
 ### Route B: T²_L (symmetric torus) — OS0–OS2
 Finite-volume warm-up isolating the UV limit. Lattice (ℤ/Nℤ)² with
@@ -211,7 +212,7 @@ consistency checks:
 All six phases are structurally complete and the full project builds
 (`lake build`).
 
-- **pphi2:** 23 axioms, 0 sorries in the active build; `cylinderIR_os0` (OS0 analyticity) is now proved via `analyticOnNhd_integral` + exponential moment transfer; Route C's 21 axioms remain preserved in `future/`
+- **pphi2:** 21 axioms, 0 sorries in the active build (rechecked 2026-04-07); `cylinderIR_os0`, `analyticOn_generatingFunctionalC`, `continuum_exponential_moments`, `exponential_moment_schwartz_bound`, `complex_gf_invariant_of_real_gf_invariant`, and the final `os0_for_continuum_limit`/`os1_for_continuum_limit`/`os4_for_continuum_limit` wrappers are now theorem-derived, with the continuum-limit inheritance layer now split cleanly between `ContinuumLimit/AxiomInheritance.lean` (the three remaining analytic/limit axioms plus the OS0/OS1/OS4 wrappers), `ContinuumLimit/CharacteristicFunctional.lean` (analyticity, complex-from-real invariance, Z₂/reality, continuity, ergodicity support), and `ContinuumLimit/TimeReflection.lean` (continuum time reflection); the remaining analytic debt is compressed to the explicit Green-form Simon/Nelson input, the canonical-approximant characteristic-functional bridge, and the spectral-gap-to-clustering input, while the remaining Ward-identity debt in `OS2_WardIdentity.lean` is now isolated to a single polynomial-log `a²` bound on the expectation of the canonical pointwise characteristic-functional defect observable `rotationCFPointwiseDefect`, with the defect-level bound for `rotationCFDefect` now obtained from the generic functional-analysis theorem `norm_configuration_expIntegral_sub_le_integral_cexp_eval_dist`, and the log-decay prerequisite lifted to the ambient theorem `tendsto_zero_pow_mul_one_add_abs_log_pow` for arbitrary natural powers `m ≥ 1`; Route C's 21 axioms remain preserved in `future/`
 - **Route B (torus):** 0 axioms, 0 sorries — the most developed route
 - **Route B' IR limit:** 3 axioms, 0 sorries — OS0 analyticity proved from uniform exponential moments + BC weak convergence; what remains is the uniform second-moment bound, uniform exponential moment, and OS3
 - **Shared foundations layer:** `Common/QFT/Euclidean/Formulations.lean` and
@@ -297,7 +298,10 @@ Pphi2/
     TorusGaussianLimit.lean          -- Gaussian identification, IsTorusGaussianContinuumLimit
     TorusInteractingLimit.lean       -- P(φ)₂ tightness + existence (Cauchy-Schwarz transfer)
   GeneralResults/
-    FunctionalAnalysis.lean          -- Pure Mathlib results: Cesàro, Schwartz Lp, trig identity
+    FunctionalAnalysis.lean          -- Pure Mathlib results: Cesàro, Schwartz Lp, trig identities, log-decay, CF defect control
+  ContinuumLimit/
+    CharacteristicFunctional.lean    -- Continuum CF analyticity/invariance/reality/ergodicity support
+    TimeReflection.lean              -- Continuum time reflection on Schwartz space and distributions
   OSAxioms.lean                      -- Phase 6: OS axiom definitions (matching OSforGFF)
   FormulationAdapter.lean            -- Exports `Pphi2` to the shared formulation interfaces
   Main.lean                          -- Phase 6: Main theorem assembly
