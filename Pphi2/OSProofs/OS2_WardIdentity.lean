@@ -16,8 +16,9 @@ group of the lattice. Full invariance is restored in the continuum limit:
 - **Rotations:** Via a Ward identity argument. The SO(2) generator J acts on
   lattice observables, producing an anomaly term O_break from the
   nearest-neighbor action breaking rotation symmetry. The key observation:
-  dim(O_break) = 4 > d = 2, so the anomaly is RG-irrelevant. Its coefficient
-  vanishes as O(a²) in the continuum limit.
+  dim(O_break) = 4 > d = 2, so the anomaly is RG-irrelevant. In the
+  super-renormalizable `P(Φ)₂` setting the formalized bound is
+  `O(a² |log a|^p)`, which still vanishes as `a → 0`.
 
   **Key simplification for P(Φ)₂:** The theory is super-renormalizable, so
   logarithmic corrections are at most polynomial in |log a| (Glimm-Jaffe
@@ -27,11 +28,11 @@ group of the lattice. Full invariance is restored in the continuum limit:
 
 - `translation_invariance_lattice` — lattice measure is translation-invariant
 - `translation_invariance_continuum` — continuum limit is translation-invariant
-- `ward_identity_lattice` — current placeholder `O(a²)` bound in the Ward-identity slot
+- `ward_identity_lattice` — current formal Ward-identity slot on the lattice side
 - `anomaly_scaling_dimension` — dim(O_break) = 4
 - `anomaly_vanishes` — one-point rotation anomaly is `O(a² |log a|^p)` and hence vanishes
 - `rotation_invariance_continuum` — continuum SO(2) invariance from anomaly decay
-- `os2_inheritance` — full E(2) invariance of the continuum limit
+- `os2_for_continuum_limit` — full E(2) invariance of the continuum limit
 
 ## References
 
@@ -657,19 +658,17 @@ theorem anomaly_bound_from_superrenormalizability (P : InteractionPolynomial)
   intro a ha hle R
   simpa [rotationCFDefect] using hpoly a ha hle R
 
-/-- **The anomaly vanishes as O(a² |log a|^p).**
+/-- **The one-point characteristic-functional rotation defect vanishes.**
 
-For any n-point Schwinger function with test functions f₁,...,fₙ ∈ S(ℝ²):
+For each real test function `f ∈ S(ℝ²)` and orthogonal transformation `R ∈ O(2)`,
+the canonical continuum-embedded lattice generating functionals satisfy
 
-  `|⟨Φ(f₁)···Φ(fₙ) · O_break⟩_a| ≤ C(f₁,...,fₙ) · a² · (1 + |log a|)^p`
-
-where C is uniform in a (depends on the Schwartz norms of the fᵢ) and
-p is a fixed power depending on the degree of the interaction polynomial.
+  `‖Z_a[R · f] - Z_a[f]‖ ≤ C(f) · a² · (1 + |log a|)^p`.
 
 The a² factor comes from the dimension-4 anomaly operator; the log factors
 arise from Wick ordering and renormalization in the super-renormalizable theory.
-Crucially, in d=2 these are at most polynomial in |log a| (not essential),
-so the bound still vanishes as a → 0. -/
+Crucially, in d=2 these are at most polynomial in `|log a|`, so the defect still
+vanishes as `a → 0`. -/
 theorem anomaly_vanishes (P : InteractionPolynomial) (mass : ℝ)
     (hmass : 0 < mass) (f : TestFunction2) :
     -- The one-point rotation anomaly of the lattice generating functional
@@ -697,14 +696,15 @@ Proof outline (Ward identity argument):
    the rotation-breaking operator from the nearest-neighbor action.
 2. dim(O_break) = 4 > d = 2 (from Fourier analysis: Δ_lattice - Δ = O(a²k⁴)),
    so the anomaly is RG-irrelevant.
-3. Super-renormalizability of P(Φ)₂ ⟹ no log corrections ⟹ |anomaly| ≤ C · a².
+3. Super-renormalizability of P(Φ)₂ implies at most polynomial log corrections,
+   so `|anomaly| ≤ C · a² · (1 + |log a|)^p`.
 4. In the weak limit: `⟨δ_J F⟩_μ = 0`, so Schwinger functions are SO(2)-invariant.
 5. Reflections: time reflection Θ is a symmetry (from OS3/RP). Combined with
    SO(2), this generates all of O(2).
 6. Schwinger functions determine μ (nuclearity of S(ℝ²)) ⟹ `Z[R·f] = Z[f]`.
 
 Refs: Symanzik (1983), Lüscher-Weisz (1985), Duch (2024). -/
-theorem rotation_invariance_continuum (N : ℕ) [NeZero N] (P : InteractionPolynomial)
+theorem rotation_invariance_continuum (P : InteractionPolynomial)
     (mass : ℝ) (hmass : 0 < mass)
     (μ : Measure (Configuration (ContinuumTestFunction 2)))
     [IsProbabilityMeasure μ]
@@ -712,7 +712,7 @@ theorem rotation_invariance_continuum (N : ℕ) [NeZero N] (P : InteractionPolyn
     (R : O2) (f : TestFunction2) :
     generatingFunctional μ (euclideanAction2 ⟨R, 0⟩ f) = generatingFunctional μ f := by
   have hcanon :
-      ∃ (a : ℕ → ℝ) (ha_pos : ∀ n, 0 < a n),
+      ∃ (N0 : ℕ) (a : ℕ → ℝ) (ha_pos : ∀ n, 0 < a n),
         (∀ n, a n ≤ 1) ∧
         Filter.Tendsto a Filter.atTop (nhds 0) ∧
         ∀ (f : TestFunction2),
@@ -720,11 +720,13 @@ theorem rotation_invariance_continuum (N : ℕ) [NeZero N] (P : InteractionPolyn
             (fun n =>
               ∫ ω : FieldConfig2,
                 Complex.exp (Complex.I * ↑(ω f))
-                  ∂(continuumMeasure 2 N P (a n) mass (ha_pos n) hmass))
+                  ∂(continuumMeasure 2 (Nat.succ N0) P (a n) mass (ha_pos n) hmass))
             Filter.atTop
             (nhds (generatingFunctional μ f)) :=
-    @canonical_continuumMeasure_cf_tendsto N inferInstance P mass hmass μ inferInstance h_limit
-  obtain ⟨a, ha_pos, ha_le, ha_tend, hcf⟩ := hcanon
+    canonical_continuumMeasure_cf_tendsto P mass hmass μ h_limit
+  obtain ⟨N0, a, ha_pos, ha_le, ha_tend, hcf⟩ := hcanon
+  let N : ℕ := Nat.succ N0
+  haveI : NeZero N := ⟨Nat.succ_ne_zero N0⟩
   have h_rot_tend := hcf (euclideanAction2 ⟨R, 0⟩ f)
   have h_id_tend := hcf f
   obtain ⟨C, p, _hC, h_anom⟩ := anomaly_vanishes (N := N) P mass hmass f
@@ -883,14 +885,14 @@ Proof chain to `OS2_EuclideanInvariance`:
    third by rotation invariance.)
 3. Extension from real to complex: `Z_ℂ[g · J]` for complex J = f + ig
    follows from the real case via `complex_gf_invariant_of_real_gf_invariant`. -/
-theorem os2_for_continuum_limit (N : ℕ) [NeZero N] (P : InteractionPolynomial)
+theorem os2_for_continuum_limit (P : InteractionPolynomial)
     (mass : ℝ) (hmass : 0 < mass)
     (μ : Measure (Configuration (ContinuumTestFunction 2)))
     (hμ : IsProbabilityMeasure μ)
     (h_limit : IsPphi2Limit μ P mass) :
     @OS2_EuclideanInvariance μ hμ := by
   have h_trans := translation_invariance_continuum P mass hmass μ hμ h_limit
-  have h_rot := rotation_invariance_continuum N P mass hmass μ h_limit
+  have h_rot := rotation_invariance_continuum P mass hmass μ h_limit
   -- Step 1: Real generating functional is E(2)-invariant.
   -- Any g = ⟨R, t⟩ ∈ E(2) acts by g·f = τ_t(R·f), so
   -- Z[g·f] = Z[τ_t(R·f)] = Z[R·f] (by h_trans) = Z[f] (by h_rot).
@@ -924,8 +926,7 @@ Assembles all results: OS3 is proved by passing the RP matrix inequalities of
 the approximating continuum measures to the limit through characteristic
 functional convergence. OS0, OS1, OS2, OS4 follow from the lattice
 construction via the mechanisms described above. -/
-theorem continuumLimit_satisfies_fullOS (N : ℕ) [NeZero N]
-    (P : InteractionPolynomial)
+theorem continuumLimit_satisfies_fullOS (P : InteractionPolynomial)
     (mass : ℝ) (hmass : 0 < mass)
     (μ : Measure (Configuration (ContinuumTestFunction 2)))
     (hμ : IsProbabilityMeasure μ)
@@ -933,7 +934,7 @@ theorem continuumLimit_satisfies_fullOS (N : ℕ) [NeZero N]
     @SatisfiesFullOS μ hμ where
   os0 := os0_for_continuum_limit P mass hmass μ hμ h_limit
   os1 := os1_for_continuum_limit P mass hmass μ hμ h_limit
-  os2 := os2_for_continuum_limit N P mass hmass μ hμ h_limit
+  os2 := os2_for_continuum_limit P mass hmass μ hμ h_limit
   os3 := os3_for_continuum_limit P mass hmass μ hμ h_limit
   os4_clustering := os4_for_continuum_limit P mass hmass μ hμ h_limit
   os4_ergodicity :=
@@ -951,8 +952,7 @@ theorem pphi2_exists (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
       (hμ : IsProbabilityMeasure μ),
     @SatisfiesFullOS μ hμ := by
   obtain ⟨μ, hμ, h_limit⟩ := pphi2_limit_exists P mass hmass
-  haveI : NeZero 1 := ⟨by decide⟩
-  exact ⟨μ, hμ, continuumLimit_satisfies_fullOS 1 P mass hmass μ hμ h_limit⟩
+  exact ⟨μ, hμ, continuumLimit_satisfies_fullOS P mass hmass μ hμ h_limit⟩
 
 end Pphi2
 

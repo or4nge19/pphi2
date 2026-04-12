@@ -10,10 +10,13 @@ limit measure μ = lim ν_{aₙ}.
 
 ## Main results
 
-- `os0_inheritance` — analyticity from uniform exponential bounds
-- `os1_inheritance` — regularity from uniform moment bounds
-- `os3_inheritance` — RP from weak closure (provable)
-- `os4_inheritance` — clustering from uniform mass gap
+- `continuum_exponential_moment_green_bound` — Simon/Nelson Green-form
+  exponential moment input
+- `canonical_continuumMeasure_cf_tendsto` — canonical UV approximants for a
+  fixed finite lattice size converge in characteristic functionals
+- `continuum_exponential_clustering` — continuum OS4 exponential clustering input
+- `os0_for_continuum_limit`, `os1_for_continuum_limit`,
+  `os4_for_continuum_limit` — theorem wrappers into the generic OS bundle
 
 ## Mathematical background
 
@@ -311,19 +314,21 @@ theorem os1_for_continuum_limit (P : InteractionPolynomial)
 /-- **Canonical characteristic-functional convergence from the lattice construction.**
 
 The abstract marker predicate `IsPphi2Limit μ P mass` only records the
-existence of some approximating sequence. For Ward-identity arguments that must
-use the actual lattice measures at spacing `a`, we need the stronger statement
-that `μ` is obtained as a limit of the canonical continuum-embedded measures
-`continuumMeasure 2 N P a mass`.
+existence of some approximating sequence. For the Ward-identity step we need a
+stronger statement tying `μ` to the specific continuum-embedded lattice measures
+appearing in the formalized anomaly estimate.
 
-This is the precise lower-layer input needed to derive continuum rotation
-invariance from the already-formalized anomaly estimate, without axiomatizing
-the final symmetry statement itself. -/
+The bridge asserted here is intentionally explicit about its scope: there is
+some fixed finite lattice size `Nat.succ N0`, together with a spacing sequence
+`a_n → 0`, such that the corresponding canonical UV family
+`continuumMeasure 2 (Nat.succ N0) P (a_n) mass` converges to `μ` in
+characteristic functionals. This is a fixed-volume UV bridge, not a standalone
+formalization of the full plane `a → 0`, `N → ∞` route. -/
 axiom canonical_continuumMeasure_cf_tendsto (P : InteractionPolynomial)
     (mass : ℝ) (hmass : 0 < mass)
     (μ : Measure FieldConfig2) [IsProbabilityMeasure μ]
     (h_limit : IsPphi2Limit μ P mass) :
-    ∃ (a : ℕ → ℝ) (ha_pos : ∀ n, 0 < a n),
+    ∃ (N0 : ℕ) (a : ℕ → ℝ) (ha_pos : ∀ n, 0 < a n),
       (∀ n, a n ≤ 1) ∧
       Filter.Tendsto a Filter.atTop (nhds 0) ∧
       ∀ (f : TestFunction2),
@@ -331,7 +336,7 @@ axiom canonical_continuumMeasure_cf_tendsto (P : InteractionPolynomial)
           (fun n =>
             ∫ ω : FieldConfig2,
               Complex.exp (Complex.I * ↑(ω f)) ∂
-                (continuumMeasure 2 N P (a n) mass (ha_pos n) hmass))
+                (continuumMeasure 2 (Nat.succ N0) P (a n) mass (ha_pos n) hmass))
           Filter.atTop
           (nhds (EuclideanOS.generatingFunctional (B := plane2Background) μ f))
 

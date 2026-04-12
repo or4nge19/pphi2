@@ -398,10 +398,10 @@ refactoring (functionality consolidated into L2Operator axioms).
 | `schwinger_n_convergence` | Convergence | Hard | n-point Schwinger functions converge along subsequence. Diagonal subsequence extraction. |
 | `continuumLimit_nontrivial` | Convergence | Hard | ∫ (ω f)² dμ > 0 for some f. Free field two-point function gives lower bound. |
 | `continuumLimit_nonGaussian` | Convergence | Hard | Connected 4-point function ≠ 0. Perturbation theory gives O(λ) contribution. |
-| `os0_inheritance` | AxiomInheritance | Medium | OS0 transfers: uniform moment bounds + pointwise convergence → limit has all moments finite. |
+| `continuum_exponential_moment_green_bound` | AxiomInheritance | Hard | Simon/Nelson Green-form exponential moment input used to derive the OS0/OS1 wrappers. |
 | ~~`os3_for_continuum_limit`~~ | OS2_WardIdentity | ✅ **Proved** | Standard OS3 from inline approximant RP in `IsPphi2Limit` + entrywise characteristic-functional convergence. |
-| `os4_inheritance` | AxiomInheritance | Med/Hard | Exponential clustering survives weak limits. Uniform spectral gap + weak convergence. |
-| ~~`continuumLimit_satisfies_os0134`~~ | AxiomInheritance | **Theorem** | Assembly of os0/os1/os3/os4 inheritance results. |
+| `continuum_exponential_clustering` | AxiomInheritance | Hard | Continuum characteristic-functional clustering input from the spectral-gap package. |
+| ~~`os0_for_continuum_limit / os1_for_continuum_limit / os4_for_continuum_limit`~~ | AxiomInheritance | **Theorem** | Derived wrappers packaging the analytic and clustering inputs into the generic OS bundle. |
 
 ### Phase 4G: Gaussian continuum limit
 
@@ -499,7 +499,7 @@ Note: `os1_inheritance` is a theorem (not axiom) — OS1 transfers trivially sin
 | ~~`latticeMeasure_translation_invariant`~~ | OS2_WardIdentity | ~~Medium~~ | **Proved** — density bridge + change of variables. BW and ρ invariant under translation, Lebesgue measure preserved by `piCongrLeft`. |
 | ~~`translation_invariance_continuum`~~ | OS2_WardIdentity | ~~Medium~~ | **Proved** — strengthened `IsPphi2Limit` with `cf_tendsto` + `lattice_inv` fields; continuum invariance via `tendsto_nhds_unique_of_eventuallyEq`. |
 | `rotation_cf_pointwise_defect_polylog_bound` | OS2_WardIdentity | Hard | Remaining OS2 axiom: one-point super-renormalizable bound on the expectation of the canonical pointwise characteristic-functional defect observable `rotationCFPointwiseDefect`; the defect-level bound for `rotationCFDefect` is theorem-derived from the generic functional-analysis estimate `norm_configuration_expIntegral_sub_le_integral_cexp_eval_dist`. |
-| `canonical_continuumMeasure_cf_tendsto` | AxiomInheritance | Hard | Canonical continuum-embedded lattice measures converge in characteristic functionals to `μ` along some `a_n → 0`, `0 < a_n ≤ 1`. This is the precise bridge from abstract `IsPphi2Limit` to the actual `continuumMeasure` approximants used by the Ward estimate. |
+| `canonical_continuumMeasure_cf_tendsto` | AxiomInheritance | Hard | For some fixed finite lattice size `Nat.succ N0`, the canonical UV family `continuumMeasure 2 (Nat.succ N0) P a_n mass` converges in characteristic functionals to `μ` along `a_n → 0`, `0 < a_n ≤ 1`. This is the explicit bridge from abstract `IsPphi2Limit` to the concrete approximants used by the Ward estimate. |
 | `continuum_exponential_moment_green_bound` | AxiomInheritance | Hard | Textbook Simon/Nelson continuum bound `∫ exp(|ω f|) dμ ≤ exp(c₁‖f‖₁ + c₂ G(f,f))`. Single remaining OS0/OS1 analytic input. |
 | ~~`analyticOn_generatingFunctionalC`~~ | CharacteristicFunctional | ~~Medium~~ | **Proved** — via `analyticOnNhd_integral`, the finite-source pairing rewrite, and compact domination from exponential moments of `schwartzRe`/`schwartzIm`. |
 | ~~`continuum_exponential_moments`~~ | AxiomInheritance | ~~Hard~~ | **Proved** — derived by scaling from `continuum_exponential_moment_green_bound`. Feeds OS0 + OS1. |

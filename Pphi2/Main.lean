@@ -33,7 +33,8 @@ The proof proceeds in six phases:
 5. **Euclidean invariance** (Phase 5): Restore full E(2) symmetry via
    Ward identity argument. Translation invariance from lattice translations;
    rotation invariance from irrelevance of the anomaly (dim = 4 > d = 2,
-   no log corrections by super-renormalizability).
+   with at most polynomial `|log a|` corrections in the super-renormalizable
+   `P(Φ)₂` setting).
 
 6. **Assembly** (Phase 6): This file — combine all axioms into the
    main theorem.
@@ -81,19 +82,18 @@ Phase 4 (via Prokhorov's theorem applied to the tight family of
 continuum-embedded lattice measures), μ satisfies all five OS axioms.
 
 This combines:
-- OS0 (Analyticity): `os0_continuum` — Fernique bounds + Vitali's theorem
-- OS1 (Regularity): `os1_continuum` — Nelson's hypercontractive estimate
-- OS2 (Euclidean Invariance): `os2_continuum` — translations + Ward identity + irrelevance
+- OS0 (Analyticity): `os0_for_continuum_limit` — exponential moments + analyticity
+- OS1 (Regularity): `os1_for_continuum_limit` — Green-form exponential moment bound
+- OS2 (Euclidean Invariance): `os2_for_continuum_limit` — translations + Ward identity
 - OS3 (Reflection Positivity): `os3_for_continuum_limit` — passed to the
   limit from the RP approximants via characteristic-functional convergence
-- OS4 (Clustering): `os4_clustering_continuum` — uniform spectral gap + exponential decay -/
+- OS4 (Clustering): `os4_for_continuum_limit` — continuum exponential clustering -/
 theorem pphi2_main (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass)
     (μ : Measure (Configuration (ContinuumTestFunction 2)))
     (hμ : IsProbabilityMeasure μ)
     (h_limit : IsPphi2Limit μ P mass) :
     @SatisfiesFullOS μ hμ := by
-  haveI : NeZero 1 := ⟨by decide⟩
-  exact continuumLimit_satisfies_fullOS 1 P mass hmass μ hμ h_limit
+  exact continuumLimit_satisfies_fullOS P mass hmass μ hμ h_limit
 
 /-- **Existence of the P(Φ)₂ Euclidean measure.**
 
@@ -198,7 +198,7 @@ hypothesis `0 < mass` witnesses some `m₀ > 0`.
 Use `massParameter_positive` when a statement tied to the formalized OS bundle
 is desired. -/
 theorem bareMassParameter_positive (_P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass) :
-    -- There exists m₀ > 0 bounding the mass gap from below
+    -- The positive witness comes directly from the input bare mass parameter.
     ∃ m₀ : ℝ, 0 < m₀ := ⟨mass, hmass⟩
 
 @[deprecated bareMassParameter_positive (since := "2026-04-03")]

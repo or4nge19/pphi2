@@ -83,6 +83,10 @@ after an infrared / continuum-limit step, not from the bare periodic `N_s` model
   (`N_s → ∞` at fixed physical separation, and/or the continuum limit package) so
   wrap-around is negligible; see `refs/GRS1975-p2.md` for the infinite-lattice setup
   in GRS Part II §IV (our `N_s` torus is a finite-volume periodic truncation).
+
+**Mathlib (P) anchor:** `d_cyc(k) = latticeEuclideanTimeSeparation Ns k` is
+`((k : ZMod Ns).valMinAbs).natAbs` (`InteractingMeasure/LatticeEuclideanTime.lean`,
+`ZMod.valMinAbs_natAbs_eq_min`). Layering note: `docs/mathlib_prerequisite_layering.md`.
 -/
 
 import Pphi2.TransferMatrix.SpectralGap
@@ -224,7 +228,8 @@ theorem general_clustering_lattice
     -- For any bounded observables F, G and time separation R, the connected
     -- correlator decays exponentially at the rate of the mass gap:
     -- ∃ m > 0, ∀ bounded F G, ∀ R : ℕ,
-    --   |∫ F(ω) · G(τ_R ω) dμ - (∫ F dμ)(∫ G dμ)| ≤ C(F,G) · exp(-m · R · a)
+    --   |∫ F(ω) · G(τ_R ω) dμ - (∫ F dμ)(∫ G dμ)| ≤
+    --     C(F,G) · exp(-m · d_cyc(R) · a)
     ∃ (m : ℝ), 0 < m ∧ m ≤ massGap Ns P a mass ha hmass ∧
     ∀ (F G : Configuration (FinLatticeField 2 Ns) → ℝ)
       (_hF : ∃ C, ∀ ω, |F ω| ≤ C) (_hG : ∃ C, ∀ ω, |G ω| ≤ C),

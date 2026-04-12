@@ -5,8 +5,12 @@ Authors: Matteo Cipollina, Michael R. Douglas
 
 # General Results: Functional Analysis
 
-Pure functional analysis results not specific to the P(Φ)₂ project.
-Candidates for upstreaming to Mathlib.
+Shared analytic lemmas used across the project.
+
+The Cesàro, Schwartz-integrability, and logarithmic-decay results are close to
+Mathlib-facing material. The characteristic-functional lemmas below are more
+project-local: they are stated for `Measure (Configuration E)` and therefore
+depend on gaussian-field's tempered-distribution configuration space.
 
 ## Main results
 
