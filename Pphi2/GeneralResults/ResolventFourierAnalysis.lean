@@ -27,6 +27,9 @@ function convergence.
   2π-rescaling identity between the two normalizations
 -/
 
+import GaussianField
+import Cylinder.FourierMultiplier
+import SchwartzNuclear.HermiteHilbertBasis
 import Pphi2.GeneralResults.PeriodicResolvent1D
 import Mathlib.Analysis.Fourier.Convolution
 
@@ -36,37 +39,22 @@ namespace Pphi2
 
 open GaussianField MeasureTheory PeriodicResolvent1D
 
+/-- The `L²(ℝ)` inner product of two Schwartz functions via the canonical embedding
+`𝓢(ℝ) ↪ L²(ℝ)`. -/
+def l2InnerProduct (f g : SchwartzMap ℝ ℝ) : ℝ :=
+  @inner ℝ _ _ (schwartzToLp f) (schwartzToLp g)
+
 private theorem schwartz_l2InnerProduct_eq_integral_mul
     (f g : SchwartzMap ℝ ℝ) :
     l2InnerProduct f g = ∫ t, f t * g t := by
-  let φ : SchwartzMap ℝ ℝ →L[ℝ] ℝ :=
-    (SchwartzMap.integralCLM (𝕜 := ℝ) (μ := MeasureTheory.volume)).comp
-      (SchwartzMap.smulLeftCLM ℝ (fun t : ℝ => g t))
-  calc
-    l2InnerProduct f g = ∑' n, hermiteCoeff1D n f * hermiteCoeff1D n g := by
-      rfl
-    _ = ∑' n, hermiteCoeff1D n f * φ (schwartzHermiteBasis1D n) := by
-      congr with n
-      congr 1
-      calc
-        hermiteCoeff1D n g = ∫ t, g t * hermiteFunction n t := rfl
-        _ = φ (schwartzHermiteBasis1D n) := by
-          unfold φ
-          rw [ContinuousLinearMap.comp_apply, SchwartzMap.integralCLM_apply]
-          congr 1
-          ext t
-          rw [SchwartzMap.smulLeftCLM_apply_apply g.hasTemperateGrowth]
-          rw [schwartzHermiteBasis1D_apply, smul_eq_mul]
-    _ = φ f := by
-      symm
-      exact schwartz_hermite_expansion_CLF φ f
-    _ = ∫ t, f t * g t := by
-      unfold φ
-      rw [ContinuousLinearMap.comp_apply, SchwartzMap.integralCLM_apply]
-      congr 1
-      ext t
-      rw [SchwartzMap.smulLeftCLM_apply_apply g.hasTemperateGrowth, smul_eq_mul]
-      ring
+  simpa [l2InnerProduct] using schwartzToLp_inner f g
+
+theorem l2InnerProduct_eq_tsum_coeff
+    (f g : SchwartzMap ℝ ℝ) :
+    l2InnerProduct f g =
+      ∑' n, DyninMityaginSpace.coeff n f * DyninMityaginSpace.coeff n g := by
+  rw [schwartz_l2InnerProduct_eq_integral_mul]
+  exact (dm_parseval f g).symm
 
 private theorem resolventSymbol_mul_self
     (ω : ℝ) (hω : 0 < ω) (ξ : ℝ) :

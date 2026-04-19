@@ -111,7 +111,7 @@ The construction proceeds in two limits:
    μ_{P,Lt,Ls} on T_{Lt,Ls} converge weakly to a measure μ_{P,Ls} on the
    cylinder S¹_{Ls} × ℝ. Tightness follows from uniform-in-Lt moment bounds
    via the **method of images** (gaussian-field `Cylinder/MethodOfImages.lean`).
-   The IR limit files are in `IRLimit/` with 4 axioms and 0 sorries.
+   The IR limit files are in `IRLimit/` with 3 axioms and 0 sorries.
    `limit_exponential_moment` (MCT + truncation) is now fully proved.
    OS2 (time reflection) of the limit measure is **proved** via characteristic
    functional convergence.
@@ -130,14 +130,14 @@ The cylinder S¹_{Ls} × ℝ has a natural time axis ℝ, enabling:
 OS0–OS2). Only needs new work for OS3 (RP) and the Lt → ∞ limit.
 **Status:** UV limit (Step 1) complete — `AsymTorusOS.lean` has **0 axioms,
 0 sorry** for OS0–OS2. Cylinder IR limit (Step 2) in progress — `IRLimit/` has
-**4 axioms, 0 sorries**. `limit_exponential_moment` (MCT + truncation + BC convergence)
+**3 axioms, 0 sorries**. `limit_exponential_moment` (MCT + truncation + BC convergence)
 is now fully proved. OS2 time reflection is proved via characteristic-functional
 convergence, and compact-support, finite-rank, and general cylinder covariance
 convergence are proved against a global physically normalized cylinder form
 obtained from `cylinderGreen` by explicit temporal `2π` rescaling, with uniform
 bilinear seminorm control of the embedded torus covariance family. Spatial
 translation is exact at each finite `Lt`; what remains axiomatized in the IR
-lane is the uniform second-moment bound, uniform exponential moment, and OS0/OS3.
+lane is the uniform second-moment bound, uniform exponential moment, and OS3.
 
 ### Route C: S¹_L × ℝ (cylinder, direct) — OS0–OS3
 Direct Nelson/Simon construction with natural time axis ℝ for OS reconstruction.
@@ -207,9 +207,9 @@ consistency checks:
 All six phases are structurally complete and the full project builds
 (`lake build`).
 
-- **pphi2:** 23 axioms, 5 sorries in the active build; `cylinderIR_os0` (OS0 analyticity) now proved via `analyticOnNhd_integral` + exponential moment transfer; Route C's 21 axioms remain preserved in `future/`
+- **pphi2:** 23 axioms, 0 sorries in the active build (rechecked 2026-04-19 17:54). `cylinderIR_os0`, `analyticOn_generatingFunctionalC`, `continuum_exponential_moments`, `exponential_moment_schwartz_bound`, `complex_gf_invariant_of_real_gf_invariant`, the final `os0_for_continuum_limit`/`os1_for_continuum_limit`/`os4_for_continuum_limit` wrappers, and `continuumMeasures_tight` are theorem-derived. The continuum-limit inheritance layer is split between `ContinuumLimit/AxiomInheritance.lean` (the three remaining analytic/limit axioms plus the OS0/OS1/OS4 wrappers), `ContinuumLimit/CharacteristicFunctional.lean` (analyticity, complex-from-real invariance, Z₂/reality, continuity, ergodicity support), `ContinuumLimit/TimeReflection.lean` (continuum time reflection), and `ContinuumLimit/Tightness.lean` (proved from `continuum_second_moment_uniform` plus `configuration_tight_of_uniform_second_moments`). The remaining analytic debt is concentrated in the explicit Green-form Simon/Nelson input, a fixed-volume canonical UV characteristic-functional bridge for the Ward step, the spectral-gap-to-clustering input, and the plane-limit existence axiom `pphi2_limit_exists`, which remains explicit rather than being simulated by a fake witness. The remaining Ward-identity debt in `OS2_WardIdentity.lean` is the one-point polynomial-log `a²` bound on the expectation of `rotationCFPointwiseDefect`; the defect-level bound for `rotationCFDefect` is theorem-derived from `norm_configuration_expIntegral_sub_le_integral_cexp_eval_dist`, and the log-decay prerequisite is handled by `tendsto_zero_pow_mul_one_add_abs_log_pow` for arbitrary natural powers `m ≥ 1`. Route C's 21 axioms remain preserved in `future/`
 - **Route B (torus):** 0 axioms, 0 sorries — the most developed route
-- **Route B' IR limit:** 3 axioms, 5 sorries — OS0 analyticity proved from uniform exponential moments + BC weak convergence; what remains is the uniform second-moment bound, uniform exponential moment, and OS3
+- **Route B' IR limit:** 3 axioms, 0 sorries — OS0 analyticity proved from uniform exponential moments + BC weak convergence; what remains is the uniform second-moment bound, uniform exponential moment, and OS3
 - **Shared foundations layer:** `Common/QFT/Euclidean/Formulations.lean` and
   `Common/QFT/Euclidean/ReconstructionInterfaces.lean` separate concrete
   measure models, tensor-moment Schwinger data, distributional Schwinger data,

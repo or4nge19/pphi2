@@ -51,6 +51,11 @@ These layers are now tentatively sketched in
 linear-growth / reconstruction-rule surfaces factored separately into
 `Common/QFT/Euclidean/ReconstructionInterfaces.lean`.
 
+## See also
+
+- `docs/mathlib_prerequisite_layering.md` — **prerequisite (P) vs goal (X)** vocabulary,
+  Mathlib-idiomatic boundaries, and theorem-driven rules (minimal defs, maximal reuse).
+
 ## Initial suggested refactor program
 
 1. Extract shared formulation interfaces from `Phi4/OSAxioms.lean` into

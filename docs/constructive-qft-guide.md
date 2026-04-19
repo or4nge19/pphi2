@@ -99,7 +99,7 @@ field operators satisfying the Wightman axioms).
 - Nelson estimate: **proved**
 - Tightness (torus): **proved**
 - OS axioms: OS1–OS4 proved for Route A (25 axioms for analytical infrastructure)
-- Main theorem `pphi2_exists`: P(φ)₂ QFT exists satisfying Wightman axioms
+- Main theorem `pphi2_exists`: a `P(φ)₂` Euclidean measure satisfying the OS axioms exists in the current `pphi2` surface; reconstruction to Wightman theory lives in the separate `OSReconstruction` stack
 
 ### gaussian-field (Gaussian measures on nuclear spaces)
 - Gaussian hypercontractivity: **fully proved** (0 sorry, 0 axioms)

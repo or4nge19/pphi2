@@ -274,93 +274,20 @@ axiom continuumLimit_nonGaussian (P : InteractionPolynomial)
 There exists a probability measure μ on S'(ℝ²) that satisfies the marker
 predicate `IsPphi2Limit μ P mass`.
 
-The current `IsPphi2Limit` marker is witnessed by a probability sequence with
-convergent moments, characteristic functionals, bounded-continuous observables,
-and continuum reflection positivity, together with Z₂ symmetry of μ.
-Therefore, a constant sequence at the symmetric Dirac measure `δ₀` still
-witnesses the predicate. -/
-theorem pphi2_limit_exists (P : InteractionPolynomial)
+Mathematically this is the actual plane-limit existence statement needed by the
+rest of the OS0–OS4 assembly: one must combine tightness / Prokhorov extraction
+with the additional Schwinger-, characteristic-functional-, symmetry-, and
+reflection-positivity data encoded in `IsPphi2Limit`.
+
+The weaker fixed-`N` extraction theorem `continuumLimit` is proved above. The
+upgrade from that theorem to the full marker package remains a substantive
+constructive-QFT step, so it is recorded as an explicit axiom here rather than
+simulated by a fake witness. -/
+axiom pphi2_limit_exists (P : InteractionPolynomial)
     (mass : ℝ) (_hmass : 0 < mass) :
     ∃ (μ : Measure (Configuration (ContinuumTestFunction 2)))
       (_ : IsProbabilityMeasure μ),
-    IsPphi2Limit μ P mass := by
-  let μ : Measure FieldConfig2 :=
-    Measure.dirac 0
-  have hμ : IsProbabilityMeasure μ :=
-    by
-      dsimp [μ]
-      infer_instance
-  have h_dirac_cf :
-      ∀ (g : TestFunction2),
-        ∫ ω : FieldConfig2, Complex.exp (Complex.I * ↑(ω g)) ∂μ = 1 := by
-    intro g
-    have hmeas : StronglyMeasurable
-        (fun ω : FieldConfig2 => Complex.exp (Complex.I * ↑(ω g))) :=
-      (Complex.measurable_exp.comp
-        ((Complex.measurable_ofReal.comp
-          (configuration_eval_measurable g)).const_mul
-          Complex.I)).stronglyMeasurable
-    rw [integral_dirac' _ _ hmeas]
-    norm_num [show (0 : FieldConfig2) g = 0 from rfl]
-  refine ⟨μ, hμ, ?_⟩
-  refine ⟨(fun k : ℕ => 1 / (k + 1 : ℝ)), (fun _ => μ), ?_, ?_, ?_, ?_⟩
-  · intro k
-    simpa using hμ
-  · simpa [Nat.cast_add, Nat.cast_one] using
-      (tendsto_one_div_add_atTop_nhds_zero_nat :
-        Tendsto (fun n : ℕ => 1 / (n + 1 : ℝ)) Filter.atTop (nhds 0))
-  · intro k
-    positivity
-  · refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
-    · intro n f
-      exact (tendsto_const_nhds :
-        Filter.Tendsto
-          (fun _ : ℕ => ∫ ω : Configuration (ContinuumTestFunction 2),
-            ∏ i, ω (f i) ∂μ)
-          Filter.atTop
-          (nhds (∫ ω : Configuration (ContinuumTestFunction 2),
-            ∏ i, ω (f i) ∂μ)))
-    · -- Z₂ symmetry holds for δ₀ since negation fixes 0.
-      have hneg_meas :
-          Measurable (Neg.neg :
-            Configuration (ContinuumTestFunction 2) →
-              Configuration (ContinuumTestFunction 2)) := by
-        exact configuration_measurable_of_eval_measurable _
-          (fun f => (configuration_eval_measurable f).neg)
-      simp only [μ, Measure.map_dirac' hneg_meas, neg_zero]
-    · -- Characteristic functional convergence: constant sequence → trivial
-      intro f; exact tendsto_const_nhds
-    · -- Lattice translation invariance: trivial for Dirac at 0
-      -- Both sides = exp(0) = 1 for all k, so the eventuality holds trivially.
-      -- Trivial: ν_k = δ_0 for all k. Under δ_0, ω = 0, so ω(f) = 0 = ω(τ_v f),
-      -- hence both integrals = exp(0) = 1.
-      intro v f; exact Filter.Eventually.of_forall fun _ => by
-        rw [h_dirac_cf f, h_dirac_cf (schwartzTranslate 2 v f)]
-    · -- Weak convergence: constant sequence at δ₀ → trivial
-      intro g _ _; exact tendsto_const_nhds
-    · -- OS3 for the approximating sequence: Dirac at 0 gives a rank-one RP matrix.
-      intro k n f c
-      have hentry : ∀ i j : Fin n,
-          (∫ ω : FieldConfig2,
-            Complex.exp (Complex.I * ↑(ω ((f i : TestFunction2) -
-              compTimeReflection2 ((f j : TestFunction2))))) ∂μ).re = 1 := by
-        intro i j
-        rw [h_dirac_cf ((f i : TestFunction2) - compTimeReflection2 ((f j : TestFunction2)))]
-        norm_num
-      simp_rw [hentry]
-      have hsum :
-          ∑ i, ∑ j, c i * c j = (∑ i, c i) ^ 2 := by
-        calc
-          ∑ i, ∑ j, c i * c j
-              = ∑ i, c i * ∑ j, c j := by
-                  apply Finset.sum_congr rfl
-                  intro i _
-                  rw [Finset.mul_sum]
-          _ = (∑ i, c i) * (∑ j, c j) := by
-                rw [Finset.sum_mul]
-          _ = (∑ i, c i) ^ 2 := by
-                rw [pow_two]
-      simpa [hsum] using sq_nonneg (∑ i, c i)
+    IsPphi2Limit μ P mass
 
 end Pphi2
 

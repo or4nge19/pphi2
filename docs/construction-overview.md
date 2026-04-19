@@ -403,9 +403,10 @@ Each axiom is proved by a different technique:
 
 The theorem `pphi2_exists` provides the existence form: for any
 $(P, m)$, there exists a probability measure satisfying all OS axioms.
-The theorem `pphi2_wightman` combines this with the OS reconstruction
-theorem to conclude the existence of a Wightman QFT in 1+1 dimensions
-with a positive mass gap.
+The deprecated alias `pphi2_wightman` in this repository does **not**
+formalize OS reconstruction. The reconstruction step is intended to be supplied
+by the external `OSReconstruction` development once the formulation-level bridge
+is wired in.
 
 Additional results proved in `Main.lean`:
 

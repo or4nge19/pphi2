@@ -348,7 +348,7 @@ theorem asymTorusContinuumGreen_embed_pure_eq_tsum
 the one-dimensional circle Green form with mass `ω_a = resolventFreq Ls mass a`. This is the torus
 counterpart of `cylinderGreen_pure_eq_tsum_l2Inner` and isolates the remaining genuinely 1D bridge
 to the explicit periodic kernel. -/
-private theorem asymTorusContinuumGreen_embed_pure_eq_tsum_temporalGreen
+theorem asymTorusContinuumGreen_embed_pure_eq_tsum_temporalGreen
     (Lt : ℝ) [hLt : Fact (0 < Lt)]
     (mass : ℝ) (hmass : 0 < mass)
     (g₁ g₂ : SmoothMap_Circle Ls ℝ)
@@ -612,7 +612,7 @@ theorem cylinderGreen_pure_eq_tsum_l2Inner
             _ = c * ∑' b : ℕ, DyninMityaginSpace.coeff b A * DyninMityaginSpace.coeff b B := by
                   exact hAB.tsum_mul_left c
             _ = c * l2InnerProduct A B := by
-                  rfl
+                  rw [l2InnerProduct_eq_tsum_coeff]
             _ = DyninMityaginSpace.coeff a g₁ *
                   DyninMityaginSpace.coeff a g₂ *
                   l2InnerProduct A B := by
@@ -725,7 +725,7 @@ theorem cylinderGreen_pure_eq_tsum_scaledFreeKernel_integralOn_compactDiffBox
 
 /-- The physically normalized pure-cylinder bilinear form obtained by replacing the temporal
 resolvent multiplier with the locally corrected version `physicalResolventMultiplierCLM`. -/
-private def physicalCylinderGreen_pure
+def physicalCylinderGreen_pure
     (mass : ℝ) (hmass : 0 < mass)
     (g₁ g₂ : SmoothMap_Circle Ls ℝ)
     (h₁ h₂ : SchwartzMap ℝ ℝ) : ℝ :=
@@ -739,7 +739,7 @@ private def physicalCylinderGreen_pure
           (resolventFreq Ls mass a) (resolventFreq_pos Ls mass hmass a) h₂)
 
 /-- The corrected pure-cylinder bilinear form has the expected physical free-kernel expansion. -/
-private theorem physicalCylinderGreen_pure_eq_tsum_freeKernel_integral
+theorem physicalCylinderGreen_pure_eq_tsum_freeKernel_integral
     (mass : ℝ) (hmass : 0 < mass)
     (g₁ g₂ : SmoothMap_Circle Ls ℝ)
     (h₁ h₂ : SchwartzMap ℝ ℝ) :
@@ -757,7 +757,7 @@ private theorem physicalCylinderGreen_pure_eq_tsum_freeKernel_integral
     (hω := resolventFreq_pos Ls mass hmass a)]
 
 /-- Compact-support version of `physicalCylinderGreen_pure_eq_tsum_freeKernel_integral`. -/
-private theorem physicalCylinderGreen_pure_eq_tsum_freeKernel_integralOn_compactDiffBox
+theorem physicalCylinderGreen_pure_eq_tsum_freeKernel_integralOn_compactDiffBox
     (mass : ℝ) (hmass : 0 < mass)
     (g₁ g₂ : SmoothMap_Circle Ls ℝ)
     (h₁ h₂ : SchwartzMap ℝ ℝ)
@@ -781,7 +781,7 @@ private theorem physicalCylinderGreen_pure_eq_tsum_freeKernel_integralOn_compact
     (T := T) (hsupp₁ := hsupp₁) (hsupp₂ := hsupp₂)]
 
 /-- Rescale the temporal Schwartz factor by `h(t) ↦ √(2π) h(2π t)`. -/
-private def cylinderTwoPiRescale :
+def cylinderTwoPiRescale :
     CylinderTestFunction Ls →L[ℝ] CylinderTestFunction Ls :=
   nuclearTensorProduct_mapCLM
     (ContinuousLinearMap.id ℝ (SmoothMap_Circle Ls ℝ))
@@ -798,14 +798,14 @@ private def cylinderTwoPiRescale :
 
 /-- Global physically normalized cylinder covariance, obtained by pulling back `cylinderGreen`
 along the explicit temporal normalization rescaling. -/
-private def physicalCylinderGreen
+def physicalCylinderGreen
     (mass : ℝ) (hmass : 0 < mass)
     (f g : CylinderTestFunction Ls) : ℝ :=
   cylinderGreen Ls mass hmass
     (cylinderTwoPiRescale Ls f)
     (cylinderTwoPiRescale Ls g)
 
-private theorem physicalCylinderGreen_apply_pure_eq
+theorem physicalCylinderGreen_apply_pure_eq
     (mass : ℝ) (hmass : 0 < mass)
     (g₁ g₂ : SmoothMap_Circle Ls ℝ)
     (h₁ h₂ : SchwartzMap ℝ ℝ) :
@@ -855,7 +855,7 @@ theorem cylinderGreen_finset_sum
   rw [cylinderGreen_symm]
   ring
 
-private theorem physicalCylinderGreen_finset_sum
+theorem physicalCylinderGreen_finset_sum
     (mass : ℝ) (hmass : 0 < mass)
     {ι₁ ι₂ : Type*}
     (s₁ : Finset ι₁) (s₂ : Finset ι₂)
@@ -969,7 +969,7 @@ theorem asymTorusGreen_tendsto_cylinderGreen_finset_sum_of_pure
   rw [hleft, hright]
   exact hsum
 
-private theorem physicalCylinderGreen_product_seminorm_bound
+theorem physicalCylinderGreen_product_seminorm_bound
     (mass : ℝ) (hmass : 0 < mass) :
     ∃ q : Seminorm ℝ (CylinderTestFunction Ls),
       Continuous q ∧
@@ -984,10 +984,10 @@ private theorem physicalCylinderGreen_product_seminorm_bound
   simpa [physicalCylinderGreen, q, Tphys, cylinderGreen] using
     abs_real_inner_le_norm (Tphys f) (Tphys g)
 
-private def cylinderBasisSpatial (m : ℕ) : SmoothMap_Circle Ls ℝ :=
+def cylinderBasisSpatial (m : ℕ) : SmoothMap_Circle Ls ℝ :=
   DyninMityaginSpace.basis (E := SmoothMap_Circle Ls ℝ) (Nat.unpair m).1
 
-private def cylinderBasisTemporal (m : ℕ) : SchwartzMap ℝ ℝ :=
+def cylinderBasisTemporal (m : ℕ) : SchwartzMap ℝ ℝ :=
   DyninMityaginSpace.basis (E := SchwartzMap ℝ ℝ) (Nat.unpair m).2
 
 private theorem cylinderBasis_eq_pure (m : ℕ) :
@@ -1008,7 +1008,7 @@ private def basisPurePartial
       (cylinderBasisSpatial (Ls := Ls) m)
       (cylinderBasisTemporal m)
 
-private def basisCutoffPartial
+def basisCutoffPartial
     (f : CylinderTestFunction Ls) (s : Finset ℕ) (N : ℕ) : CylinderTestFunction Ls :=
   ∑ m ∈ s, DyninMityaginSpace.coeff m f •
     NuclearTensorProduct.pure
@@ -1058,7 +1058,7 @@ private theorem basisCutoffPartial_tendsto
         (cylinderBasisSpatial (Ls := Ls) m)).continuous.continuousAt.tendsto.comp htemp
   simpa using hpure.const_smul (DyninMityaginSpace.coeff m f)
 
-private theorem exists_compactSupport_basisApprox
+theorem exists_compactSupport_basisApprox
     (q : Seminorm ℝ (CylinderTestFunction Ls)) (hq : Continuous q)
     (f : CylinderTestFunction Ls) {ε : ℝ} (hε : 0 < ε) :
     ∃ s : Finset ℕ, ∃ N : ℕ,

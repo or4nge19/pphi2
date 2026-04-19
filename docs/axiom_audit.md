@@ -343,7 +343,7 @@ The following were previously axioms and are now theorems:
 
 ### Known design issues (not bugs)
 
-1. **Unused P/mass pattern**: ~10 axioms (continuum_exponential_moments, translation_invariance_continuum, rotation_invariance_continuum, os4_inheritance, os4_clustering_implies_ergodicity, etc.) claim properties for arbitrary μ without connecting to the lattice construction. This is a design simplification: the axioms serve as stand-ins for proper proofs that would take μ as "the continuum limit of lattice measures." Since `pphi2_exists` currently uses `Measure.dirac 0`, these axioms are trivially satisfied by the specific measure used.
+1. **Unused P/mass pattern**: ~10 axioms (continuum_exponential_moments, translation_invariance_continuum, rotation_invariance_continuum, os4_inheritance, os4_clustering_implies_ergodicity, etc.) claim properties for arbitrary μ without connecting to the lattice construction. This is a design simplification: the axioms serve as stand-ins for proper proofs that would take μ as "the continuum limit of lattice measures." The earlier fake `Measure.dirac 0` witness has been removed, but the structural issue remains until the actual continuum-limit package is derived from the lattice extraction theorem.
 
 2. **`SatisfiesOS0134` unused**: The secondary OS bundle with Schwinger function formulation is dead code — not imported by `Main.lean`. The main theorem uses `SatisfiesFullOS` via `continuumLimit_satisfies_fullOS`.
 
@@ -395,20 +395,20 @@ Notes on ⚠️ axioms:
 
 ---
 
-### Route B' IR Limit (7 axioms, added 2026-03-19)
+### Route B' IR Limit (3 active axioms, 7 reviewed items; added 2026-03-19)
 
 | # | Name | File:Line | Rating | Verified | Notes |
 |---|------|----------|--------|----------|-------|
-| 1 | `cylinderToTorusEmbed_comp_timeTranslation` | CylinderEmbedding:99 | ✅ Standard | ✅ Gemini (2026-03-19) | Periodization intertwines time translation. Reindexing sum over ℤ. |
-| 2 | `cylinderToTorusEmbed_comp_timeReflection` | CylinderEmbedding:106 | ✅ Standard | ✅ Gemini (2026-03-19) | Periodization intertwines time reflection. Reindex k → -k. |
+| 1 | `cylinderToTorusEmbed_comp_timeTranslation` | CylinderEmbedding:99 | ✅ Standard | ✅ Gemini (2026-03-19) | **PROVED**. Periodization intertwines time translation. Reindexing sum over ℤ. |
+| 2 | `cylinderToTorusEmbed_comp_timeReflection` | CylinderEmbedding:106 | ✅ Standard | ✅ Gemini (2026-03-19) | **PROVED**. Periodization intertwines time reflection. Reindex k → -k. |
 | 3 | `cylinderIR_uniform_second_moment` | GreenFunctionComparison:52 | ✅ Standard | ✅ Gemini (2026-03-19) | Pullback → OS1 regularity → method of images. Uniform in Lt ≥ 1. |
 | 4 | `cylinderIR_uniform_exponential_moment` | UniformExponentialMoment:53 | ✅ Standard | ✅ Gemini (2026-03-19) | Nelson/Fröhlich + method of images. Sufficient for Vitali/Montel. |
-| 5 | `cylinderIRLimit_exists` | IRTightness:60 | ✅ Standard | ✅ Gemini (2026-03-19) | Mitoma tightness → Prokhorov → Lévy continuity. Char. functional convergence correct. |
-| 6 | `cylinderIR_os0` | CylinderOS:130 | ✅ Standard | ✅ Gemini (2026-03-19) | Uniform exp moments → Vitali/Montel → analyticity. |
+| 5 | `cylinderIRLimit_exists` | IRTightness:60 | ✅ Standard | ✅ Gemini (2026-03-19) | **PROVED**. Mitoma tightness → Prokhorov → Lévy continuity. Characteristic-functional convergence correct. |
+| 6 | `cylinderIR_os0` | CylinderOS:130 | ✅ Standard | ✅ Gemini (2026-03-19) | **PROVED inline in `routeBPrime_cylinder_OS`** from uniform exponential moments + Vitali/Montel style domination via `analyticOnNhd_integral`. |
 | 7 | `cylinderIR_os3` | CylinderOS:144 | ✅ Standard | ✅ Gemini (2026-03-19) | No wrap-around for Lt > 2R confirmed valid. Density of C_c^∞ confirmed. |
 
 **Gemini review notes (2026-03-19):**
-- All 7 axioms verified correct with no modifications needed.
+- All 7 reviewed statements were verified correct; rows 1, 2, 5, and 6 are now theorem-derived in the current tree.
 - The Re() in OS3 is redundant (M_{ij} is Hermitian so c†Mc is real) but harmless.
 - Characteristic functional convergence is the standard notion for nuclear spaces.
 - **UPDATE**: `cylinderToTorusEmbed_comp_timeTranslation` and `_comp_timeReflection`

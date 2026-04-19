@@ -41,9 +41,12 @@ Take a sequence Lt_n → ∞. Each torus measure μ_{Lt_n, Ls} satisfies
 OS0–OS2. Pull back to the cylinder via periodization embedding, then
 extract a weak limit ν on S¹_{Ls} × ℝ.
 
-**Status**: 5 axioms remain. OS2 (time reflection invariance) is proved
-for the limit. OS0 (analyticity) and OS3 (reflection positivity) are
-axiomatized with documented proof routes.
+**Status**: 3 local IR axioms remain. OS2 (time/spatial translation and time
+reflection invariance), IR-limit extraction, and OS0 analyticity are now proved;
+the remaining local axioms are
+`cylinderIR_uniform_second_moment`,
+`cylinderIR_uniform_exponential_moment`, and
+`cylinderIR_os3`.
 
 ## 3. The Embedding: Cylinder → Torus
 
@@ -140,7 +143,7 @@ Similarly for time reflection. This is purely algebraic — no limiting argument
 
 ### For the limit (via characteristic functional convergence)
 
-The IR limit axiom `cylinderIRLimit_exists` provides characteristic functional
+The theorem `cylinderIRLimit_exists` provides characteristic functional
 convergence: Z_{Lt_n}(f) → Z(f) for all f. Since Z_{Lt_n}(f) = Z_{Lt_n}(Θf)
 at every n (exact reflection invariance), taking the limit:
 
@@ -148,7 +151,7 @@ at every n (exact reflection invariance), taking the limit:
 
 This uses `tendsto_nhds_unique`: if a_n → L₁ and a_n = b_n → L₂, then L₁ = L₂.
 
-## 5. Remaining Axioms and Proof Routes
+## 5. IR Step Status and Remaining Proof Routes
 
 ### 5.1 Uniform second moment bound (`cylinderIR_uniform_second_moment`)
 
@@ -197,7 +200,7 @@ use the method of images bound on ‖embed f‖.
 pointwise convergence of the characteristic function on the real axis —
 insufficient for analyticity. The exponential bound gives Vitali/Montel.
 
-### 5.3 IR limit existence (`cylinderIRLimit_exists`)
+### 5.3 IR limit existence (`cylinderIRLimit_exists`, proved)
 
 **Statement**: Given Lt_n → ∞ and OS-satisfying measures μ_n on T_{Lt_n, Ls},
 there exist a subsequence φ and a probability measure ν on S¹_{Ls} × ℝ
@@ -223,7 +226,7 @@ is needed (not just first moments ∫ ωf dν_n → ∫ ωf dν) because OS2
 transfers through characteristic functionals, and OS0 requires analytic
 continuation of the characteristic functional.
 
-### 5.4 OS0: Analyticity (`cylinderIR_os0`)
+### 5.4 OS0: Analyticity (proved inline in `routeBPrime_cylinder_OS`)
 
 **Statement**: The multivariate generating functional
 
@@ -355,7 +358,7 @@ measure directly by:
 
 Route B' advantages:
 - Reuses the entire torus UV limit (0 axioms, fully proved)
-- Only adds the IR limit step (5 axioms)
+- Only adds an IR step with 3 remaining local axioms on the current surface
 - The embedding construction is clean (NTP functor + periodization)
 - OS2 is exact (not a limiting statement)
 
@@ -366,7 +369,7 @@ Route C advantages:
 
 ## 9. What Would Close the Construction
 
-To eliminate all 5 IR limit axioms, the main mathematical ingredients needed are:
+To eliminate the remaining 3 IR limit axioms, the main mathematical ingredients needed are:
 
 1. **Spectral decomposition bridge** (~200 lines): Connect the method of images
    bound `torusGreen_uniform_bound` (axiom in gaussian-field) to the second

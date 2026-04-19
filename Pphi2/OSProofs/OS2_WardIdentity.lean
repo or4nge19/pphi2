@@ -1399,8 +1399,6 @@ theorem continuumLimit_satisfies_fullOS
     os4_clustering_implies_ergodicity P mass hmass μ h_limit
       (os4_for_continuum_limit P mass hmass μ hμ h_limit)
 
-/-! ## Existence theorem (using full OS axioms) -/
-
 /-- **Existence of the P(Φ)₂ Euclidean measure.**
 
 There exists a probability measure μ on S'(ℝ²) satisfying all five

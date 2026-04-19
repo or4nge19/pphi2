@@ -388,6 +388,186 @@ theorem periodizedSchwartz_mul_periodicKernel_tendsto_freeKernel_integralOn_comp
   simpa [K, F, F_lim] using h_tend
 
 omit hLs in
+/-- The compact-box temporal bridge also holds for arbitrary Schwartz functions:
+periodization converges uniformly on the fixed box by Schwartz tail decay, so
+the only remaining convergence is the periodic/free kernel convergence in the
+difference variable. -/
+theorem periodizedSchwartz_mul_periodicKernel_tendsto_freeKernel_uniformOn_compactDiffBox_schwartz
+    (h₁ h₂ : SchwartzMap ℝ ℝ)
+    (T : ℝ) (hT : 0 < T)
+    (ω mass : ℝ) (hmass : 0 < mass) (hω : mass ≤ ω)
+    (Lt : ℕ → ℝ) (hLt : ∀ k, Fact (0 < Lt k))
+    (hLt_tend : Tendsto Lt atTop atTop) :
+    TendstoUniformlyOn
+      (fun k (p : ℝ × ℝ) =>
+        ((@periodizeCLM (Lt k) (hLt k) h₁).toFun p.1 *
+          (@periodizeCLM (Lt k) (hLt k) h₂).toFun p.2) *
+          periodicKernel ω (Lt k) (p.1 - p.2))
+      (fun p => (h₁ p.1 * h₂ p.2) * freeKernel ω (p.1 - p.2))
+      atTop (Set.Icc (-T) T ×ˢ Set.Icc (-T) T) := by
+  let K : Set (ℝ × ℝ) := Set.Icc (-T) T ×ˢ Set.Icc (-T) T
+  have hK_compact : IsCompact K := isCompact_Icc.prod isCompact_Icc
+  have hper₁ :
+      TendstoUniformlyOn
+        (fun k t => (@periodizeCLM (Lt k) (hLt k) h₁).toFun t)
+        h₁ atTop (Set.Icc (-T) T) :=
+    periodizeCLM_tendsto_uniformlyOn_symmetricCompact_schwartz
+      h₁ T hT Lt hLt hLt_tend
+  have hper₂ :
+      TendstoUniformlyOn
+        (fun k t => (@periodizeCLM (Lt k) (hLt k) h₂).toFun t)
+        h₂ atTop (Set.Icc (-T) T) :=
+    periodizeCLM_tendsto_uniformlyOn_symmetricCompact_schwartz
+      h₂ T hT Lt hLt hLt_tend
+  have hper₁_box :
+      TendstoUniformlyOn
+        (fun k (p : ℝ × ℝ) => (@periodizeCLM (Lt k) (hLt k) h₁).toFun p.1)
+        (fun p => h₁ p.1) atTop K := by
+    refine (hper₁.comp Prod.fst).mono ?_
+    intro p hp
+    exact hp.1
+  have hper₂_box :
+      TendstoUniformlyOn
+        (fun k (p : ℝ × ℝ) => (@periodizeCLM (Lt k) (hLt k) h₂).toFun p.2)
+        (fun p => h₂ p.2) atTop K := by
+    refine (hper₂.comp Prod.snd).mono ?_
+    intro p hp
+    exact hp.2
+  have hkernel :
+      TendstoUniformlyOn
+        (fun k (p : ℝ × ℝ) => periodicKernel ω (Lt k) (p.1 - p.2))
+        (fun p => freeKernel ω (p.1 - p.2))
+        atTop K :=
+    tendstoUniformlyOn_periodicKernel_freeKernel_compactDiffBox_of_mass_gap
+      ω mass hmass hω T Lt hLt hLt_tend
+  have hper₁_cont : ContinuousOn (fun p : ℝ × ℝ => h₁ p.1) K := by
+    exact (h₁.continuous.comp continuous_fst).continuousOn
+  have hper₂_cont : ContinuousOn (fun p : ℝ × ℝ => h₂ p.2) K := by
+    exact (h₂.continuous.comp continuous_snd).continuousOn
+  have hkernel_cont : ContinuousOn (fun p : ℝ × ℝ => freeKernel ω (p.1 - p.2)) K := by
+    exact ((continuous_freeKernel ω).comp (continuous_fst.sub continuous_snd)).continuousOn
+  have hprod_loc :
+      TendstoLocallyUniformlyOn
+        (fun k (p : ℝ × ℝ) =>
+          (@periodizeCLM (Lt k) (hLt k) h₁).toFun p.1 *
+            (@periodizeCLM (Lt k) (hLt k) h₂).toFun p.2)
+        (fun p => h₁ p.1 * h₂ p.2)
+        atTop K := by
+    exact hper₁_box.tendstoLocallyUniformlyOn.mul₀
+      hper₂_box.tendstoLocallyUniformlyOn hper₁_cont hper₂_cont
+  have hfull_loc :
+      TendstoLocallyUniformlyOn
+        (fun k (p : ℝ × ℝ) =>
+          ((@periodizeCLM (Lt k) (hLt k) h₁).toFun p.1 *
+            (@periodizeCLM (Lt k) (hLt k) h₂).toFun p.2) *
+            periodicKernel ω (Lt k) (p.1 - p.2))
+        (fun p => (h₁ p.1 * h₂ p.2) * freeKernel ω (p.1 - p.2))
+        atTop K := by
+    exact hprod_loc.mul₀ hkernel.tendstoLocallyUniformlyOn
+      (hper₁_cont.mul hper₂_cont) hkernel_cont
+  exact (tendstoLocallyUniformlyOn_iff_tendstoUniformlyOn_of_compact hK_compact).mp hfull_loc
+
+omit hLs in
+/-- Integrating the support-free compact-box temporal convergence over the box
+yields convergence of the corresponding bilinear forms for arbitrary Schwartz
+temporal factors. -/
+theorem periodizedSchwartz_mul_periodicKernel_tendsto_freeKernel_integralOn_compactDiffBox_schwartz
+    (h₁ h₂ : SchwartzMap ℝ ℝ)
+    (T : ℝ) (hT : 0 < T)
+    (ω mass : ℝ) (hmass : 0 < mass) (hω : mass ≤ ω)
+    (Lt : ℕ → ℝ) (hLt : ∀ k, Fact (0 < Lt k))
+    (hLt_tend : Tendsto Lt atTop atTop) :
+    Tendsto
+      (fun k =>
+        ∫ p in Set.Icc (-T) T ×ˢ Set.Icc (-T) T,
+          ((@periodizeCLM (Lt k) (hLt k) h₁).toFun p.1 *
+            (@periodizeCLM (Lt k) (hLt k) h₂).toFun p.2) *
+            periodicKernel ω (Lt k) (p.1 - p.2) ∂volume)
+      atTop
+      (nhds (∫ p in Set.Icc (-T) T ×ˢ Set.Icc (-T) T,
+        (h₁ p.1 * h₂ p.2) * freeKernel ω (p.1 - p.2) ∂volume)) := by
+  let K : Set (ℝ × ℝ) := Set.Icc (-T) T ×ˢ Set.Icc (-T) T
+  let F : ℕ → ℝ × ℝ → ℝ := fun k p =>
+    ((@periodizeCLM (Lt k) (hLt k) h₁).toFun p.1 *
+      (@periodizeCLM (Lt k) (hLt k) h₂).toFun p.2) *
+      periodicKernel ω (Lt k) (p.1 - p.2)
+  let F_lim : ℝ × ℝ → ℝ := fun p =>
+    (h₁ p.1 * h₂ p.2) * freeKernel ω (p.1 - p.2)
+  have hunif :
+      TendstoUniformlyOn F F_lim atTop K := by
+    simpa [F, F_lim, K] using
+      periodizedSchwartz_mul_periodicKernel_tendsto_freeKernel_uniformOn_compactDiffBox_schwartz
+        (h₁ := h₁) (h₂ := h₂) T hT ω mass hmass hω Lt hLt hLt_tend
+  have hK_compact : IsCompact K := isCompact_Icc.prod isCompact_Icc
+  have hK_meas : MeasurableSet K := hK_compact.isClosed.measurableSet
+  haveI : IsFiniteMeasure (volume.restrict K) := by
+    refine ⟨?_⟩
+    simpa [Measure.restrict_apply, hK_meas, K] using hK_compact.measure_lt_top (μ := volume)
+  have hF_cont : ∀ k, Continuous (F k) := by
+    intro k
+    have hper₁ :
+        Continuous (fun p : ℝ × ℝ => (@periodizeCLM (Lt k) (hLt k) h₁).toFun p.1) :=
+      ((@periodizeCLM (Lt k) (hLt k) h₁).continuous.comp continuous_fst)
+    have hper₂ :
+        Continuous (fun p : ℝ × ℝ => (@periodizeCLM (Lt k) (hLt k) h₂).toFun p.2) :=
+      ((@periodizeCLM (Lt k) (hLt k) h₂).continuous.comp continuous_snd)
+    have hkernel :
+        Continuous (fun p : ℝ × ℝ => periodicKernel ω (Lt k) (p.1 - p.2)) :=
+      (continuous_periodicKernel ω (Lt k)).comp (continuous_fst.sub continuous_snd)
+    simpa [F] using (hper₁.mul hper₂).mul hkernel
+  have hF_meas :
+      ∀ᶠ k in atTop, AEStronglyMeasurable (F k) (volume.restrict K) := by
+    exact Eventually.of_forall fun k =>
+      (hF_cont k).stronglyMeasurable.aestronglyMeasurable
+  have hF_lim_cont : ContinuousOn F_lim K := by
+    have hper₁_cont : ContinuousOn (fun p : ℝ × ℝ => h₁ p.1) K := by
+      exact (h₁.continuous.comp continuous_fst).continuousOn
+    have hper₂_cont : ContinuousOn (fun p : ℝ × ℝ => h₂ p.2) K := by
+      exact (h₂.continuous.comp continuous_snd).continuousOn
+    have hkernel_cont : ContinuousOn (fun p : ℝ × ℝ => freeKernel ω (p.1 - p.2)) K := by
+      exact ((continuous_freeKernel ω).comp (continuous_fst.sub continuous_snd)).continuousOn
+    simpa [F_lim] using (hper₁_cont.mul hper₂_cont).mul hkernel_cont
+  obtain ⟨C0, hC0_image⟩ : ∃ C, ∀ y ∈ F_lim '' K, ‖y‖ ≤ C :=
+    Bornology.IsBounded.exists_norm_le (hK_compact.image_of_continuousOn hF_lim_cont).isBounded
+  have hC0 : ∀ p ∈ K, ‖F_lim p‖ ≤ C0 := by
+    intro p hp
+    exact hC0_image _ (Set.mem_image_of_mem F_lim hp)
+  have h_bound :
+      ∃ C, ∀ᶠ k in atTop, (∀ᵐ p ∂(volume.restrict K), ‖F k p‖ ≤ C) := by
+    refine ⟨C0 + 1, ?_⟩
+    have hsmall : ∀ᶠ k in atTop, ∀ p ∈ K, dist (F k p) (F_lim p) < 1 := by
+      filter_upwards [(Metric.tendstoUniformlyOn_iff.mp hunif) 1 zero_lt_one] with k hk p hp
+      simpa [dist_comm] using hk p hp
+    filter_upwards [hsmall] with k hk
+    refine (ae_restrict_mem hK_meas).mono ?_
+    intro p hp
+    have hk' := hk p hp
+    have hdist : ‖F k p - F_lim p‖ < 1 := by
+      simpa [Real.dist_eq, Real.norm_eq_abs] using hk'
+    have hC0' := hC0 p hp
+    calc
+      ‖F k p‖ = ‖(F k p - F_lim p) + F_lim p‖ := by
+        congr 1
+        ring
+      _ ≤ ‖F k p - F_lim p‖ + ‖F_lim p‖ := norm_add_le _ _
+      _ ≤ C0 + 1 := by
+        linarith
+  have h_pointwise : ∀ p ∈ K, Tendsto (fun k => F k p) atTop (nhds (F_lim p)) := by
+    intro p hp
+    rw [Metric.tendsto_nhds]
+    intro ε hε
+    filter_upwards [(Metric.tendstoUniformlyOn_iff.mp hunif ε hε)] with k hk
+    simpa [dist_comm] using hk p hp
+  have h_lim : ∀ᵐ p ∂(volume.restrict K), Tendsto (fun k => F k p) atTop (nhds (F_lim p)) := by
+    exact (ae_restrict_mem hK_meas).mono fun p hp => h_pointwise p hp
+  have h_tend :
+      Tendsto (fun k => ∫ p, F k p ∂(volume.restrict K)) atTop
+        (nhds (∫ p, F_lim p ∂(volume.restrict K))) := by
+    exact tendsto_integral_filter_of_norm_le_const
+      (μ := volume.restrict K) hF_meas h_bound h_lim
+  simpa [K, F, F_lim] using h_tend
+
+omit hLs in
 /-- The compact-support temporal convergence theorem specialized to the cylinder frequencies
 `ω_n = resolventFreq Ls mass n`, written in expanded resolvent form. -/
 theorem periodizedSchwartz_mul_resolventFreq_tendsto_free_uniformOn_compactDiffBox
@@ -442,6 +622,60 @@ theorem periodizedSchwartz_mul_resolventFreq_tendsto_free_integralOn_compactDiff
   simpa [periodicKernel, freeKernel] using
     periodizedSchwartz_mul_periodicKernel_tendsto_freeKernel_integralOn_compactDiffBox
       (h₁ := h₁) (h₂ := h₂) T hT hsupp₁ hsupp₂
+      (ω := resolventFreq Ls mass n) (mass := mass) hmass
+      (resolventFreq_mass_le Ls mass hmass.le n) Lt hLt hLt_tend
+
+omit hLs in
+/-- Support-free resolvent-frequency specialization of the uniform compact-box
+periodization theorem for Schwartz temporal factors. -/
+theorem periodizedSchwartz_mul_resolventFreq_tendsto_free_uniformOn_compactDiffBox_schwartz
+    (h₁ h₂ : SchwartzMap ℝ ℝ)
+    (T : ℝ) (hT : 0 < T)
+    (mass : ℝ) (hmass : 0 < mass) (n : ℕ)
+    (Lt : ℕ → ℝ) (hLt : ∀ k, Fact (0 < Lt k))
+    (hLt_tend : Tendsto Lt atTop atTop) :
+    TendstoUniformlyOn
+      (fun k (p : ℝ × ℝ) =>
+        ((@periodizeCLM (Lt k) (hLt k) h₁).toFun p.1 *
+          (@periodizeCLM (Lt k) (hLt k) h₂).toFun p.2) *
+          (Real.cosh (resolventFreq Ls mass n * (Lt k / 2 - |p.1 - p.2|)) /
+            (2 * resolventFreq Ls mass n * Real.sinh (resolventFreq Ls mass n * Lt k / 2))))
+      (fun p =>
+        (h₁ p.1 * h₂ p.2) *
+          (Real.exp (-resolventFreq Ls mass n * |p.1 - p.2|) /
+            (2 * resolventFreq Ls mass n)))
+      atTop (Set.Icc (-T) T ×ˢ Set.Icc (-T) T) := by
+  simpa [periodicKernel, freeKernel] using
+    periodizedSchwartz_mul_periodicKernel_tendsto_freeKernel_uniformOn_compactDiffBox_schwartz
+      (h₁ := h₁) (h₂ := h₂) T hT
+      (ω := resolventFreq Ls mass n) (mass := mass) hmass
+      (resolventFreq_mass_le Ls mass hmass.le n) Lt hLt hLt_tend
+
+omit hLs in
+/-- Support-free resolvent-frequency specialization of the integral compact-box
+periodization theorem for Schwartz temporal factors. -/
+theorem periodizedSchwartz_mul_resolventFreq_tendsto_free_integralOn_compactDiffBox_schwartz
+    (h₁ h₂ : SchwartzMap ℝ ℝ)
+    (T : ℝ) (hT : 0 < T)
+    (mass : ℝ) (hmass : 0 < mass) (n : ℕ)
+    (Lt : ℕ → ℝ) (hLt : ∀ k, Fact (0 < Lt k))
+    (hLt_tend : Tendsto Lt atTop atTop) :
+    Tendsto
+      (fun k =>
+        ∫ p in Set.Icc (-T) T ×ˢ Set.Icc (-T) T,
+          ((@periodizeCLM (Lt k) (hLt k) h₁).toFun p.1 *
+            (@periodizeCLM (Lt k) (hLt k) h₂).toFun p.2) *
+            (Real.cosh (resolventFreq Ls mass n * (Lt k / 2 - |p.1 - p.2|)) /
+              (2 * resolventFreq Ls mass n * Real.sinh (resolventFreq Ls mass n * Lt k / 2)))
+          ∂volume)
+      atTop
+      (nhds (∫ p in Set.Icc (-T) T ×ˢ Set.Icc (-T) T,
+        (h₁ p.1 * h₂ p.2) *
+          (Real.exp (-resolventFreq Ls mass n * |p.1 - p.2|) /
+            (2 * resolventFreq Ls mass n)) ∂volume)) := by
+  simpa [periodicKernel, freeKernel] using
+    periodizedSchwartz_mul_periodicKernel_tendsto_freeKernel_integralOn_compactDiffBox_schwartz
+      (h₁ := h₁) (h₂ := h₂) T hT
       (ω := resolventFreq Ls mass n) (mass := mass) hmass
       (resolventFreq_mass_le Ls mass hmass.le n) Lt hLt hLt_tend
 

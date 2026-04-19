@@ -1,8 +1,10 @@
 # Comparison: pphi2 vs Phi4
 
 Both projects formalize the construction of an interacting scalar quantum field
-theory in 2 Euclidean dimensions in Lean 4, ultimately verifying the
-Osterwalder-Schrader axioms and (via reconstruction) the Wightman axioms.
+theory in 2 Euclidean dimensions in Lean 4. In the current `pphi2` tree the
+formalized surface is the Euclidean OS side together with shared
+reconstruction-facing interfaces; the actual Wick-rotation / Wightman
+reconstruction lane lives in the separate `OSReconstruction` development.
 They share the gaussian-field library as a common dependency but differ
 significantly in their construction strategy.
 
@@ -14,7 +16,7 @@ significantly in their construction strategy.
 | **Parameters** | `InteractionPolynomial`, mass m > 0 | `Phi4Params` (mass m > 0, coupling λ > 0) |
 | **Target axioms** | OS0–OS4 (all five) | OS0–OS3 + E0' (E4 for weak coupling only) |
 | **Extra dependency** | — | OSreconstruction (Wightman axioms, analytic continuation) |
-| **Main theorem** | `pphi2_main`, `pphi2_existence` | `phi4_wightman_exists` |
+| **Main theorem** | `pphi2_main`, `pphi2_existence` (Euclidean OS side) | `phi4_wightman_exists` |
 
 ## Construction strategy
 

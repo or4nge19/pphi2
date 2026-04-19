@@ -18,6 +18,8 @@ For any continuum limit measure $\mu$ (satisfying `IsPphi2Limit`), $\mu$ satisfi
 
 ### `pphi2_existence`
 $\exists \mu$ probability measure on $\mathcal{S}'(\mathbb{R}^2)$ satisfying `SatisfiesFullOS`. Delegates to `pphi2_exists`.
+The present existence route depends on the explicit axiom `pphi2_limit_exists`
+from `ContinuumLimit/Convergence.lean`.
 
 ### `pphi2_nontriviality` (axiom)
 $\exists \mu$ such that $S_2(f,f) = \int \Phi(f)^2\,d\mu > 0$ for all $f \ne 0$.
