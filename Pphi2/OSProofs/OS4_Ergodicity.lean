@@ -43,6 +43,7 @@ gives this on the lattice; ergodicity ensures it persists in the limit.
 -/
 
 import Pphi2.OSProofs.OS4_MassGap
+import Pphi2.GeneralResults.FunctionalAnalysis
 
 noncomputable section
 
@@ -129,19 +130,8 @@ theorem clustering_implies_ergodicity
       lt_of_le_of_ne (abs_nonneg _) (Ne.symm h_ne)
     -- Since exp(-mR) → 0 as R → ∞ (m > 0), C * exp(-mR) → 0
     have h_lim : Filter.Tendsto (fun R => C * Real.exp (-m * R))
-        Filter.atTop (nhds 0) := by
-      have h_exp : Filter.Tendsto (fun R => Real.exp (-m * R)) Filter.atTop (nhds 0) :=
-        Real.tendsto_exp_atBot.comp (by
-          rw [Filter.tendsto_atBot]
-          intro b; rw [Filter.eventually_atTop]
-          refine ⟨-(b / m), fun y hy => ?_⟩
-          have h1 : m * y ≥ m * (-(b / m)) := mul_le_mul_of_nonneg_left hy (le_of_lt hm)
-          have h2 : m * (-(b / m)) = -b := by field_simp
-          linarith)
-      have h_const : Filter.Tendsto (fun _ : ℝ => C) Filter.atTop (nhds C) := tendsto_const_nhds
-      have h_mul := h_const.mul h_exp
-      rw [mul_zero] at h_mul
-      exact h_mul
+        Filter.atTop (nhds 0) :=
+      tendsto_const_mul_exp_neg_mul_atTop C m hm
     -- Get R₀ such that for R ≥ R₀, C * exp(-mR) < |diff|/2
     have h_ev := Metric.tendsto_nhds.mp h_lim
       (|(μ A).toReal - (μ A).toReal ^ 2| / 2) (half_pos h_pos)

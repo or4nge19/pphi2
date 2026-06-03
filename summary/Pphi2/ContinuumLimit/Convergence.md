@@ -5,10 +5,10 @@
 > **Generated**: 2026-03-20
 
 ## Overview
-Applies Prokhorov's theorem to extract a weakly convergent subsequence from the tight family of continuum-embedded measures. Contains a fully proved sequential Prokhorov theorem for Polish spaces (using Mathlib's `isCompact_closure_of_isTightMeasureSet` and Levy-Prokhorov metrization), two topological axioms for $\mathcal{S}'(\mathbb{R}^d)$, the continuum limit existence theorem, and a proved witness for `IsPphi2Limit`.
+Applies Prokhorov's theorem to extract a weakly convergent subsequence from the tight family of continuum-embedded measures. Contains a fully proved sequential Prokhorov theorem for Polish spaces (using Mathlib's `isCompact_closure_of_isTightMeasureSet` and Levy-Prokhorov metrization), two topological axioms for $\mathcal{S}'(\mathbb{R}^d)$, the continuum limit extraction theorem, and an explicit construction axiom for the strengthened concrete `IsPphi2Limit` certificate.
 
 ## Status
-**Main result**: `continuumLimit` proved; 3 axioms total
+**Main result**: `continuumLimit` proved; `pphi2_limit_exists` is an explicit coupled UV/IR construction axiom; 3 axioms total
 **Length**: 349 lines, 0 definitions + 5 theorems + 3 axioms
 
 ---
@@ -31,8 +31,8 @@ For any sequence of lattice spacings $a_n \to 0$, there exists a subsequence $a_
 ### `continuumLimit_nonGaussian` (axiom)
 The continuum limit is non-Gaussian for nontrivial $P$: there exists $f$ with $S_4(f,f,f,f) - 3 S_2(f,f)^2 \ne 0$ (nonzero connected four-point function).
 
-### `pphi2_limit_exists` (theorem, proved)
-There exists a probability measure $\mu$ on $\mathcal{S}'(\mathbb{R}^2)$ satisfying `IsPphi2Limit`. **Proved** by constructing the Dirac measure at $0$ as a trivial witness.
+### `pphi2_limit_exists` (axiom)
+There exists a probability measure $\mu$ on $\mathcal{S}'(\mathbb{R}^2)$ satisfying the strengthened concrete `IsPphi2Limit` certificate. This now requires coupled UV/IR approximants `continuumMeasure 2 (N_k) P a_k mass` with $a_k \to 0$, $N_k \to \infty$, and $N_k a_k \to \infty$; the former Dirac-measure witness path has been removed.
 
 ---
 *This file has **0** definitions and **5** theorems (0 with sorry) + **3** axioms.*

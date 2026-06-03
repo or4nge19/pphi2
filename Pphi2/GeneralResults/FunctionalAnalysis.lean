@@ -418,7 +418,147 @@ theorem norm_configuration_expIntegral_sub_le_integral_cexp_eval_dist {E : Type*
           norm_integral_le_integral_norm _
     _ = ∫ ω : Configuration E, configuration_cexp_eval_dist f g ω ∂μ := rfl
 
+/-! ## Weak-limit transfer of exponential moments -/
+
+/-- Uniform one-dimensional exponential-moment bounds pass to bounded-continuous
+weak limits.
+
+If `ν n` converges to `ν_lim` against bounded continuous test functions, and
+`∫ exp |ω f| dν_n ≤ B` uniformly, then the same integrability and bound hold
+for `ν_lim`. The proof uses bounded continuous truncations
+`min (exp |ω f|) (M + 1)` and monotone convergence. -/
+theorem configuration_limit_exponential_moment_of_uniform {E : Type*}
+    [AddCommGroup E] [Module ℝ E]
+    [TopologicalSpace E] [IsTopologicalAddGroup E] [ContinuousSMul ℝ E]
+    (νseq : ℕ → Measure (Configuration E))
+    (ν_lim : Measure (Configuration E)) [IsProbabilityMeasure ν_lim]
+    (hbc : ∀ (g : Configuration E → ℝ),
+      Continuous g → (∃ C, ∀ x, |g x| ≤ C) →
+      Filter.Tendsto (fun n => ∫ ω, g ω ∂(νseq n))
+        Filter.atTop (nhds (∫ ω, g ω ∂ν_lim)))
+    (f : E) (B : ℝ)
+    (h_unif : ∀ n,
+      Integrable (fun ω : Configuration E => Real.exp (|ω f|)) (νseq n) ∧
+      ∫ ω : Configuration E, Real.exp (|ω f|) ∂(νseq n) ≤ B) :
+    Integrable (fun ω : Configuration E => Real.exp (|ω f|)) ν_lim ∧
+    ∫ ω : Configuration E, Real.exp (|ω f|) ∂ν_lim ≤ B := by
+  have hexp_nn : ∀ ω : Configuration E, 0 ≤ Real.exp (|ω f|) :=
+    fun ω => (Real.exp_pos _).le
+  have heval_ae : AEStronglyMeasurable (fun ω : Configuration E => ω f) ν_lim :=
+    (configuration_eval_measurable f).aestronglyMeasurable
+  have heval_cont : Continuous (fun ω : Configuration E => ω f) :=
+    WeakDual.eval_continuous f
+  have hexp_meas : AEStronglyMeasurable
+      (fun ω : Configuration E => Real.exp (|ω f|)) ν_lim :=
+    (Real.continuous_exp.comp continuous_abs).comp_aestronglyMeasurable heval_ae
+  have hgM_nn : ∀ (M : ℕ) (ω : Configuration E),
+      0 ≤ min (Real.exp (|ω f|)) (↑(M + 1) : ℝ) :=
+    fun M ω => le_min (Real.exp_pos _).le (by positivity)
+  have hgM_int_le : ∀ M : ℕ,
+      ∫ ω, min (Real.exp (|ω f|)) (↑(M + 1) : ℝ) ∂ν_lim ≤ B := by
+    intro M
+    have hgM_cont : Continuous (fun ω : Configuration E =>
+        min (Real.exp (|ω f|)) (↑(M + 1) : ℝ)) :=
+      (Real.continuous_exp.comp (continuous_abs.comp heval_cont)).min continuous_const
+    have hgM_bound : ∃ C : ℝ, ∀ ω : Configuration E,
+        |min (Real.exp (|ω f|)) (↑(M + 1) : ℝ)| ≤ C :=
+      ⟨↑(M + 1), fun ω => by
+        rw [abs_of_nonneg (hgM_nn M ω)]
+        exact min_le_right _ _⟩
+    have hbc_gM := hbc _ hgM_cont hgM_bound
+    have hgM_le_B : ∀ n,
+        ∫ ω, min (Real.exp (|ω f|)) (↑(M + 1) : ℝ) ∂(νseq n) ≤ B :=
+      fun n => (integral_mono_of_nonneg (ae_of_all _ (hgM_nn M)) (h_unif n).1
+        (ae_of_all _ fun ω => min_le_left _ _)).trans (h_unif n).2
+    exact le_of_tendsto hbc_gM (Filter.Eventually.of_forall hgM_le_B)
+  have hgMenr_meas : ∀ M : ℕ, Measurable (fun ω : Configuration E =>
+      ENNReal.ofReal (min (Real.exp (|ω f|)) (↑(M + 1) : ℝ))) :=
+    fun M => ENNReal.measurable_ofReal.comp
+      ((Real.measurable_exp.comp
+        (measurable_abs.comp (configuration_eval_measurable f))).min measurable_const)
+  have hgMenr_mono : Monotone (fun (M : ℕ) (ω : Configuration E) =>
+      ENNReal.ofReal (min (Real.exp (|ω f|)) (↑(M + 1) : ℝ))) :=
+    fun m n hmn ω => ENNReal.ofReal_le_ofReal
+      (min_le_min_left _ (by exact_mod_cast Nat.add_le_add_right hmn 1))
+  have hgMenr_iSup : ∀ ω : Configuration E,
+      ⨆ M : ℕ, ENNReal.ofReal (min (Real.exp (|ω f|)) (↑(M + 1) : ℝ)) =
+      ENNReal.ofReal (Real.exp (|ω f|)) := by
+    intro ω
+    apply le_antisymm
+    · exact iSup_le fun M => ENNReal.ofReal_le_ofReal (min_le_left _ _)
+    · apply le_iSup_of_le (Nat.ceil (Real.exp (|ω f|)))
+      apply ENNReal.ofReal_le_ofReal
+      apply le_min le_rfl
+      have h1 : Real.exp (|ω f|) ≤ ↑⌈Real.exp (|ω f|)⌉₊ := Nat.le_ceil _
+      have h2 : (⌈Real.exp (|ω f|)⌉₊ : ℝ) ≤ ↑(⌈Real.exp (|ω f|)⌉₊ + 1) := by
+        push_cast
+        linarith
+      linarith
+  have hlint_iSup : ∫⁻ ω, ENNReal.ofReal (Real.exp (|ω f|)) ∂ν_lim =
+      ⨆ (M : ℕ), ∫⁻ ω, ENNReal.ofReal
+        (min (Real.exp (|ω f|)) (↑(M + 1) : ℝ)) ∂ν_lim := by
+    have : (fun ω : Configuration E => ENNReal.ofReal (Real.exp (|ω f|))) =
+        fun ω => ⨆ (M : ℕ), ENNReal.ofReal
+          (min (Real.exp (|ω f|)) (↑(M + 1) : ℝ)) :=
+      funext fun ω => (hgMenr_iSup ω).symm
+    rw [this, lintegral_iSup hgMenr_meas hgMenr_mono]
+  have hlint_gM_le : ∀ M : ℕ,
+      ∫⁻ ω, ENNReal.ofReal (min (Real.exp (|ω f|)) (↑(M + 1) : ℝ)) ∂ν_lim ≤
+      ENNReal.ofReal B := by
+    intro M
+    have hgM_ae : AEStronglyMeasurable
+        (fun ω : Configuration E => min (Real.exp (|ω f|)) (↑(M + 1) : ℝ)) ν_lim :=
+      ((Real.continuous_exp.comp continuous_abs).min continuous_const)
+        |>.comp_aestronglyMeasurable heval_ae
+    have hgM_integrable : Integrable
+        (fun ω => min (Real.exp (|ω f|)) (↑(M + 1) : ℝ)) ν_lim :=
+      Integrable.of_bound hgM_ae (↑(M + 1) : ℝ) (ae_of_all _ fun ω => by
+        rw [Real.norm_of_nonneg (hgM_nn M ω)]
+        exact min_le_right _ _)
+    rw [← ofReal_integral_eq_lintegral_ofReal hgM_integrable (ae_of_all _ (hgM_nn M))]
+    exact ENNReal.ofReal_le_ofReal (hgM_int_le M)
+  have hlint_le : ∫⁻ ω, ENNReal.ofReal (Real.exp (|ω f|)) ∂ν_lim ≤ ENNReal.ofReal B :=
+    hlint_iSup ▸ iSup_le fun M => hlint_gM_le M
+  have hint : Integrable (fun ω => Real.exp (|ω f|)) ν_lim := by
+    rw [← lintegral_ofReal_ne_top_iff_integrable hexp_meas (ae_of_all _ hexp_nn)]
+    exact (hlint_le.trans_lt ENNReal.ofReal_lt_top).ne
+  have hB_nn : 0 ≤ B :=
+    le_trans (integral_nonneg (fun ω => hexp_nn ω)) (h_unif 0).2
+  have hint_le : ∫ ω, Real.exp (|ω f|) ∂ν_lim ≤ B := by
+    have heq := ofReal_integral_eq_lintegral_ofReal hint (ae_of_all _ hexp_nn)
+    rw [← heq] at hlint_le
+    exact (ENNReal.ofReal_le_ofReal_iff hB_nn).mp hlint_le
+  exact ⟨hint, hint_le⟩
+
+/-! ## Exponential decay -/
+
+/-- A real exponential bound with strictly positive rate tends to zero at
+infinity. This is the general analytic tail used after project-specific
+spectral estimates provide `C * exp (-m * R)`. -/
+theorem tendsto_const_mul_exp_neg_mul_atTop (C m : ℝ) (hm : 0 < m) :
+    Filter.Tendsto (fun R : ℝ => C * Real.exp (-m * R)) Filter.atTop (nhds 0) := by
+  have h_exp : Filter.Tendsto (fun R : ℝ => Real.exp (-m * R)) Filter.atTop (nhds 0) :=
+    Real.tendsto_exp_atBot.comp (by
+      rw [Filter.tendsto_atBot]
+      intro b
+      rw [Filter.eventually_atTop]
+      refine ⟨-(b / m), fun R hR => ?_⟩
+      have h1 : m * R ≥ m * (-(b / m)) := mul_le_mul_of_nonneg_left hR (le_of_lt hm)
+      have h2 : m * (-(b / m)) = -b := by field_simp
+      linarith)
+  simpa using h_exp.const_mul C
+
 /-! ## Trigonometric identities -/
+
+/-- A feature representation gives a positive semidefinite quadratic form.
+
+This is the abstract final step in reflection-positivity arguments: after the
+model-specific work rewrites an RP matrix quadratic form as an integral of a
+square, nonnegativity is immediate. -/
+theorem integral_feature_square_nonneg {α : Type*} [MeasurableSpace α]
+    (μ : Measure α) {n : ℕ} (c : Fin n → ℝ) (K : Fin n → α → ℝ) :
+    0 ≤ ∫ x, (∑ i : Fin n, c i * K i x) ^ 2 ∂μ := by
+  exact integral_nonneg fun x => sq_nonneg _
 
 /-- **Double-sum trigonometric identity for reflection positivity.**
 

@@ -2,6 +2,68 @@
 
 **Last updated**: 2026-06-02.
 
+## 2026-06-02 — PR #32 replay + honest concrete limit marker
+
+This pass replayed the code content of closed PR #32 on the local base and
+separated a false construction theorem from a genuine construction input.
+After pulling `origin/main`, the cylinder/isotropic layer is also active on
+`main`; the current declaration counter is pphi2 `18` axioms / `0` sorries
+and gaussian-field `3` axioms / `0` sorries.
+
+What landed:
+
+* `Bridge.lean`: `measure_determined_by_schwinger` is now a theorem, using the
+  general moment-determinacy API in
+  `TorusContinuumLimit/MeasureUniqueness.lean`.
+* `TorusContinuumLimit/MeasureUniqueness.lean`: added reusable interacting
+  measure uniqueness lemmas:
+  `integrable_exp_smul_of_integrable_exp_sq`, `eval_map_eq_of_moments`, and
+  `measure_eq_of_moments`.
+* `AsymTorus/AsymTorusOS.lean`: `asymTorusInteracting_exponentialMomentBound`
+  is now a private theorem, with the route-specific proof reduced to the new
+  general weak-limit transfer lemma.
+* `GeneralResults/FunctionalAnalysis.lean`: added
+  `configuration_limit_exponential_moment_of_uniform`,
+  `tendsto_const_mul_exp_neg_mul_atTop`, and
+  `integral_feature_square_nonneg` as reusable probability/RP/spectral
+  infrastructure.
+* `ContinuumLimit/Embedding.lean`: `IsPphi2Limit` now records concrete lattice
+  approximants `continuumMeasure 2 (N k) P (a k) mass`, with `a_k → 0`,
+  `N_k → ∞`, `N_k a_k → ∞`, and `a_k ≤ 1`.
+* `ContinuumLimit/AxiomInheritance.lean`:
+  `canonical_continuumMeasure_cf_tendsto` is now a theorem extracted from the
+  strengthened limit certificate.
+* `ContinuumLimit/Convergence.lean`: the former `pphi2_limit_exists` theorem
+  witnessed by the constant Dirac measure was replaced by an explicit
+  construction axiom for the coupled UV/IR Prokhorov theorem.
+* `GaussianContinuumLimit/PropagatorConvergence.lean`: added the theorem
+  `latticeGreenBilinear_basis_tendsto_continuum_of_uv_ir`, isolating the
+  mechanical UV/IR decomposition for the flat Green convergence plan.
+
+Verification:
+
+* `./scripts/count_axioms.sh`: pphi2 `18` axioms, `0` sorries; gaussian-field
+  `3` axioms, `0` sorries.
+* Source-based `#print axioms` checks on the pre-origin base showed:
+  * `Pphi2.torusInteracting_satisfies_OS` depends only on
+    `[propext, Classical.choice, Quot.sound]`.
+  * `Pphi2.asymTorusInteracting_satisfies_OS` depends only on
+    `[propext, Classical.choice, Quot.sound]`.
+  * `Pphi2.pphi2_existence` now explicitly depends on
+    `Pphi2.pphi2_limit_exists`, plus the remaining continuum OS2/OS4 estimate
+    axioms, rather than hiding behind a `δ₀` witness.
+
+Net effect:
+
+* The pre-origin pphi2 declaration count dropped from `17 real / 19 raw` to
+  `15`; after pulling origin's cylinder/isotropic layer, the active pphi2 count
+  is `18`.
+* pphi2 sorry count: unchanged at `0`.
+* The apparent theorem-to-axiom change is intentional source-of-truth repair:
+  the old theorem proved only that the previous marker predicate was too weak.
+  The new axiom is the real coupled-approximant construction theorem still to
+  be formalized.
+
 ## 2026-05-31 — Layer B1 (cylinder TM + variance bound) complete
 
 The cylinder transfer-matrix port for the `asymInteracting_expMoment_volume_uniform`
@@ -75,7 +137,6 @@ without changing pphi2's axiom count:
 sorries. UNIT 7 (axiom-discharge assembly via the joint↔config
 pushforward bridge) is the only step left to drop the count to 18 real
 / 20 raw.
-
 ## 2026-05-15 — Lp-carrier Phase 2 + gaussian-hilbert Phase 3 wire-in
 
 The 2026-05-13 → 2026-05-15 sister-repo work substantially advanced the
@@ -133,17 +194,15 @@ Format and conventions for this audit doc: `~/.claude/AXIOM_AUDIT_FORMAT.md`.
 
 | Package | Axioms | Sorries | Pin |
 |---|---|---|---|
-| **pphi2** (active build) | 17 | 0 | — |
-| **pphi2** (`cylinder-isotropic-lattice` branch: +`asymInteracting_expMoment_volume_uniform`; `wickConstantAsym_eq_variance` **discharged** 2026-05-27, `asymChaosCutoffDecomposition` **discharged** 2026-05-31) | 18 | 0 | GaussianField `5bb35e8` |
-| **GaussianField** (pinned, in `.lake/packages/GaussianField/`) | 9 | 0 | `24b26efe` |
+| **pphi2** (active build) | 18 | 0 | — |
+| **GaussianField** (pinned, in `.lake/packages/GaussianField/`) | 3 | 0 | `dc2b3b8` |
 | **MarkovSemigroups** (pinned, in `.lake/packages/MarkovSemigroups/`) | 11 | 0 | `3cb482dc` |
 | **gaussian-hilbert** (pinned, tracks `main`) | 1 *(was 4 in last audit; see 2026-05-{10,11} entries)* | 0 | `main` |
 
 Notes:
 
-* pphi2 count includes 2 private axioms
-  (`gaussian_rp_cov_perfect_square`,
-  `asymTorusInteracting_exponentialMomentBound`).
+* pphi2 count includes 1 private axiom:
+  `gaussian_rp_cov_perfect_square`.
 * The pphi2 pin for **GaussianField is stale** relative to current
   upstream `main` (today's upstream is at ~3 axioms thanks to the
   2026-05-10 spatial-translation + master-equivariance discharges).
@@ -487,59 +546,34 @@ elementary inequality `x² ≤ 2 e^|x|` and a scaling optimization.
 eventual pullback RP predicate `CylinderMeasureSequenceEventuallyReflectionPositive`
 and proves the IR-limit OS3 transfer by characteristic-functional convergence.
 
-## Current pphi2 Axiom Inventory (21 raw / 19 real on `cylinder-isotropic-lattice`, 0 sorries)
+## Current pphi2 Axiom Inventory (18 active, 0 sorries)
 
 This table is generated from the current `./scripts/count_axioms.sh` result and
-is the source of truth for active pphi2 axioms in this audit. The Stage 1
-GJ-aligned cohort is in the lower block.
+is the source of truth for active pphi2 axioms in this audit.
 
-### Main inventory (15 axioms — present on `main`)
-
-| File | Active axioms | Names |
-|------|---------------|-------|
-| `Pphi2/Bridge.lean` | 2 | `schwinger_agreement`, `os2_from_phi4` |
-| `Pphi2/ContinuumLimit/AxiomInheritance.lean` | 3 | `continuum_exponential_moment_bound`, `canonical_continuumMeasure_cf_tendsto`, `continuum_exponential_clustering` |
-| `Pphi2/ContinuumLimit/Convergence.lean` | 1 | `continuumLimit_nonGaussian` |
-| `Pphi2/GaussianContinuumLimit/PropagatorConvergence.lean` | 1 | `latticeGreenBilinear_basis_tendsto_continuum` |
-| `Pphi2/Main.lean` | 1 | `pphi2_nontriviality` |
-| `Pphi2/OSProofs/OS2_WardIdentity.lean` | 1 | `rotation_cf_defect_polylog_bound` |
-| `Pphi2/OSProofs/OS3_RP_Lattice.lean` | 1 | `gaussian_rp_cov_perfect_square` (private) |
-| `Pphi2/OSProofs/OS4_MassGap.lean` | 2 | `two_point_clustering_from_spectral_gap`, `general_clustering_from_spectral_gap` |
-| `Pphi2/TransferMatrix/SpectralGap.lean` | 2 | `spectral_gap_uniform`, `spectral_gap_lower_bound` |
-| **Subtotal** | **15** | |
-
-### Isotropic `Z_Nt × Z_Ns` cylinder redesign (2 axioms — only on `cylinder-isotropic-lattice`)
-
-The heterogeneous-lattice cylinder construction. Both are deep-think-vetted analytic inputs.
-`asymChaosCutoffDecomposition` has a clear discharge path (port the proved square Nelson machinery);
-`asymInteracting_expMoment_volume_uniform` is the genuine deep input (volume-uniform interacting
-exp-moment ≡ cylinder transfer-matrix gap / cluster expansion).
-
-**Discharged 2026-05-27:** `wickConstantAsym_eq_variance` (was the third axiom) is now a **theorem**
-(`AsymTorus/AsymWickVariance.lean` + `AsymWickMean.lean`), proved by the algebraic circulant route
-(`massOperatorAsym` commutes with lattice translations ⟹ spectral covariance is shift-invariant ⟹
-the diagonal is constant = the eigenvalue average; `#print axioms` clean).
+### Main inventory (18 axioms — present on `main`)
 
 | File | Active axioms | Names |
 |------|---------------|-------|
 | `Pphi2/AsymTorus/AsymContinuumLimit.lean` | 1 | `asymInteracting_expMoment_volume_uniform` |
-| **Subtotal** | **1** | (was 2; `asymChaosCutoffDecomposition` discharged 2026-05-31) |
+| `Pphi2/AsymTorus/AsymExpMomentDischarge.lean` | 2 | `asymInteracting_mgf_gaussianDominated`, `asymInteractingVariance_le_freeVariance_Lt_uniform` |
+| `Pphi2/Bridge.lean` | 2 | `schwinger_agreement`, `os2_from_phi4` |
+| `Pphi2/ContinuumLimit/AxiomInheritance.lean` | 2 | `continuum_exponential_moment_bound`, `continuum_exponential_clustering` |
+| `Pphi2/ContinuumLimit/Convergence.lean` | 2 | `continuumLimit_nonGaussian`, `pphi2_limit_exists` |
+| `Pphi2/GaussianContinuumLimit/PropagatorConvergence.lean` | 1 | `latticeGreenBilinear_basis_tendsto_continuum` |
+| `Pphi2/Main.lean` | 1 | `pphi2_nontriviality` |
+| `Pphi2/NelsonEstimate/PolynomialChaosBridge.lean` | 1 | `nelson_exponential_estimate_master_bounded` |
+| `Pphi2/OSProofs/OS2_WardIdentity.lean` | 1 | `rotation_cf_defect_polylog_bound` |
+| `Pphi2/OSProofs/OS3_RP_Lattice.lean` | 1 | `gaussian_rp_cov_perfect_square` (private) |
+| `Pphi2/OSProofs/OS4_MassGap.lean` | 2 | `two_point_clustering_from_spectral_gap`, `general_clustering_from_spectral_gap` |
+| `Pphi2/TransferMatrix/SpectralGap.lean` | 2 | `spectral_gap_uniform`, `spectral_gap_lower_bound` |
+| **Subtotal** | **18** | |
 
-### Stage 1 GJ-aligned cohort (4 axioms — only on `fix/lattice-action-normalization`)
+The former Stage-1 GJ-aligned cohort entries in `AsymTorus/`,
+`ContinuumLimit/Hypercontractivity.lean`, and `NelsonEstimate/NelsonEstimate.lean`
+are no longer active axioms on this branch.
 
-These are the Cluster A Nelson dynamical-cutoff family — all four reduce to
-the same Glimm–Jaffe Ch. 8 estimate.
-
-| File | Active axioms | Names |
-|------|---------------|-------|
-| `Pphi2/AsymTorus/AsymTorusInteractingLimit.lean` | 1 | `asymNelson_exponential_estimate` |
-| `Pphi2/AsymTorus/AsymTorusOS.lean` | 1 | `asymTorusInteracting_exponentialMomentBound` |
-| `Pphi2/ContinuumLimit/Hypercontractivity.lean` | 1 | `exponential_moment_bound` |
-| `Pphi2/NelsonEstimate/NelsonEstimate.lean` | 1 | `nelson_exponential_estimate_lattice` |
-| **Subtotal** | **4** | |
-| **Total (this branch)** | **19** | |
-
-### Cylinder isotropic-lattice cohort (1 axiom — only on `cylinder-isotropic-lattice`)
+### Cylinder isotropic-lattice provenance (now on `main`)
 
 Heterogeneous-lattice analogue of the square Nelson dynamical-cutoff input, for the
 metric-correct `Z_Nt × Z_Ns` cylinder construction (Phase-2 #3, B-lean).
@@ -655,10 +689,10 @@ inputs.
 | # | Name | File | Rating | Verified | Notes |
 |---|------|------|--------|----------|-------|
 | 22 | ~~`latticeMeasure_translation_invariant`~~ | OS2_WardIdentity | ✅ **PROVED** | DT 2026-02-25 | Lattice measure invariant under cyclic translation. |
-| 23 | ~~`translation_invariance_continuum`~~ | OS2_WardIdentity | ✅ **PROVED** | SA 2026-03-07 | `Z[τ_v f] = Z[f]`. From `cf_tendsto` + `lattice_inv` via `tendsto_nhds_unique_of_eventuallyEq`. |
+| 23 | ~~`translation_invariance_continuum`~~ | OS2_WardIdentity | ✅ **PROVED** | SA 2026-03-07 | `Z[τ_v f] = Z[f]`. From `cf_tendsto` plus asymptotic translation-defect convergence via `tendsto_nhds_unique`. |
 | 24 | `rotation_cf_defect_polylog_bound` | OS2_WardIdentity | ⚠️ Likely correct | SA 2026-04-19 | Remaining Ward input: direct polynomial-log `a²` bound for the one-point characteristic-functional defect `rotationCFDefect`, stated uniformly in the lattice size `N`. Replaces the stronger pointwise-defect formulation. |
 | 25 | ~~`rotation_invariance_continuum`~~ | OS2_WardIdentity | ✅ **PROVED** | SA 2026-04-19 | `Z[R·f] = Z[f]` for `R ∈ O(2)`. Uses the coupled canonical UV/IR bridge + the uniform defect bound + logarithmic asymptotics. |
-| 26 | `canonical_continuumMeasure_cf_tendsto` | AxiomInheritance | ⚠️ Design bridge | SA 2026-04-19 | Coupled UV/IR bridge: canonical `continuumMeasure 2 (N n) P (a n) mass` converges CF-wise to `μ` along `a_n → 0`, `N_n → ∞`, and physical volume `(N_n : ℝ) * a_n → ∞`. |
+| ~~26~~ | ~~`canonical_continuumMeasure_cf_tendsto`~~ | AxiomInheritance | ✅ **PROVED** | 2026-06-02 | Extracted from the strengthened concrete `IsPphi2Limit` certificate. |
 | 27 | `continuum_exponential_moment_bound` | AxiomInheritance | ⚠️ Design bridge | SA 2026-04-19 | Project-level mixed `L¹`/Green bridge `∫ exp(|ω f|) dμ ≤ exp(c₁∫|f| + c₂ G(f,f))`. This fixes the false pure-quadratic claim while matching the downstream OS0/OS1 wrappers. |
 | 28 | ~~`analyticOn_generatingFunctionalC`~~ | CharacteristicFunctional | ✅ **PROVED** | DT 2026-02-25 | Exp moments → joint analyticity (Hartogs + dominated convergence). |
 | 29 | ~~`continuum_exponential_moments`~~ | AxiomInheritance | **Proved** | SA 2026-04-12 | Derived by scaling from `continuum_exponential_moment_bound`. |
@@ -682,16 +716,17 @@ inputs.
 | # | Name | File:Line | Rating | Verified | Notes |
 |---|------|----------|--------|----------|---------|
 | 33 | ~~`IsPphi2ContinuumLimit.toIsPphi2Limit`~~ | Bridge | ✅ **PROVED** | SA 2026-02-25 | Converted from axiom to `theorem`. Proof is `exact h` since `IsPphi2Limit` and `IsPphi2ContinuumLimit` have identical bodies (modulo type aliases). |
-| 34 | ~~`measure_determined_by_schwinger`~~ | Bridge | ✅ **PROVED** | 2026-06-02 | Discharged to a theorem via `MeasureUniqueness.measure_eq_of_moments` (finite exp-moments ⇒ entire MGF ⇒ equal moments force equal laws; Cramér–Wold). No new axioms/sorries. |
+| 34 | ~~`measure_determined_by_schwinger`~~ | Bridge | ✅ **PROVED** | 2026-06-02 | Discharged via general moment determinacy with finite exponential moments in `TorusContinuumLimit/MeasureUniqueness.lean`. |
 | 35 | `wick_constant_comparison` | Bridge | ✅ Standard | DT 2026-02-24 | Wick constant ≈ (2π)⁻¹ log(1/a) with bounded remainder. |
 | 36 | `schwinger_agreement` | Bridge | ⚠️ Likely correct | DT 2026-02-24 | n-point Schwinger function equality at weak coupling. |
 | 37 | `same_continuum_measure` | Bridge | ⚠️ Likely correct | DT 2026-02-24 | Fixed: requires `IsPphi2ContinuumLimit`, `IsPhi4ContinuumLimit`, `IsWeakCoupling`. |
 | 38 | `os2_from_phi4` | Bridge | ⚠️ Likely correct | DT 2026-02-24 | Fixed: requires `IsPhi4ContinuumLimit`. |
 | 39 | ~~`os3_from_pphi2`~~ | Bridge | ✅ **PROVED** | SA 2026-02-27 | Replaced axiom with theorem: `exact os3_for_continuum_limit ... (IsPphi2ContinuumLimit.toIsPphi2Limit h)`. |
 
-### Route B': Asymmetric Torus (0 axioms — all proved 2026-03-18)
+### Route B': Asymmetric Torus (0 axioms)
 
-All four infrastructure axioms have been replaced with theorems.
+All infrastructure axioms have been replaced with theorems; the final
+`asymTorusInteracting_exponentialMomentBound` discharge landed 2026-06-02.
 
 | # | Name | File | Status | Notes |
 |---|------|------|--------|-------|
@@ -704,16 +739,15 @@ All four infrastructure axioms have been replaced with theorems.
 
 | Status | Count |
 |--------|-------|
-| Active axioms | 16 |
+| Active axioms | 15 |
 | Sorries | 0 |
-| Private axioms among active | 2 |
+| Private axioms among active | 1 |
 | Proved/Defined rows retained below for provenance | historical |
 
 Most active axioms verified by GR or DT.
 Current self-audit / pending targeted re-review items in the refactored Ward /
 inheritance surface:
 - `rotation_cf_defect_polylog_bound`
-- `canonical_continuumMeasure_cf_tendsto`
 - `continuum_exponential_moment_bound`
 
 ### Notes from DT review (2026-02-25)

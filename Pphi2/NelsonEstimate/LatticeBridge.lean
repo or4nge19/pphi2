@@ -5,20 +5,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 # Lattice Bridge — From Phase-1 Hypotheses to the Master Bridge
 
 The abstract Phase 2 chain (`BridgeFromTail.lean`,
-`IntegrabilityHelpers.lean`) reduces the master bridge axiom
+`IntegrabilityHelpers.lean`) reduces the master bridge statement
 `polynomial_chaos_exp_moment_bridge` to a structural hypothesis on
 the lattice GFF: an `M`-parametrised smooth/rough decomposition with
 deterministic smooth bound, lattice rough-error tail bound, and the
 tail's integrability against `exp(2t)`.
 
 This file defines that hypothesis bundle as
-`LatticeRoughErrorSetup` and derives the bridge axiom from it as a
+`LatticeRoughErrorSetup` and derives the bridge conclusion from it as a
 theorem.
 
 The final Phase 1 work — proving the rough chaos membership +
 `L²`-norm bound on the lattice — feeds in by constructing a
 `LatticeRoughErrorSetup`. Once that construction lands, the bridge
-axiom becomes a one-liner application of `bridgeAxiom_of_setup`.
+statement becomes a one-liner application of `bridgeAxiom_of_setup`.
 
 ## Main definitions
 

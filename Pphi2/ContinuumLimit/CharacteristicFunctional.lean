@@ -362,8 +362,8 @@ theorem pphi2_measure_neg_invariant (P : InteractionPolynomial)
     (μ : Measure FieldConfig2) [IsProbabilityMeasure μ]
     (h_limit : IsPphi2Limit μ P mass) :
     Measure.map (Neg.neg : FieldConfig2 → FieldConfig2) μ = μ := by
-  rcases h_limit with ⟨_a, _ν, _hprob, _ha_tend, _ha_pos, _hmom, hneg, _hcf, _hlat,
-    _hweakconv, _happrox_os3⟩
+  rcases h_limit with ⟨_a, _ν, _hprob, _ha_tend, _ha_pos, _ha_le, _hconcrete, _hmom, hneg,
+    _hcf, _hlat, _hweakconv, _happrox_os3⟩
   exact hneg
 
 /-- Negation on Configuration is measurable w.r.t. the cylindrical σ-algebra. -/

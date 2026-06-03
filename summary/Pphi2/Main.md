@@ -41,8 +41,10 @@ $\exists \mu$ satisfying `SatisfiesFullOS` and $\exists m_0 > 0$ as in `massPara
 ### `os_reconstruction` (deprecated), `pphi2_wightman` (deprecated)
 Aliases for `massParameter_positive` and `pphi2_exists_os_and_massParameter_positive` respectively.
 
-### `mass_reparametrization_invariance`, `mass_reparametrization_exists`
-The continuum limit is invariant under mass reparametrization via `shiftQuadratic`.
+### `shifted_limit_of_reparametrized_certificate`, `mass_reparametrization_separate_exists`
+The current API is intentionally conditional: same-measure mass reparametrization
+still requires a separate transport proof identifying the concrete regularized
+lattice actions.
 
 ---
 *This file has **0** definitions, **13** theorems, and **1** axiom.*

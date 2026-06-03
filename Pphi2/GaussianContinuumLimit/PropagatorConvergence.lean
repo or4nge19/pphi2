@@ -122,6 +122,46 @@ axiom latticeGreenBilinear_basis_tendsto_continuum
 
 end ConvergenceAxiom
 
+/-- The flat lattice Green convergence follows from a UV/IR decomposition.
+
+This is the formal skeleton behind the discharge plan for
+`latticeGreenBilinear_basis_tendsto_continuum`: if the lattice bilinear differs
+from a torus/periodized comparison term by a vanishing UV error, and that
+comparison term converges to the flat continuum Green bilinear in the IR limit,
+then the lattice bilinear has the desired flat limit. -/
+theorem latticeGreenBilinear_basis_tendsto_continuum_of_uv_ir
+    [Fact (0 < d)]
+    (mass : ℝ) (_hmass : 0 < mass)
+    (a_seq : ℕ → ℝ) (_ha_pos : ∀ n, 0 < a_seq n)
+    (N_seq : ℕ → ℕ) [∀ n, NeZero (N_seq n)]
+    (i j : ℕ)
+    (torusApprox : ℕ → ℝ)
+    (h_uv :
+      Tendsto
+        (fun n =>
+          latticeGreenBilinear d (N_seq n) (a_seq n) mass
+            (DyninMityaginSpace.basis i)
+            (DyninMityaginSpace.basis j) - torusApprox n)
+        atTop (nhds 0))
+    (h_ir :
+      Tendsto torusApprox atTop
+        (nhds
+          (continuumGreenBilinear d mass
+            (DyninMityaginSpace.basis i)
+            (DyninMityaginSpace.basis j)))) :
+    Tendsto
+      (fun n =>
+        latticeGreenBilinear d (N_seq n) (a_seq n) mass
+          (DyninMityaginSpace.basis i)
+          (DyninMityaginSpace.basis j))
+      atTop
+      (nhds
+        (continuumGreenBilinear d mass
+          (DyninMityaginSpace.basis i)
+          (DyninMityaginSpace.basis j))) := by
+  have hsum := h_uv.add h_ir
+  simpa [sub_add_cancel] using hsum
+
 /-! ## Uniform bound on the embedded two-point function -/
 
 /-- **Covariance upper bound via eigenvalue lower bound** (bare CLM).

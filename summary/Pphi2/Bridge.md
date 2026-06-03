@@ -8,8 +8,8 @@
 Bridges the pphi2 lattice construction and a hypothetical Phi4 continuum construction, proving they produce the same measure on $\mathcal{S}'(\mathbb{R}^2)$ at weak coupling (via moment determinacy + Schwinger function agreement). Enables axiom transfer: OS2 (Euclidean invariance) from Phi4 to pphi2, and OS3 (reflection positivity) from pphi2 to Phi4, eliminating the hardest argument in each project.
 
 ## Status
-**Main result**: Core results depend on 3 axioms (`measure_determined_by_schwinger`, `schwinger_agreement`, `os2_from_phi4`)
-**Length**: 481 lines, 5 definitions + 7 theorems + 3 axioms
+**Main result**: Core results depend on 2 axioms (`schwinger_agreement`, `os2_from_phi4`); `measure_determined_by_schwinger` is now a theorem.
+**Length**: 519 lines, 5 definitions + 8 theorems + 2 axioms
 
 ---
 
@@ -23,9 +23,11 @@ Bridges the pphi2 lattice construction and a hypothetical Phi4 continuum constru
 Concrete continuum limit satisfies the abstract `IsPphi2Limit` predicate (definitional).
 
 ### Axioms
-- **`measure_determined_by_schwinger`**: Probability measures with finite exponential moments are determined by their Schwinger functions (moment determinacy).
 - **`schwinger_agreement`**: At weak coupling, pphi2 and Phi4 Schwinger functions agree.
 - **`os2_from_phi4`**: The Phi4 continuum measure is $E(2)$-invariant (manifest in continuum).
+
+### `measure_determined_by_schwinger`
+Probability measures with finite exponential moments are determined by their Schwinger functions. Proved via the general moment-determinacy API in `TorusContinuumLimit/MeasureUniqueness.lean`.
 
 ### `same_continuum_measure`
 $\mu_{\text{latt}} = \mu_{\text{cont}}$ at weak coupling. Proved from moment determinacy + Schwinger agreement.
@@ -43,4 +45,4 @@ OS3 transferred to Phi4 via measure equality -- bypasses Dirichlet/Neumann bound
 Full OS axiom bundles using optimal proof sources from each project.
 
 ---
-*This file has **5** definitions, **7** theorems, and **3** axioms.*
+*This file has **5** definitions, **8** theorems, and **2** axioms.*

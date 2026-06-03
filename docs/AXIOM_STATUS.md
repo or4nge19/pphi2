@@ -2,20 +2,19 @@
 
 *Current state of pphi2's axiom inventory. No history — see
 [`axiom_audit.md`](axiom_audit.md) for the historical log of audit
-passes and discharges. Last refreshed: 2026-05-22.*
+passes and discharges. Last refreshed: 2026-06-02.*
 
 ## At a glance
 
 | Count | Value |
 |---|---|
-| pphi2 axioms (active) | **16** (14 public + 2 `private`) — down from 17 after the 2026-05-22 moment-determinacy discharge (`measure_determined_by_schwinger` is now a theorem) |
+| pphi2 axioms (active) | **18** (17 public + 1 `private`) |
 | pphi2 sorries | **0** — `rough_error_variance` is now fully proved; `#print axioms Pphi2.rough_error_variance` shows only `[propext, Classical.choice, Quot.sound]`. |
-| `lake build` | clean (3857 jobs) |
-| Direct upstream deps (pins from `lake-manifest.json`) | gaussian-field (`269fbc2e`, **3 axioms / 0 sorries** — verified via `count_axioms.sh`); gibbs-variational (`45eb21b`, **0 axioms / 1 off-critical-path sorry**); markov-semigroups (`5bf4444`, tracks `main`), gaussian-hilbert (`7531830`, tracks `main`), bochner (`b70e84b8`, tracks `main`). Sister-repo axiom counts drift with `main` and are not re-verifiable from here (`count_axioms.sh` covers only pphi2 + gaussian-field) — see each repo's own `AXIOM_AUDIT.md` for current figures (gaussian-hilbert was ~1 axiom at the 2026-05-11 audit; markov-semigroups ~11). |
+| `lake build` | clean (exit code 0, 2026-06-02 after pulling `origin/main`) |
+| Direct upstream deps (pins from `lake-manifest.json`) | gaussian-field (`dc2b3b8`, **3 axioms / 0 sorries** — verified via `count_axioms.sh`); gibbs-variational (`a7535d1`, **0 axioms / 1 off-critical-path sorry**); markov-semigroups (`acf6491`, tracks `main`), gaussian-hilbert (`56ee09f`, tracks `main`), bochner (`34222bb`, tracks `main`), reflection-positivity (`1940650`, tracks `main`). Sister-repo axiom counts drift with `main` and are not re-verifiable from here (`count_axioms.sh` covers only pphi2 + gaussian-field) — see each repo's own `AXIOM_AUDIT.md` for current figures (gaussian-hilbert was ~1 axiom at the 2026-05-11 audit; markov-semigroups ~11). |
 
-The `scripts/count_axioms.sh` script reports 18 because of two
-`axiom`-prefixed words in docstrings at `LatticeBridge.lean:21` and
-`LayerCake.lean:85`. The actual count is 16.
+The `scripts/count_axioms.sh` script reports the declaration count directly:
+18 pphi2 axioms and 0 pphi2 sorries.
 
 ### Conventions
 
@@ -43,11 +42,12 @@ Audit-table conventions per
 
 ### T² interacting OS theory (`torusInteracting_satisfies_OS`, OS0–OS4 on T²)
 
-Verified via `#print axioms`: **1 non-builtin axiom**.
+Verified via `#print axioms`: **0 non-builtin axioms** for
+`Pphi2.torusInteracting_satisfies_OS`.
 
 | Axiom | File | Discharge plan | Effort |
 |---|---|---|---|
-| `polynomial_chaos_exp_moment_bridge` | `NelsonEstimate/PolynomialChaosBridge.lean:116` | [`polynomial-chaos-exp-moment-bridge-proof-plan.md`](polynomial-chaos-exp-moment-bridge-proof-plan.md) (parent) + [`rough-error-variance-plan.md`](rough-error-variance-plan.md) (Step 1, rev 2 + Gemini DT review) + [`rough-error-variance-deep-think-review.md`](rough-error-variance-deep-think-review.md) (review record) | ~2-3 weeks total + 3 upstream sorries (Glimm-Jaffe Ch. 8 Fourier estimates + measure-theory factorization) |
+| — | — | No active pphi2 axiom in this closure. | — |
 
 After this discharge, 3 transitive OU placeholders from gaussian-hilbert
 will appear in `torusInteracting_satisfies_OS`'s axiom set; those have
@@ -68,35 +68,34 @@ S'(ℝ²) Wightman directly.
 
 ## Full axiom inventory
 
-### Bridge / phase-6 (4 axioms — pphi2 ↔ φ⁴ classification)
-
-*`measure_determined_by_schwinger` was discharged to a theorem on 2026-05-22 (proof in
-`TorusContinuumLimit/MeasureUniqueness.lean`: `measure_eq_of_moments` — the finite exponential
-moment makes the 1D MGF entire, so equal moments force equal MGFs (identity theorem) hence equal
-laws; Cramér–Wold lifts to the full measure). It depends only on `[propext, Classical.choice,
-Quot.sound]`.*
+### Bridge / phase-6 (3 axioms — pphi2 ↔ φ⁴ classification)
 
 | Axiom | File:Line | Rating | Sources | Notes |
 |---|---|---|---|---|
 | `schwinger_agreement` | `Bridge.lean:263` | Likely correct | DT 2026-02-24 | n-point Schwinger function equality at weak coupling. |
 | `os2_from_phi4` | `Bridge.lean:334` | Likely correct | DT 2026-02-24 | Requires `IsPhi4ContinuumLimit`. |
-| `wick_constant_comparison` | `Bridge.lean` | Standard | DT 2026-02-24 | Wick constant `≈ (2π)⁻¹ log(1/a) + bounded`. |
 | `pphi2_nontriviality` | `Main.lean:128` | Placeholder | — | Phase-4 research endpoint: bridge to φ⁴; downstream of `same_continuum_measure`. |
 
-### Continuum-limit machinery (3 axioms — abstract Mitoma/Prokhorov chassis)
+`measure_determined_by_schwinger` was discharged 2026-06-02 via
+`TorusContinuumLimit/MeasureUniqueness.lean`.
+
+### Continuum-limit machinery (4 axioms — concrete construction and inheritance)
 
 | Axiom | File:Line | Rating | Sources | Notes |
 |---|---|---|---|---|
 | `continuum_exponential_moment_bound` | `ContinuumLimit/AxiomInheritance.lean:123` | Likely correct | SA 2026-04-19 | Design bridge: mixed `L¹`/Green `∫ exp(\|ωf\|) dμ ≤ exp(c₁∫\|f\| + c₂ G(f,f))`. |
-| `canonical_continuumMeasure_cf_tendsto` | `ContinuumLimit/AxiomInheritance.lean:327` | Likely correct | SA 2026-04-19 | Design bridge: coupled UV/IR, CF convergence along `aₙ → 0`, `Nₙ aₙ → ∞`. |
 | `continuum_exponential_clustering` | `ContinuumLimit/AxiomInheritance.lean:354` | Likely correct | GR 2026-03-07 | Correct for P(Φ)₂; spectral-gap input for continuum OS4. |
 | `continuumLimit_nonGaussian` | `ContinuumLimit/Convergence.lean:256` | Placeholder | — | Phase-4 research endpoint: nontriviality of the limit. |
+| `pphi2_limit_exists` | `ContinuumLimit/Convergence.lean:282` | Standard | LP | Coupled UV/IR Prokhorov construction from concrete lattice approximants. Replaces the former theorem that was witnessed by `δ₀` under the too-weak marker predicate. |
+
+`canonical_continuumMeasure_cf_tendsto` was discharged 2026-06-02: it is now a
+theorem extracted from the strengthened `IsPphi2Limit` certificate.
 
 ### Cluster A — Nelson exponential estimate (1 axiom — bridge)
 
 | Axiom | File:Line | Rating | Sources | Notes |
 |---|---|---|---|---|
-| `polynomial_chaos_exp_moment_bridge` | `NelsonEstimate/PolynomialChaosBridge.lean:116` | Standard | DT 2026-05-08, DT 2026-05-10 | **The T² interacting OS critical-path axiom.** Over-stated to `∀ a > 0` but textbook GJ Ch. 8 covers `a ≤ 1`; large-`a` regime trivial. Plans: [parent](polynomial-chaos-exp-moment-bridge-proof-plan.md), [Step 1](rough-error-variance-plan.md) (rev 2 incorporates Gemini DT 2026-05-10 critique: K-quantifier hygiene, m=1 L¹×L^∞ bound replacing C-S, m≥2 L^m sum bound replacing ‖C_R‖_∞, RHS = `K·T·(1+|log T|)^{P.n−1}`, three named upstream sorries for parallel-tracked Glimm-Jaffe Ch. 8 Fourier estimates). [Review record](rough-error-variance-deep-think-review.md). |
+| `nelson_exponential_estimate_master_bounded` | `NelsonEstimate/PolynomialChaosBridge.lean:1310` | Standard | DT 2026-05-08, DT 2026-05-10 | Compatibility wrapper for the bounded-volume Nelson estimate. Consumers should move to the fixed-volume API or prove the genuinely stronger coupled-volume estimate. |
 
 ### Cluster A Phase B — discharged textbook theorems
 
@@ -132,11 +131,18 @@ design and discharge notes remain in
 |---|---|---|---|---|
 | `latticeGreenBilinear_basis_tendsto_continuum` | `GaussianContinuumLimit/PropagatorConvergence.lean:103` | Standard | SA | Spectral lattice Green bilinear → continuum on basis pairs. **Plan**: [`lattice-green-flat-Rd-discharge-plan.md`](../plans/lattice-green-flat-Rd-discharge-plan.md) (Strategy A, ~3 weeks). NOT on T² critical path. |
 
-### AsymTorus (1 axiom)
+### AsymTorus / cylinder-isotropic layer (3 axioms)
 
 | Axiom | File:Line | Rating | Sources | Notes |
 |---|---|---|---|---|
-| `asymTorusInteracting_exponentialMomentBound` (`private`) | `AsymTorus/AsymTorusOS.lean:852` | Standard | — | BC-limit lift of the lattice exp-moment bound to the asymmetric-torus continuum measure. Sister of Cluster A but structurally different (BC convergence). |
+| `asymInteracting_expMoment_volume_uniform` | `AsymTorus/AsymContinuumLimit.lean:621` | Likely correct | DT | Volume-uniform interacting exponential moment for the asymmetric/cylinder family. |
+| `asymInteracting_mgf_gaussianDominated` | `AsymTorus/AsymExpMomentDischarge.lean:127` | Standard | LP | Newman/Lee-Yang style MGF domination input used in the discharge architecture. |
+| `asymInteractingVariance_le_freeVariance_Lt_uniform` | `AsymTorus/AsymExpMomentDischarge.lean:190` | Standard | LP | Uniform variance comparison input for the cylinder shortcut. |
+
+`AsymTorus/AsymTorusOS.lean` is axiom-free as of 2026-06-02.
+`asymTorusInteracting_exponentialMomentBound` was discharged by combining the
+cutoff exponential-moment bound, the uniform second-moment estimate, and the
+generic BC weak-limit exponential-moment transfer theorem.
 
 ## Upstream axiom counts (transitively imported)
 
@@ -147,7 +153,7 @@ and [`.lake/packages/MarkovSemigroups/docs/AXIOM_AUDIT.md`](https://github.com/m
 
 | Repo | Axioms | Plan-coverage |
 |---|---|---|
-| pphi2 | 17 | 1 T² critical-path axiom remains (`polynomial_chaos_exp_moment_bridge`); the rest are broader bridge/continuum/OS3-OS4 items with literature-backed plans |
+| pphi2 | 18 | No non-builtin axiom in `torusInteracting_satisfies_OS`; remaining axioms are broader bridge/continuum/AsymTorus/OS2-OS4/QFT-estimate items with literature-backed plans |
 | gaussian-hilbert | 4 | All 4 plan-covered: 1 (`polynomial_dense_L2_of_subGaussian`) is DT-vetted Standard; 3 (OU placeholders) covered by `ou-mehler-discharge-plan.md` |
 | markov-semigroups | 11 | All textbook with literature refs in `AXIOM_AUDIT.md`; no near-term discharge plans (long-term debt) |
 | gaussian-field | 3 | Down from 8 after the 2026-05-10 cylinder/Hermite discharges + the 2026-05-11 `gff_wickPower_two_site_inner` proof (axiom-free, Janson 2-site Wick formula on lattice GFF). Remaining 3 axioms are Gemini-vetted Standard classical-analysis (embed-L²-uniform-bound, fourier-multiplier-Schwartz, Hermite-Galerkin tendsto). |

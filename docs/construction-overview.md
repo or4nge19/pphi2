@@ -497,9 +497,9 @@ The proof architecture uses **axioms** for unproved analytic and
 probabilistic results, with the logical structure connecting them fully
 formalized.
 
-As of the latest count: **pphi2 has 15 axioms and 0 sorries**;
-the pinned Lake `GaussianField` dependency has **4 axioms and 0 sorries**,
-for a combined total of **19 axioms** across both projects.
+As of the latest count: **pphi2 has 18 axioms and 0 sorries**;
+the pinned Lake `GaussianField` dependency has **3 axioms and 0 sorries**,
+for a combined total of **21 axioms** across both projects.
 
 The axioms cluster into several thematic groups:
 

@@ -120,6 +120,14 @@ def IsPphi2ContinuumLimit
     (∀ k : ℕ, IsProbabilityMeasure (ν k)) ∧
     Filter.Tendsto a Filter.atTop (nhds 0) ∧
     (∀ k : ℕ, 0 < a k) ∧
+    (∀ k : ℕ, a k ≤ 1) ∧
+    (∃ (N : ℕ → ℕ) (hN_pos : ∀ k, 0 < N k) (ha_pos : ∀ k, 0 < a k)
+      (hmass : 0 < mass),
+      Filter.Tendsto N Filter.atTop Filter.atTop ∧
+      Filter.Tendsto (fun k => (N k : ℝ) * a k) Filter.atTop Filter.atTop ∧
+      ∀ k,
+        letI : NeZero (N k) := ⟨Nat.ne_of_gt (hN_pos k)⟩
+        ν k = continuumMeasure 2 (N k) P (a k) mass (ha_pos k) hmass) ∧
     (∀ (n : ℕ) (f : Fin n → TestFun),
       Filter.Tendsto
         (fun k : ℕ => ∫ ω : FieldConfig, ∏ i, ω (f i) ∂(ν k))
@@ -132,9 +140,11 @@ def IsPphi2ContinuumLimit
         Filter.atTop
         (nhds (∫ ω : FieldConfig, Complex.exp (Complex.I * ↑(ω f)) ∂μ))) ∧
     (∀ (v : EuclideanSpace ℝ (Fin 2)) (f : TestFun),
-      ∀ᶠ k in Filter.atTop,
-        ∫ ω : FieldConfig, Complex.exp (Complex.I * ↑(ω f)) ∂(ν k) =
-        ∫ ω : FieldConfig, Complex.exp (Complex.I * ↑(ω (schwartzTranslate 2 v f))) ∂(ν k)) ∧
+      Filter.Tendsto
+        (fun k =>
+        ∫ ω : FieldConfig, Complex.exp (Complex.I * ↑(ω f)) ∂(ν k) -
+        ∫ ω : FieldConfig, Complex.exp (Complex.I * ↑(ω (schwartzTranslate 2 v f))) ∂(ν k))
+        Filter.atTop (nhds 0)) ∧
     -- Weak convergence for bounded continuous functions
     (∀ (g : FieldConfig → ℝ),
       Continuous g → (∃ C, ∀ x, |g x| ≤ C) →
@@ -155,7 +165,7 @@ Placeholder body. Full definition requires the Phi4 project's formalization. -/
 def IsPhi4ContinuumLimit
     (μ : @Measure FieldConfig instMeasurableSpaceConfiguration)
     [IsProbabilityMeasure μ]
-    (P : InteractionPolynomial) (mass coupling : ℝ) : Prop :=
+    (_P : InteractionPolynomial) (_mass _coupling : ℝ) : Prop :=
   -- μ arises as the infinite-volume limit of the Phi4 finite-volume measures μ^{Phi4}_{Λ}
   -- on S'(ℝ²), obtained after removing the UV cutoff (κ → ∞). We abstract these as a
   -- sequence of probability measures on S'(ℝ²) indexed by volume cutoff Λ_k → ∞,
@@ -175,7 +185,7 @@ expansion converges, guaranteeing uniqueness of the infinite-volume limit.
 Placeholder body. The full condition is `coupling < l₀(P, mass)` where l₀
 is the radius of convergence of the Glimm-Jaffe-Spencer cluster expansion.
 Reference: Glimm-Jaffe-Spencer (1974). -/
-def IsWeakCoupling (P : InteractionPolynomial) (mass coupling : ℝ) : Prop :=
+def IsWeakCoupling (_P : InteractionPolynomial) (mass coupling : ℝ) : Prop :=
   -- The coupling constant is small enough for the Glimm-Jaffe-Spencer cluster
   -- expansion to converge. Concretely, for P(τ) = λτ⁴ this requires λ < λ₀(m)
   -- where λ₀(m) > 0 is a mass-dependent radius of convergence.
@@ -357,10 +367,10 @@ from Phi4 — bypassing the Ward identity argument entirely. -/
 theorem os2_for_pphi2_via_phi4
     (P : InteractionPolynomial) (mass coupling : ℝ)
     (hmass : 0 < mass) (hP : isPhi4 P coupling)
-    (h_weak : IsWeakCoupling P mass coupling)
+    (_h_weak : IsWeakCoupling P mass coupling)
     (μ_latt : @Measure FieldConfig instMeasurableSpaceConfiguration)
     (hμ_latt : IsProbabilityMeasure μ_latt)
-    (hμ_latt_limit : @IsPphi2ContinuumLimit μ_latt hμ_latt P mass)
+    (_hμ_latt_limit : @IsPphi2ContinuumLimit μ_latt hμ_latt P mass)
     (μ_cont : @Measure FieldConfig instMeasurableSpaceConfiguration)
     (hμ_cont : IsProbabilityMeasure μ_cont)
     (hμ_cont_limit : @IsPhi4ContinuumLimit μ_cont hμ_cont P mass coupling)
@@ -403,8 +413,8 @@ from pphi2 — bypassing the Dirichlet/Neumann covariance comparison,
 checkerboard decomposition, and multiple reflection bounds. -/
 theorem os3_for_phi4_via_pphi2
     (P : InteractionPolynomial) (mass coupling : ℝ)
-    (hmass : 0 < mass) (hP : isPhi4 P coupling)
-    (h_weak : IsWeakCoupling P mass coupling)
+    (hmass : 0 < mass) (_hP : isPhi4 P coupling)
+    (_h_weak : IsWeakCoupling P mass coupling)
     (μ_latt : @Measure FieldConfig instMeasurableSpaceConfiguration)
     (hμ_latt : IsProbabilityMeasure μ_latt)
     (hμ_latt_limit : @IsPphi2ContinuumLimit μ_latt hμ_latt P mass)
@@ -436,7 +446,7 @@ This eliminates:
 theorem full_os_via_bridge
     (P : InteractionPolynomial) (mass coupling : ℝ)
     (hmass : 0 < mass) (hP : isPhi4 P coupling)
-    (h_weak : IsWeakCoupling P mass coupling)
+    (_h_weak : IsWeakCoupling P mass coupling)
     (μ_latt : @Measure FieldConfig instMeasurableSpaceConfiguration)
     (hμ_latt : IsProbabilityMeasure μ_latt)
     (hμ_latt_limit : @IsPphi2ContinuumLimit μ_latt hμ_latt P mass)

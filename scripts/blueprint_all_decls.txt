@@ -78,6 +78,7 @@ thm Pphi2.os1_for_continuum_limit
 thm GaussianField.circleTranslation_add
 thm Pphi2.schwingerN_perm
 thm Pphi2.pphi2_measure_neg_invariant
+thm GaussianField.measure_eq_of_moments
 thm GaussianField.circleSpacing_pos
 thm Pphi2.ChaosTailBridge.chaos_neg_tail_bound_explicit
 def GaussianField.latticeGaussianFieldLaw
@@ -123,7 +124,9 @@ thm GaussianField.multiIndexEquiv_symm_growth
 thm Pphi2.asymCanonicalSmoothFieldFunctionOfFst.congr_simp
 thm GaussianField.RapidDecaySeq.mk.congr_simp
 thm Pphi2.EuclideanOS.generatingFunctional_re_eq_integral_cos
+def Pphi2.Bridge.isPhi4
 thm Pphi2.EuclideanOS.SatisfiesFullOS.os4_ergodicity
+def Pphi2.Bridge.IsPphi2ContinuumLimit
 thm GaussianField.dft_parseval_2d
 thm Pphi2.torusGaussianLimit_isGaussian
 thm GaussianField.eigenvector_transfer
@@ -181,6 +184,7 @@ def Pphi2.AsymCanonicalJoint
 def GaussianField.AsymLatticeField
 thm Pphi2.timeCoupling_eq_zero_iff
 def Pphi2.asymCanonicalCrossTerm
+def Pphi2.Bridge.FieldConfig
 def Pphi2.EuclideanOS.distribPairing
 thm Pphi2.asymCanonicalSumFieldFunction_memLp_two
 def GaussianField.heatSymbol
@@ -375,6 +379,7 @@ def GaussianField.RapidDecayLattice.instSMul
 def Pphi2.continuumTimeReflection
 thm Lattice.isStronglyAtomic
 thm Pphi2.torus_second_moment_uniform
+def Pphi2.Bridge.IsPhi4ContinuumLimit
 thm Pphi2.anomaly_vanishes
 thm Pphi2.asymTorus_interacting_second_moment_uniform
 thm GaussianField.gffMultiWickMonomial.congr_simp
@@ -561,7 +566,6 @@ def GaussianField.latticeFourierProductNormSq
 thm GaussianField.dft_eigencoeff_massOperatorAsym
 thm Pphi2.EuclideanOS.SatisfiesFullOS.os2
 thm GaussianField.resolventFreq_zero_mode
-thm Pphi2.mass_reparametrization_invariance
 thm Pphi2.LatticeSetup.wickPolynomial_of_pure
 def Lattice.toSemilatticeInf
 def GaussianField.RapidDecayLattice.latticeCoeffCLM
@@ -613,8 +617,10 @@ thm Pphi2.transferOperator_positivityImproving
 thm GaussianField.spectralCLM.congr_simp
 thm GaussianField.nuclear_bilinear_extension_existsUnique
 thm GaussianField.qft_singular_values_bounded
+thm Pphi2.Bridge.measure_determined_by_schwinger
 thm GaussianField.circleRestrictionGJ_le
 thm Pphi2.cylinderPullback_second_moment_eq
+thm Pphi2.Bridge.os3_for_phi4_via_pphi2
 thm Pphi2.torusContinuumMeasure.congr_simp
 thm GaussianField.heatWeight_nonneg
 thm GaussianField.spectralLatticeCovariance_norm_sq
@@ -731,7 +737,6 @@ def Common.QFT.Euclidean.SchwingerFormulation.instTopologicalSpaceComplexTestFun
 def GaussianField.gffOrthonormalCoord
 thm Pphi2.interactingLatticeMeasure_symmetry_invariant
 thm GaussianField.SmoothMap_Circle.instIsTopologicalAddGroup
-thm Pphi2.mass_reparametrization_exists
 thm GaussianField.dft_parseval_family
 thm Pphi2.covariance_inner_le_mass_inv_sq_norm_sq
 def Pphi2.canonicalFullInteractionJoint
@@ -918,6 +923,7 @@ thm Pphi2.DynamicalCutoff.degreeDynamicalCutoffScale_pos
 def Pphi2.asymLatticeTestFn
 thm Pphi2.interactingLatticeMeasure_isProbability
 def Pphi2.canonicalSmoothCovariance
+thm Pphi2.latticeGreenBilinear_basis_tendsto_continuum_of_uv_ir
 def GaussianField.translateSites
 def GaussianField.schwartzRapidDecayEquiv1D
 thm GaussianField.modePartner_cos
@@ -1001,6 +1007,7 @@ thm Pphi2.latticeMeasure_translation_invariant
 thm Pphi2.canonicalSumFieldFunction_memLp_two
 def Pphi2.EuclideanPlaneBackground.actionComplex
 def Pphi2.OS0_Analyticity
+thm Pphi2.shifted_limit_of_reparametrized_certificate
 thm Pphi2.schwartzIm_sum_complex_smul
 def Pphi2.asymGroundEnergyLevel
 thm Pphi2.asymCanonicalRoughFieldFunction_add
@@ -1015,6 +1022,7 @@ thm GaussianField.qftSingularValue_nonneg
 thm Pphi2.ContinuumTestFunction_eq
 thm Pphi2.torus_interacting_tightness
 thm GaussianField.monotone_max_neg
+axiom Pphi2.Bridge.schwinger_agreement
 thm GaussianField.ntpExtractSlice_a_decay
 thm GaussianField.summable_coeff_mul_pow
 thm GaussianField.negLaplacianMatrix_isHermitian
@@ -1063,6 +1071,7 @@ def GaussianField.RapidDecayLattice.latticeRapidDecayEquiv
 thm GaussianField.cylinderHeatSemigroup_timeTranslation_comm
 thm GaussianField.sitePairing_eq_massEigenbasis_sum
 thm GaussianField.latticeHeatKernelBilinear1d_eq_mathlib_spectral
+def Pphi2.Bridge.TestFun
 def GaussianField.schwartzRapidDecayEquivNd
 struct Common.QFT.Euclidean.Formulation
 def GaussianField.HasPointEval.pointEval
@@ -1135,6 +1144,7 @@ def GaussianHilbert.hermiteEval
 def Pphi2.transferWeight
 thm Pphi2.canonicalSmoothRough_cross_moment_zero
 def GaussianField.finLatticeField_dyninMityaginSpace
+thm Pphi2.Bridge.full_os_via_bridge
 thm GaussianHilbert.mehlerFun_apply
 thm Pphi2.asymTorusInteractingMeasure.congr_simp
 thm Pphi2.asymTorusInteractingMeasureIso_exponentialMomentBound_cutoff
@@ -1215,6 +1225,7 @@ def GaussianField.quadraticGaussianMeasure
 def Pphi2.canonicalRoughFieldFunction
 def Pphi2.EuclideanTimeStructure.reflect
 thm Pphi2.LatticeSetup.interactionFunctional_eq_smooth_plus_rough
+thm GaussianField.integrable_exp_smul_of_integrable_exp_sq
 thm Pphi2.asymTransferWeight_measurable
 def Pphi2.EuclideanPlaneBackground.translate
 thm Pphi2.asymCanonicalRoughFieldFunction_smul
@@ -1262,6 +1273,7 @@ thm Pphi2.interactionFunctionalAsym_asymCanonicalSumConfig_eq
 thm GaussianField.resolventQuotientSymbol_le_one
 def GaussianField.IsSingleSite
 thm Pphi2.interactionFunctionalAsym.congr_simp
+thm Pphi2.Bridge.same_continuum_measure
 thm Pphi2.AsymTransferGroundExcitedData.hi_ne
 thm Pphi2.asymCanonicalSmoothWickPower_two_site_marginal_eq_zero_of_ne
 thm GaussianField.normalizedGaussianDensityMeasure_linearFourier
@@ -1377,7 +1389,7 @@ thm GaussianField.massOperatorAsym_selfAdjoint
 thm Pphi2.torusContinuumGreen_nonneg
 thm Pphi2.MeasureHasGreenMomentBound.congr_simp
 thm Pphi2.FieldDecomposition.φ_S_measurable
-thm Pphi2.pphi2_limit_exists
+axiom Pphi2.pphi2_limit_exists
 thm Pphi2.ContinuumComplexTestFunction_eq
 thm Pphi2.pphi2_nonGaussianity
 thm GaussianField.laplacianDFT_flat_bound
@@ -1540,6 +1552,7 @@ def GaussianField.circleTranslation
 def Pphi2.massGap
 thm Pphi2.interactingMeasure_integrable_of_bounded
 thm GaussianField.nuclear_clm_target_factorization
+thm Pphi2.mass_reparametrization_separate_exists
 thm Pphi2.smoothCovEigenvalue_pos
 def Pphi2.L2SpatialField
 thm GaussianField.wick_recursive
@@ -1662,6 +1675,7 @@ def GaussianField.cylinderHeatSemigroup
 thm GaussianField.fubini_pi_decomp_lintegral
 thm Pphi2.partitionFunctionAsym.congr_simp
 thm GaussianField.RapidDecaySeq.instCompleteSpace
+thm GaussianField.eval_map_eq_of_moments
 thm Pphi2.asymTransferOperator_inner_nonneg
 thm GaussianField.gaussianDensity.congr_simp
 thm GaussianField.NuclearTensorProduct.ext_iff
@@ -1851,6 +1865,7 @@ def Common.QFT.Euclidean.TensorToDistributionalBridge.ctorIdx
 thm Pphi2.wickConstant_antitone_mass
 thm Pphi2.AsymTorusSequenceHasUniformGreenMomentBound.of_forall
 def Pphi2.EuclideanPlaneBackground.Motion.ctorIdx
+thm Pphi2.Bridge.os3_from_pphi2
 def Pphi2.FieldDecomposition.φ_S
 thm Pphi2.latticeCovarianceAsymGJ_inner_eq_inv_a_sq_spectral
 thm Pphi2.TransferGroundExcitedData.hi_ne
@@ -1952,6 +1967,7 @@ thm Pphi2.two_point_clustering_lattice
 def Pphi2.FieldDecomposition.φ_R
 thm Pphi2.torusEmbedLift.congr_simp
 thm Pphi2.bounded_integrable_interacting
+thm Pphi2.Bridge.phi4_full_os_via_bridge
 def GaussianHilbert.wienerChaos
 thm GaussianHilbert.hermiteMultiLp_mem_wienerChaos
 thm GaussianField.greenFunctionBilinear_timeReflection_invariant
@@ -2009,6 +2025,7 @@ thm GaussianField.resolventFreq_sq
 thm GaussianField.finiteLaplacian_reflection_commute
 def GaussianField.ntpSliceSchwartz
 thm GaussianHilbert.memLp_coord_of_subGaussian
+thm Pphi2.Bridge.IsPphi2ContinuumLimit.toIsPphi2Limit
 thm GaussianField.seminorm_le_nuclear_expansion
 thm GaussianField.RapidDecaySeq.rapidDecay_hasBiorthogonalBasis
 def Pphi2.asymTransferFirstExcitedEigenvalue
@@ -2174,6 +2191,7 @@ thm Pphi2.dm_basis_eq_fourierBasis
 thm Pphi2.asymLatticeTestFnIso.congr_simp
 def GaussianField.TorusTestFunction
 thm Pphi2.latticeEmbed_eval
+thm Pphi2.Bridge.os2_for_pphi2_via_phi4
 thm GaussianField.gffMultiWickMonomial_eq_hermite_product
 def GaussianHilbert.polynomialToL2
 thm Pphi2.embeddedTwoPoint_uniform_bound
@@ -2250,6 +2268,7 @@ thm GaussianField.sum_cos_mul_cos_zmod_eq_zero
 thm Pphi2.embeddedTwoPoint_eq_latticeSum
 thm Pphi2.EuclideanPlaneBackground.inversePointAction_translationMotion
 thm Pphi2.interactingMeasure_isProbabilityMeasure
+def Pphi2.Bridge.IsWeakCoupling
 thm Pphi2.exponential_mixing
 thm GaussianField.massEigenbasis_coeff_reprSymm_ofLp
 thm GaussianField.latticeHeatKernelBilinear1d.congr_simp
@@ -2261,7 +2280,7 @@ def GaussianField.cylinderSpatialTranslationSym
 thm Pphi2.torusContinuumMeasures_tight
 thm GaussianField.greenFunctionBilinear_reflection_pure
 thm Pphi2.delta_massEigenvectorCoeff_asym
-axiom Pphi2.canonical_continuumMeasure_cf_tendsto
+thm Pphi2.canonical_continuumMeasure_cf_tendsto
 thm GaussianField.schwartzRapidDecayEquiv1D_norm_summable
 def GaussianField.NuclearTensorProduct.toPairIndex
 def Common.QFT.Euclidean.DistributionalSchwingerModel.schwinger
@@ -2384,6 +2403,7 @@ thm Pphi2.transferGaussian_memLp_two
 thm Pphi2.asymCanonicalSumFieldFunction_measurable
 thm GaussianField.multiIndexEquiv_growth
 def Pphi2.canonicalCrossTerm
+axiom Pphi2.Bridge.os2_from_phi4
 thm Pphi2.asymTorusGeneratingFunctional.congr_simp
 def Pphi2.continuumEuclideanActionComplex
 thm Pphi2.canonicalSmoothInteraction_lower_bound_at_cutoff_quartic

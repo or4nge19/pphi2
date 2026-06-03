@@ -224,8 +224,8 @@ The assembly is purely structural:
    `C = C_B / 2`.
 
 The constant `C_B` is `Lt`-uniform by Layer B2, so the final
-`K = 2`, `C = C_B / 2` is `Lt`-uniform — exactly what the original
-axiom asks for. -/
+`K = 2`, `C = C_B / 2` is `Lt`-uniform, exactly matching the original
+statement. -/
 theorem asymInteracting_expMoment_volume_uniform_proof
     (Ls : ℝ) [hLs : Fact (0 < Ls)]
     (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mass) :

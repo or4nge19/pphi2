@@ -82,7 +82,7 @@ This is the layer-cake reformulation needed by the dynamical-cutoff
 discharge: combined with the stretched-exponential probability bound
 `μ{V ≤ -t} ≤ 2 exp(-c g(t))` (with `g` doubly-exponential at large `t`),
 it produces the finite uniform-in-`N` exp moment bound that the bridge
-axiom asserts.
+statement asserts.
 
 **Proof outline:**
 1. Pointwise `exp(-V)² ≤ exp(2W)` where `W := max 0 (-V) ≥ 0`

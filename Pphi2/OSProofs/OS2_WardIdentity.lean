@@ -392,10 +392,10 @@ Reference: Glimm-Jaffe §8.6 (translation invariance of the continuum limit).
 
 **Proof:** From `IsPphi2Limit` we extract:
 - `cf_tendsto`: Z_{ν_k}[g] → Z_μ[g] for all g
-- `lattice_inv`: Z_{ν_k}[f] = Z_{ν_k}[τ_v f] eventually, for all v, f
+- `lattice_inv`: Z_{ν_k}[f] - Z_{ν_k}[τ_v f] → 0 for all v, f
 
 For any v, f: both Z_{ν_k}[f] and Z_{ν_k}[τ_v f] converge to Z_μ[f] and Z_μ[τ_v f]
-respectively. Since Z_{ν_k}[f] = Z_{ν_k}[τ_v f] eventually, the limits are equal. -/
+respectively. Since the difference tends to zero, the limits are equal. -/
 theorem translation_invariance_continuum (P : InteractionPolynomial)
     (mass : ℝ) (_hmass : 0 < mass)
     (μ : Measure (Configuration (ContinuumTestFunction 2)))
@@ -403,8 +403,8 @@ theorem translation_invariance_continuum (P : InteractionPolynomial)
     (h_limit : IsPphi2Limit μ P mass) :
     ∀ (v : EuclideanSpace ℝ (Fin 2)) (f : TestFunction2),
     generatingFunctional μ f = generatingFunctional μ (SchwartzMap.translate v f) := by
-  rcases h_limit with ⟨a, ν, hprob, _ha_tend, _ha_pos, _hmom, _hneg, hcf, hlat, _hweakconv,
-    _happrox_os3⟩
+  rcases h_limit with ⟨a, ν, hprob, _ha_tend, _ha_pos, _ha_le, _hconcrete, _hmom, _hneg,
+    hcf, hlat, _hweakconv, _happrox_os3⟩
   intro v f
   -- SchwartzMap.translate v f = schwartzTranslate 2 v f (same definition)
   have htranslate_eq : SchwartzMap.translate v f = schwartzTranslate 2 v f := rfl
@@ -413,13 +413,18 @@ theorem translation_invariance_continuum (P : InteractionPolynomial)
   have lim_f := hcf f
   -- Z_{ν_k}[τ_v f] → Z_μ[τ_v f]
   have lim_tv := hcf (schwartzTranslate 2 v f)
-  -- Z_{ν_k}[f] = Z_{ν_k}[τ_v f] eventually
-  have h_ev := hlat v f
+  -- Z_{ν_k}[f] - Z_{ν_k}[τ_v f] → 0 asymptotically
+  have h_defect := hlat v f
   -- Generating functional = integral of exp(i·ω(·))
   change ∫ ω : FieldConfig2, Complex.exp (Complex.I * ↑(ω f)) ∂μ =
        ∫ ω : FieldConfig2, Complex.exp (Complex.I * ↑(ω (schwartzTranslate 2 v f))) ∂μ
-  -- Both sequences have the same limit, since they're eventually equal
-  exact tendsto_nhds_unique_of_eventuallyEq lim_f lim_tv h_ev
+  have h_diff := lim_f.sub lim_tv
+  have h_zero :
+      (∫ ω : FieldConfig2, Complex.exp (Complex.I * ↑(ω f)) ∂μ) -
+        (∫ ω : FieldConfig2,
+          Complex.exp (Complex.I * ↑(ω (schwartzTranslate 2 v f))) ∂μ) = 0 :=
+    tendsto_nhds_unique h_diff h_defect
+  exact sub_eq_zero.mp h_zero
 
 /-! ## Ward identity for rotations
 
@@ -767,8 +772,8 @@ theorem os3_for_continuum_limit (P : InteractionPolynomial)
     (hμ : IsProbabilityMeasure μ)
     (h_limit : IsPphi2Limit μ P mass) :
     @OS3_ReflectionPositivity μ hμ := by
-  rcases h_limit with ⟨_a, ν, _hprob, _ha_tend, _ha_pos, _hmom, _hneg, hcf, _hlat, _hweakconv,
-    happrox_os3⟩
+  rcases h_limit with ⟨_a, ν, _hprob, _ha_tend, _ha_pos, _ha_le, _hconcrete, _hmom, _hneg,
+    hcf, _hlat, _hweakconv, happrox_os3⟩
   intro n f c
   simp only [EuclideanOS.generatingFunctional]
   have hentry :

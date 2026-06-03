@@ -354,6 +354,14 @@ def IsPphi2Limit
     (∀ k, IsProbabilityMeasure (ν k)) ∧
     Filter.Tendsto a Filter.atTop (nhds 0) ∧
     (∀ k, 0 < a k) ∧
+    (∀ k, a k ≤ 1) ∧
+    (∃ (N : ℕ → ℕ) (hN_pos : ∀ k, 0 < N k) (ha_pos : ∀ k, 0 < a k)
+      (hmass : 0 < _mass),
+      Filter.Tendsto N Filter.atTop Filter.atTop ∧
+      Filter.Tendsto (fun k => (N k : ℝ) * a k) Filter.atTop Filter.atTop ∧
+      ∀ k,
+        letI : NeZero (N k) := ⟨Nat.ne_of_gt (hN_pos k)⟩
+        ν k = continuumMeasure 2 (N k) _P (a k) _mass (ha_pos k) hmass) ∧
     (∀ (n : ℕ) (f : Fin n → TestFunction2),
       Filter.Tendsto
         (fun k => ∫ ω : FieldConfig2, ∏ i, ω (f i) ∂(ν k))
@@ -372,17 +380,18 @@ def IsPphi2Limit
         Filter.atTop
         (nhds (∫ ω : FieldConfig2,
           Complex.exp (Complex.I * ↑(ω f)) ∂μ))) ∧
-    -- Lattice translation invariance: for any translation vector v, the
-    -- characteristic functional of ν_k is eventually invariant under τ_v.
-    -- This holds because the lattice spacings a_k → 0 can be chosen so that
-    -- for any v, v is eventually a lattice vector (e.g., dyadic a_k = 2^{-k}).
-    -- Inherited from `latticeMeasure_translation_invariant` via embedding.
+    -- Asymptotic translation invariance of the embedded lattice measures.
+    -- Finite lattices are exactly invariant only under lattice translations,
+    -- so arbitrary continuum translations are recorded by a vanishing
+    -- characteristic-functional defect, not by eventual exact equality.
     (∀ (v : SpaceTime2) (f : TestFunction2),
-      ∀ᶠ k in Filter.atTop,
+      Filter.Tendsto
+        (fun k =>
         ∫ ω : FieldConfig2,
-          Complex.exp (Complex.I * ↑(ω f)) ∂(ν k) =
+          Complex.exp (Complex.I * ↑(ω f)) ∂(ν k) -
         ∫ ω : FieldConfig2,
-          Complex.exp (Complex.I * ↑(ω (schwartzTranslate 2 v f))) ∂(ν k)) ∧
+          Complex.exp (Complex.I * ↑(ω (schwartzTranslate 2 v f))) ∂(ν k))
+        Filter.atTop (nhds 0)) ∧
     -- Weak convergence for bounded continuous functions:
     -- ∫ g dν_k → ∫ g dμ for all bounded continuous g : Configuration → ℝ.
     -- This follows from Prokhorov's theorem (`prokhorov_configuration`).

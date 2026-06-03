@@ -3,18 +3,14 @@
 Three live routes + one preserved route. All share the interacting-measure
 framework `dμ_V = (1/Z) exp(-V) dμ_free` (`InteractingMeasure/General.lean`).
 
-**Current state** (`scripts/count_axioms.sh`, 2026-05-08, on
-`fix/lattice-action-normalization`):
-**pphi2 total: 17 axioms, 0 sorries. pinned Lake GaussianField: 5 axioms, 1 sorry.**
+**Current state** (`scripts/count_axioms.sh`, 2026-06-02):
+**pphi2 total: 18 axioms, 0 sorries. pinned Lake GaussianField: 3 axioms, 0 sorries.**
 
-The 4-axiom delta over `main` (which is at 15) is the surviving
-Stage 1 GJ-aligned cohort introduced when the lattice action was renormalised
-to the Glimm–Jaffe convention `S = (a^d/2)⟨φ, M_a φ⟩`. 9 of the original
-11 Stage 1 axioms have been discharged in Phase 2 (**Cluster B complete**:
-both symmetric and asymmetric uniform-bound pairs proved via the
-`(a^d)⁻¹ · a_geom² = 1` cancellation; the asym side now has its own
-GJ-aligned embedding `evalAsymAtFinSiteGJ` mirroring `evalTorusAtSiteGJ`).
-Remaining 4 are all in **Cluster A** (Nelson dynamical-cutoff family).
+The Stage 1 GJ-aligned cohort introduced when the lattice action was
+renormalised to the Glimm–Jaffe convention `S = (a^d/2)⟨φ, M_a φ⟩` has been
+substantially discharged. Cluster B is complete, the PR #32 theorem conversions
+have been replayed locally, origin's cylinder/isotropic layer is now on `main`,
+and the remaining live axioms are tracked in `docs/AXIOM_STATUS.md`.
 
 Recent reductions (this branch):
 
@@ -101,7 +97,8 @@ structurally assembled, conditional on the remaining axioms.
 - `gaussianContinuumMeasures_tight` — **PROVED** for `d > 0`
 - `prokhorov_configuration_sequential` — **PROVED** via gaussian-field
 - `continuumLimit` (subsequential Prokhorov extraction) — **PROVED**
-- `pphi2_limit_exists` — proved, currently using a trivial δ₀ witness
+- `pphi2_limit_exists` — **AXIOM**: honest coupled UV/IR construction from
+  concrete approximants; the former trivial δ₀ witness path has been removed
 
 ---
 

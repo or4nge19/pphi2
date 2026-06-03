@@ -16,38 +16,38 @@ and backend-independent reconstruction rules. This keeps the current scalar
 positive-measure construction explicit while opening a path to broader
 Euclidean/Minkowski interfaces.
 
-**Current counter (`./scripts/count_axioms.sh`, 2026-06-02): pphi2 22 raw axioms, 0 sorries;
-gaussian-field 3 axioms, 0 sorries** (both verified via `count_axioms.sh`, GaussianField pinned at
-`5bb35e8`). `main` now subsumes the former `cylinder-isotropic-lattice` branch (Phase-2/3 cylinder
-construction, isotropic files wired into `Pphi2.lean`), which is why the raw count is up from the
-pre-cylinder base. `measure_determined_by_schwinger` was **discharged 2026-06-02** (Bridge axiom →
-theorem via `MeasureUniqueness.measure_eq_of_moments`). The remaining genuinely-critical input is
-one deep-think-vetted isotropic-redesign axiom:
-`asymInteracting_expMoment_volume_uniform`
-(`AsymTorus/AsymContinuumLimit.lean`, the volume-uniform interacting exp-moment — the genuine
-cluster-expansion input). [`wickConstantAsym_eq_variance` was a third isotropic axiom, **discharged
-2026-05-27** → theorem in `AsymTorus/AsymWickVariance.lean`, algebraic circulant route.
-`asymChaosCutoffDecomposition` was the second, **discharged 2026-05-31** → theorem in
-`AsymTorus/AsymNelson.lean` via UNIT 7 (trivial split + pushforward + UNIT 2 smooth lower
-bound + UNIT 6 polynomial-chaos negative-tail wrapper). **Layer B1 of the last-axiom
-discharge architecture** complete 2026-05-31: cylinder transfer matrix (`AsymL2Operator.lean`,
-`AsymJentzsch.lean`, `AsymPositivity.lean`) + Layer-B1 variance bound (`AsymVarianceBound.lean`).
-Remaining: Layer A (Newman MGF via new `lee-yang` repo, scaffolded), Layer B2
-(Lt-uniformity via chessboard, deferred), Layer C (~50-line assembly).]
-gaussian-field **3** (the Phase-1b `AsymCovariance` convergence
-`lattice_green_tendsto_continuum_asym` added 0 axioms), with GaussianField pinned at `5bb35e8`.
-Phase 3 produces `MeasureHasGreenMomentBound` as a theorem (per `Lt`) and, via the three axioms,
-`cylinderIso_OS_of_RP_OS2`: cylinder `S¹(Ls)×ℝ` OS0/OS1/OS2/OS3 conditional only on the separate
-reflection-positivity and OS2-symmetry inputs. The generic Gaussian exp-moment lemma
-`GaussianField.gaussian_exp_abs_moment` and the weak-limit transfer
-`GaussianField.weakLimit_exponential_moment` are theorems (0 axioms). See
-`docs/cylinder-conditional-inputs-provability.md` for the input-by-input provability map. pphi2 also depends on markov-semigroups and gaussian-hilbert (axiom counts
+**Current counter (`./scripts/count_axioms.sh`, 2026-06-02): 18 axioms (17 public + 1
+`private`), 0 sorries** (pphi2)
+**+ 3 axioms, 0 sorries** (gaussian-field) = **21 combined** (both verified via
+`count_axioms.sh` after pulling `origin/main`). `main` now subsumes the former
+`cylinder-isotropic-lattice` branch (Phase-2/3 cylinder construction, isotropic
+files wired into `Pphi2.lean`). `measure_determined_by_schwinger` was
+**discharged 2026-06-02** (Bridge axiom → theorem via
+`MeasureUniqueness.measure_eq_of_moments`), and
+`asymTorusInteracting_exponentialMomentBound` is theorem-derived from the
+cutoff exponential-moment bound, uniform second-moment estimate, and weak-limit
+transfer lemma. The current active AsymTorus inputs are
+`asymInteracting_expMoment_volume_uniform`,
+`asymInteracting_mgf_gaussianDominated`, and
+`asymInteractingVariance_le_freeVariance_Lt_uniform`. pphi2 also depends on
+markov-semigroups and gaussian-hilbert (axiom counts
 track `main` — see [`docs/AXIOM_STATUS.md`](docs/AXIOM_STATUS.md) and each repo's own
 `AXIOM_AUDIT.md`) for the upstream `polynomial_chaos_concentration` API used by Cluster A, and now
 on [`gibbs-variational`](https://github.com/mrdouglasny/gibbs-variational) (0 axioms, 1
 off-critical-path `sorry`) for the finite-dim Boué–Dupuis bound that will discharge the cylinder
 CYL-1a Green-moment input. See [`docs/AXIOM_STATUS.md`](docs/AXIOM_STATUS.md) for the canonical
-inventory (refreshed 2026-05-22).
+inventory (refreshed 2026-06-02).
+
+Recent change (2026-06-02): PR #32's two code discharges were replayed and
+verified locally. `measure_determined_by_schwinger` is now a theorem via the
+general moment-determinacy API in `TorusContinuumLimit/MeasureUniqueness.lean`,
+and `asymTorusInteracting_exponentialMomentBound` is now a private theorem using
+the reusable weak-limit exponential-moment transfer lemma. The abstract
+`IsPphi2Limit` marker was strengthened with concrete lattice approximants, so
+the old `δ₀` witness path for `pphi2_limit_exists` is gone; the construction is
+now an explicit axiom pending the coupled UV/IR Prokhorov proof, and
+`canonical_continuumMeasure_cf_tendsto` is a theorem extracted from the concrete
+limit certificate.
 
 Recent change (2026-05-08, post PR #14 merge): **5 Stage 1 GJ axioms
 discharged in Phase 2** plus three additional pphi2 axioms cleared by
@@ -238,10 +238,10 @@ itself is a theorem via `embeddedTwoPoint_eq_latticeGreenBilinear`.
 | 3 | `OSProofs/OS4_MassGap.lean` | 2 axioms, 0 sorries |
 | 3 | `OSProofs/OS4_Ergodicity.lean` | 0 axioms, 0 sorries |
 | 4 | `ContinuumLimit/Embedding.lean` | 0 axioms (`IsPphi2Limit` is a def) |
-| 4 | `ContinuumLimit/Hypercontractivity.lean` | 1 axiom, 0 sorries (Stage 1: `exponential_moment_bound` axiomatised — uniform-in-`a≤1` claim no longer holds via the easy pointwise lower bound under GJ-aligned wickConstant; Phase 2). `wickConstant_eq_variance` updated to use `latticeCovarianceGJ` via the bridge `latticeCovariance_GJ_eq_inv_smul_bare`. |
+| 4 | `ContinuumLimit/Hypercontractivity.lean` | 0 axioms, 0 sorries. |
 | 4 | `ContinuumLimit/Tightness.lean` | **0 axioms, 0 sorries** (`continuumMeasures_tight` proved from Mitoma-Chebyshev + `interacting_moment_bound`) |
-| 4 | `ContinuumLimit/Convergence.lean` | 1 axiom, 0 sorries (`continuumLimit` and `pphi2_limit_exists` proved) |
-| 4 | `ContinuumLimit/AxiomInheritance.lean` | **3 axioms, 0 sorries** (`continuum_exponential_moment_bound`, `canonical_continuumMeasure_cf_tendsto`, `continuum_exponential_clustering`; derived OS0/OS1/OS4 inheritance wrappers live here) |
+| 4 | `ContinuumLimit/Convergence.lean` | 2 axioms, 0 sorries (`continuumLimit_nonGaussian`, `pphi2_limit_exists`; `pphi2_limit_exists` is now an honest concrete-construction input, not a `δ₀` theorem) |
+| 4 | `ContinuumLimit/AxiomInheritance.lean` | **2 axioms, 0 sorries** (`continuum_exponential_moment_bound`, `continuum_exponential_clustering`; `canonical_continuumMeasure_cf_tendsto` is now a theorem from the strengthened limit certificate) |
 | 4 | `ContinuumLimit/CharacteristicFunctional.lean` | 0 axioms, 0 sorries (complex analyticity, complex-from-real invariance, Z₂/reality, translation continuity, ergodicity support) |
 | 4 | `ContinuumLimit/TimeReflection.lean` | 0 axioms, 0 sorries (continuum time reflection on Schwartz space and distributions) |
 | 4 | `ContinuumLimit/RPTransfer.lean` | 0 axioms, 0 sorries (intertwining proved, signedVal) |
@@ -275,14 +275,14 @@ itself is a theorem via `embeddedTwoPoint_eq_latticeGreenBilinear`.
 | 4T | `TorusContinuumLimit/TorusInteractingOS.lean` | **0 axioms**, 0 sorries (Phase 2 Cluster B partial 2026-05-08: `torusEmbeddedTwoPoint_le_seminorm` discharged via the symmetric-torus tight bound `torusEmbeddedTwoPoint_le_seminorm_tight`). |
 | 4T | `TorusContinuumLimit/MeasureUniqueness.lean` | 0 axioms, 0 sorries |
 | 4T | `TorusContinuumLimit/TorusNuclearBridge.lean` | 0 axioms, 0 sorries |
-| 4T | `NelsonEstimate/NelsonEstimate.lean` | 1 axiom, 0 sorries (Stage 1: `nelson_exponential_estimate_lattice` axiomatised — easy pointwise-bound proof breaks under GJ; genuine proof via Glimm–Jaffe Ch. 8 dynamical cutoff is Phase 2). |
+| 4T | `NelsonEstimate/NelsonEstimate.lean` | 0 axioms, 0 sorries. |
 | 4T | `NelsonEstimate/CovarianceSplit.lean` | **0 axioms, 0 sorries** (Phase 2 partial discharge 2026-05-07: `roughCovariance_sq_summable` and `smoothVariance_le_log` (trivial-`C`-form) both axiom → proved theorem). |
-| 4T | `NelsonEstimate/FieldDecomposition.lean` | 0 axioms, 2 sorries (the canonical smooth/rough self-moment helper lemmas are proved; the remaining `canonicalSumFieldFunction_covariance` and `canonicalSumFieldFunction_covariance_eq_GJ` assembly proofs still need the integral-splitting step and the `massEigenvalues`/`latticeEigenvalue` bridge). |
+| 4T | `NelsonEstimate/FieldDecomposition.lean` | 0 axioms, 0 sorries. |
 | 4T | `NelsonEstimate/{SmoothLowerBound,RoughErrorBound}.lean` | 0 axioms, 0 sorries (Phase 2 infrastructure, ready to wire into the real Nelson proof). |
 | B' | `AsymTorus/AsymTorusEmbedding.lean` | 0 axioms, 0 sorries |
-| B' | `AsymTorus/AsymTorusInteractingLimit.lean` | 1 axiom, 0 sorries (`asymNelson_exponential_estimate` only — Cluster A Nelson estimate; Phase 2 Cluster B complete 2026-05-08: `asymGaussian_second_moment_uniform_bound` discharged via the new `evalAsymAtFinSiteGJ` GJ asym embedding). |
-| B' | `AsymTorus/AsymTorusOS.lean` | 1 axiom, 0 sorries (`asymTorusInteracting_exponentialMomentBound` only — Cluster A; Phase 2 Cluster B complete 2026-05-08: `asymGf_sub_norm_le_seminorm` discharged via the same `(a²)⁻¹·a_geom² = 1` cancellation pattern as the symmetric pair). |
-| 6 | `Bridge.lean` | 3 axioms, 0 sorries |
+| B' | `AsymTorus/AsymTorusInteractingLimit.lean` | 0 axioms, 0 sorries. |
+| B' | `AsymTorus/AsymTorusOS.lean` | 0 axioms, 0 sorries (`asymTorusInteracting_exponentialMomentBound` discharged 2026-06-02 via cutoff exp moment + uniform second moment + generic BC weak-limit transfer). |
+| 6 | `Bridge.lean` | 2 axioms, 0 sorries (`measure_determined_by_schwinger` discharged 2026-06-02) |
 | B'IR | `IRLimit/Periodization.lean` | 0 axioms, 0 sorries (re-exports from gaussian-field) |
 | B'IR | `IRLimit/CylinderEmbedding.lean` | **0 axioms, 0 sorries** (intertwining proved via NTP pure tensor density) |
 | B'IR | `IRLimit/CovarianceConvergence.lean` | 0 axioms, 0 sorries (spectral decompositions, pullback measures, basis machinery) |
@@ -624,9 +624,9 @@ Note: `os1_inheritance` is a theorem (not axiom) — OS1 transfers trivially sin
 | ~~`norm_generatingFunctional_le_one`~~ | CharacteristicFunctional | ✅ **Proved** | ‖Z[f]‖ ≤ 1 from norm_integral ≤ ∫ norm + ‖exp(ix)‖=1. |
 | ~~`os4_clustering_implies_ergodicity`~~ | CharacteristicFunctional | ✅ **Proved** | OS4_Clustering → OS4_Ergodicity via reality of Z + Cesàro convergence. |
 | ~~`latticeMeasure_translation_invariant`~~ | OS2_WardIdentity | ~~Medium~~ | **Proved** — density bridge + change of variables. BW and ρ invariant under translation, Lebesgue measure preserved by `piCongrLeft`. |
-| ~~`translation_invariance_continuum`~~ | OS2_WardIdentity | ~~Medium~~ | **Proved** — strengthened `IsPphi2Limit` with `cf_tendsto` + `lattice_inv` fields; continuum invariance via `tendsto_nhds_unique_of_eventuallyEq`. |
+| ~~`translation_invariance_continuum`~~ | OS2_WardIdentity | ~~Medium~~ | **Proved** — strengthened `IsPphi2Limit` with `cf_tendsto` + asymptotic translation-defect convergence; continuum invariance via uniqueness of the limiting defect. |
 | `rotation_cf_defect_polylog_bound` | OS2_WardIdentity | Hard | Remaining OS2 axiom: one-point super-renormalizable bound on the canonical characteristic-functional defect `rotationCFDefect`, uniform in the lattice size `N` and scaling like `C·a²·(1+|log a|)^p`. |
-| `canonical_continuumMeasure_cf_tendsto` | AxiomInheritance | Hard | Coupled UV/IR bridge: canonical `continuumMeasure 2 (N n) P (a n) mass` approximants converge in characteristic functionals to `μ` along `a_n → 0`, `N_n → ∞`, and physical volume `(N_n : ℝ) * a_n → ∞`. |
+| ~~`canonical_continuumMeasure_cf_tendsto`~~ | AxiomInheritance | ✅ **Proved** | Extracted from the strengthened `IsPphi2Limit` certificate, which now records concrete `continuumMeasure 2 (N n) P (a n) mass` approximants. |
 | `continuum_exponential_moment_bound` | AxiomInheritance | Hard | Project-level continuum exponential-moment bridge `∫ exp(|ω f|) dμ ≤ exp(c₁∫|f| + c₂ G(f,f))`. Single remaining OS0/OS1 analytic input. |
 | ~~`analyticOn_generatingFunctionalC`~~ | CharacteristicFunctional | ~~Medium~~ | **Proved** — via `analyticOnNhd_integral`, the finite-source pairing rewrite, and compact domination from exponential moments of `schwartzRe`/`schwartzIm`. |
 | ~~`continuum_exponential_moments`~~ | AxiomInheritance | ~~Hard~~ | **Proved** — derived by scaling from `continuum_exponential_moment_bound`. Feeds OS0 + OS1. |
@@ -669,7 +669,7 @@ Note: `os1_inheritance` is a theorem (not axiom) — OS1 transfers trivially sin
 | ~~`pphi2_nonGaussian`~~ | Main | **Proved** | Uses `pphi2_nonGaussianity` axiom. |
 | `pphi2_nontriviality` | Main | Hard | ∫ (ω f)² dμ > 0 for all f ≠ 0. Correlation inequalities (Griffiths, FKG). |
 | ~~`pphi2_nonGaussianity`~~ | Main | **PROVED** | Proved from `continuumLimit_nonGaussian` by providing a fixed sequence `aₙ = 1/(n+1)`. |
-| ~~`measure_determined_by_schwinger`~~ | Bridge | **PROVED** | Discharged 2026-06-02 → theorem via `MeasureUniqueness.measure_eq_of_moments` (finite exp-moments ⇒ entire MGF ⇒ Cramér–Wold). |
+| ~~`measure_determined_by_schwinger`~~ | Bridge | ✅ **Proved** | Discharged via general moment determinacy with finite exponential moments in `TorusContinuumLimit/MeasureUniqueness.lean`. |
 | ~~`wick_constant_comparison`~~ | ~~Bridge~~ | — | **Removed** — duplicate of `wickConstant_log_divergence`, moved to Unused/. |
 | `same_continuum_measure` | Bridge | Medium | pphi2 and Phi4 constructions agree at weak coupling. Requires `IsPphi2ContinuumLimit`, `IsPhi4ContinuumLimit`, `IsWeakCoupling`. |
 | `os2_from_phi4` | Bridge | Medium | OS2 for Phi4 continuum limit. Requires `IsPhi4ContinuumLimit` hypothesis. |
@@ -859,7 +859,7 @@ infrastructure. Assessment date: 2026-03-04.
 | ~~`transferOperator_isCompact`~~ | L2Operator | **PROVED** from `hilbert_schmidt_isCompact` (proved) + `transferWeight_memLp_two` + `transferGaussian_norm_le_one`. |
 | ~~`hilbert_schmidt_isCompact`~~ | L2Operator | **PROVED** from `integral_operator_l2_kernel_compact` + `tensor_kernel_memLp` + `mul_conv_integral_rep`. |
 | ~~`integral_operator_l2_kernel_compact`~~ | L2Operator | **PROVED** — general HS theorem for convolution-form L² kernel integral operators. Reed-Simon I, Thm VI.23. |
-| ~~`translation_invariance_continuum`~~ | OS2_WardIdentity | **Proved** — `tendsto_nhds_unique_of_eventuallyEq` from `cf_tendsto` + `lattice_inv`. |
+| ~~`translation_invariance_continuum`~~ | OS2_WardIdentity | **Proved** — characteristic-functional convergence plus asymptotic translation-defect convergence; the limit defect is zero by `tendsto_nhds_unique`. |
 | `analyticOn_generatingFunctionalC` | CharacteristicFunctional | Analyticity of complex generating functional from exponential moments via Morera. |
 | `continuum_exponential_moment_bound` | AxiomInheritance | Mixed `L¹`/Green exponential-moment input `∫ exp(|ω f|) ≤ exp(c₁∫|f| + c₂ G(f,f))` for OS0 + OS1. |
 | `os3_inheritance` | AxiomInheritance | RP transfers through weak limits. From `lattice_rp_matrix` + `rp_closed_under_weak_limit` (proved). |
@@ -880,7 +880,7 @@ infrastructure. Assessment date: 2026-03-04.
 | ~~`wickConstant_eq_variance`~~ | Hypercontractivity | **Theorem** (generic proof via `GeneralResults/LatticeProductDFT.lean`; 2D corollary retained in `Hypercontractivity.lean`). |
 | ~~`gaussian_hermite_zero_mean`~~ | Hypercontractivity | **Theorem** (see `GaussianHermiteMean.lean`). |
 | ~~`wickPolynomial_uniform_bounded_below`~~ | WickPolynomial | ✅ **Proved** via coefficient continuity + compactness + leading term dominance. |
-| `canonical_continuumMeasure_cf_tendsto` | AxiomInheritance | Coupled canonical `continuumMeasure` approximants converge CF-wise to `μ`; bridge needed to apply the Ward anomaly bound to an abstract `IsPphi2Limit`. |
+| ~~`canonical_continuumMeasure_cf_tendsto`~~ | AxiomInheritance | **Proved** from the strengthened concrete `IsPphi2Limit` certificate. |
 | `continuum_exponential_clustering` | AxiomInheritance | Spectral gap → exponential clustering in continuum. |
 
 ### Tier 5: Very hard / infrastructure gaps
@@ -897,7 +897,7 @@ infrastructure. Assessment date: 2026-03-04.
 | `schwinger_agreement` | Bridge | Cluster expansion uniqueness (Guerra-Rosen-Simon). |
 | `same_continuum_measure` | Bridge | pphi2 and Phi4 agree at weak coupling. |
 | `os2_from_phi4` | Bridge | OS2 for Phi4 continuum limit. |
-| ~~`measure_determined_by_schwinger`~~ | Bridge | **Discharged** to a theorem (see `MeasureUniqueness.measure_eq_of_moments`). |
+| ~~`measure_determined_by_schwinger`~~ | Bridge | **Proved** via general moment determinacy with finite exponential moments. |
 | `two_point_clustering_from_spectral_gap` | OS4_MassGap | 2-point clustering from mass gap with cyclic torus time separation. |
 | `general_clustering_from_spectral_gap` | OS4_MassGap | Bounded observables; `G` on `latticeConfigEuclideanTimeShift`, decay measured in `latticeEuclideanTimeSeparation`. |
 | `second_moment_uniform` | Tightness | Uniform second moments for interacting measure. |

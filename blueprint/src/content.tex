@@ -1,7 +1,7 @@
-\chapter{Overview}
-This is the \emph{full} declaration-level dependency graph of \texttt{pphi2}
+nodes: 2492  with-summary: 305  chapters: 5
+eclaration-level dependency graph of \texttt{pphi2}
 together with its upstream dependencies in our own libraries
-(\texttt{gaussian-field}, \texttt{gaussian-hilbert}, \dots), covering 2472
+(\texttt{gaussian-field}, \texttt{gaussian-hilbert}, \dots), covering 2492
 declarations and their real dependency edges. Edges are \emph{extracted} from
 the compiled Lean environment (\texttt{scripts/BlueprintGraph.lean}), not
 hand-drawn. Informal statements are reused from \texttt{summary/**/*.md} where
@@ -3171,6 +3171,57 @@ available (otherwise the node shows its Lean name). Declarations flagged
   \uses{GaussianField-NuclearTensorProduct-instModuleReal, GaussianField-NuclearTensorProduct-instTopologicalSpace, GaussianField-nuclearTensorProduct-mapCLM, GaussianField-SmoothMap-Circle-instAddCommGroup, GaussianField-NuclearTensorProduct-instAddCommGroup, GaussianField-circleReflection, GaussianField-SmoothMap-Circle-instModule, GaussianField-SmoothMap-Circle-instContinuousSMul, GaussianField-smoothCircle-dyninMityaginSpace, GaussianField-SmoothMap-Circle-instIsTopologicalAddGroup, GaussianField-SmoothMap-Circle, GaussianField-TorusTestFunction, GaussianField-SmoothMap-Circle-instTopologicalSpace}
   \texttt{GaussianField.torusTimeReflection}
 \end{definition}
+\section{\texttt{Pphi2.TorusContinuumLimit.MeasureUniqueness}}
+\begin{theorem}[\texttt{measure\_eq\_of\_moments}]\label{GaussianField-measure-eq-of-moments}
+  \lean{GaussianField.measure_eq_of_moments}\leanok
+  \uses{GaussianField-DyninMityaginSpace, GaussianField-eval-map-eq-of-moments, GaussianField-pushforward-eq-of-eval-eq, GaussianField-configBasisEval-measurable, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, GaussianField-instMeasurableSpaceConfiguration-eq-comap, GaussianField-configBasisEval}
+  \texttt{GaussianField.measure\_eq\_of\_moments}
+\end{theorem}
+\begin{theorem}[\texttt{weakLimit\_centered\_gaussianReal}]\label{GaussianField-weakLimit-centered-gaussianReal}
+  \lean{GaussianField.weakLimit_centered_gaussianReal}\leanok
+  \uses{Lattice-toSemilatticeSup, Lattice-toSemilatticeInf}
+  The 1D marginals of the weak limit equal $N(0, G_L(f,f))$ for each test function $f$.
+\end{theorem}
+\begin{theorem}[\texttt{gaussian\_measure\_unique\_of\_covariance}]\label{GaussianField-gaussian-measure-unique-of-covariance}
+  \lean{GaussianField.gaussian_measure_unique_of_covariance}\leanok
+  \uses{GaussianField-DyninMityaginSpace, GaussianField-pushforward-eq-of-eval-eq, GaussianField-eval-map-eq-of-covariance, GaussianField-configBasisEval-measurable, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, GaussianField-instMeasurableSpaceConfiguration-eq-comap, GaussianField-configBasisEval}
+  Main theorem: Two centered Gaussian probability measures on Configuration($E$) with the same covariance are equal. Proved by pulling back from $\mathbb{R}^{\mathbb{N}}$ using \texttt{instMeasurableSpaceConfiguration\_eq\_comap}.
+\end{theorem}
+\begin{theorem}[\texttt{mgf\_at\_scaled}]\label{GaussianField-mgf-at-scaled}
+  \lean{GaussianField.mgf_at_scaled}\leanok
+  \uses{GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration}
+  For a Gaussian measure, $\int e^{t \omega(f)}\, d\mu = \exp(t^2 \sigma^2(f)/2)$ where $\sigma^2(f) = \int (\omega f)^2\, d\mu$.
+\end{theorem}
+\begin{theorem}[\texttt{eval\_map\_eq\_of\_covariance}]\label{GaussianField-eval-map-eq-of-covariance}
+  \lean{GaussianField.eval_map_eq_of_covariance}\leanok
+  \uses{GaussianField-configuration-eval-measurable, GaussianField-Configuration, GaussianField-mgf-at-scaled, GaussianField-instMeasurableSpaceConfiguration, Lattice-toSemilatticeInf}
+  Same covariance implies same 1D marginals for all test functions. Proved by matching real MGFs to \texttt{gaussianReal}, analytically continuing to complex MGFs via \texttt{eqOn\_complexMGF\_of\_mgf}, and applying \texttt{Measure.ext\_of\_complexMGF\_eq}.
+\end{theorem}
+\begin{theorem}[\texttt{integrable\_exp\_smul\_of\_integrable\_exp\_sq}]\label{GaussianField-integrable-exp-smul-of-integrable-exp-sq}
+  \lean{GaussianField.integrable_exp_smul_of_integrable_exp_sq}\leanok
+  \uses{GaussianField-configuration-eval-measurable, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, Lattice-toSemilatticeInf}
+  \texttt{GaussianField.integrable\_exp\_smul\_of\_integrable\_exp\_sq}
+\end{theorem}
+\begin{theorem}[\texttt{pushforward\_eq\_of\_eval\_eq}]\label{GaussianField-pushforward-eq-of-eval-eq}
+  \lean{GaussianField.pushforward_eq_of_eval_eq}\leanok
+  \uses{GaussianField-DyninMityaginSpace, GaussianField-configBasisEval-measurable, GaussianField-configuration-eval-measurable, GaussianField-Configuration, GaussianField-DyninMityaginSpace-basis, GaussianField-instMeasurableSpaceConfiguration, GaussianField-configBasisEval}
+  Equal 1D marginals for all $f : E$ imply equal pushforward measures on $\mathbb{R}^{\mathbb{N}}$ via \texttt{configBasisEval}. Proved by Cramer-Wold (\texttt{ext\_of\_charFunDual} for finite-dim marginals) + Kolmogorov uniqueness (\texttt{IsProjectiveLimit.unique}).
+\end{theorem}
+\begin{theorem}[\texttt{mgf\_eq\_of\_covariance}]\label{GaussianField-mgf-eq-of-covariance}
+  \lean{GaussianField.mgf_eq_of_covariance}\leanok
+  \uses{GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration}
+  If two Gaussian measures have the same covariance, their moment generating functions agree on all test functions: $\int e^{\omega(f)}\, d\mu_1 = \int e^{\omega(f)}\, d\mu_2$.
+\end{theorem}
+\begin{theorem}[\texttt{eval\_map\_eq\_gaussianReal}]\label{GaussianField-eval-map-eq-gaussianReal}
+  \lean{GaussianField.eval_map_eq_gaussianReal}\leanok
+  \uses{GaussianField-configuration-eval-measurable, GaussianField-Configuration, GaussianField-mgf-at-scaled, GaussianField-instMeasurableSpaceConfiguration, Lattice-toSemilatticeInf}
+  \texttt{GaussianField.eval\_map\_eq\_gaussianReal}
+\end{theorem}
+\begin{theorem}[\texttt{eval\_map\_eq\_of\_moments}]\label{GaussianField-eval-map-eq-of-moments}
+  \lean{GaussianField.eval_map_eq_of_moments}\leanok
+  \uses{GaussianField-configuration-eval-measurable, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration}
+  \texttt{GaussianField.eval\_map\_eq\_of\_moments}
+\end{theorem}
 \section{\texttt{SchwartzNuclear.HermiteTensorProduct}}
 \begin{theorem}[\texttt{hermiteFunctionNd\_unpair}]\label{GaussianField-hermiteFunctionNd-unpair}
   \lean{GaussianField.hermiteFunctionNd_unpair}\leanok
@@ -4910,42 +4961,6 @@ available (otherwise the node shows its Lean name). Declarations flagged
   \lean{GaussianField.hypercontractive_1d}\leanok
   \uses{GaussianField-hypercontractive-1d-even}
   \texttt{GaussianField.hypercontractive\_1d}
-\end{theorem}
-\section{\texttt{Pphi2.TorusContinuumLimit.MeasureUniqueness}}
-\begin{theorem}[\texttt{weakLimit\_centered\_gaussianReal}]\label{GaussianField-weakLimit-centered-gaussianReal}
-  \lean{GaussianField.weakLimit_centered_gaussianReal}\leanok
-  \uses{Lattice-toSemilatticeSup, Lattice-toSemilatticeInf}
-  The 1D marginals of the weak limit equal $N(0, G_L(f,f))$ for each test function $f$.
-\end{theorem}
-\begin{theorem}[\texttt{gaussian\_measure\_unique\_of\_covariance}]\label{GaussianField-gaussian-measure-unique-of-covariance}
-  \lean{GaussianField.gaussian_measure_unique_of_covariance}\leanok
-  \uses{GaussianField-DyninMityaginSpace, GaussianField-pushforward-eq-of-eval-eq, GaussianField-eval-map-eq-of-covariance, GaussianField-configBasisEval-measurable, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, GaussianField-instMeasurableSpaceConfiguration-eq-comap, GaussianField-configBasisEval}
-  Main theorem: Two centered Gaussian probability measures on Configuration($E$) with the same covariance are equal. Proved by pulling back from $\mathbb{R}^{\mathbb{N}}$ using \texttt{instMeasurableSpaceConfiguration\_eq\_comap}.
-\end{theorem}
-\begin{theorem}[\texttt{mgf\_at\_scaled}]\label{GaussianField-mgf-at-scaled}
-  \lean{GaussianField.mgf_at_scaled}\leanok
-  \uses{GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration}
-  For a Gaussian measure, $\int e^{t \omega(f)}\, d\mu = \exp(t^2 \sigma^2(f)/2)$ where $\sigma^2(f) = \int (\omega f)^2\, d\mu$.
-\end{theorem}
-\begin{theorem}[\texttt{eval\_map\_eq\_of\_covariance}]\label{GaussianField-eval-map-eq-of-covariance}
-  \lean{GaussianField.eval_map_eq_of_covariance}\leanok
-  \uses{GaussianField-configuration-eval-measurable, GaussianField-Configuration, GaussianField-mgf-at-scaled, GaussianField-instMeasurableSpaceConfiguration, Lattice-toSemilatticeInf}
-  Same covariance implies same 1D marginals for all test functions. Proved by matching real MGFs to \texttt{gaussianReal}, analytically continuing to complex MGFs via \texttt{eqOn\_complexMGF\_of\_mgf}, and applying \texttt{Measure.ext\_of\_complexMGF\_eq}.
-\end{theorem}
-\begin{theorem}[\texttt{pushforward\_eq\_of\_eval\_eq}]\label{GaussianField-pushforward-eq-of-eval-eq}
-  \lean{GaussianField.pushforward_eq_of_eval_eq}\leanok
-  \uses{GaussianField-DyninMityaginSpace, GaussianField-configBasisEval-measurable, GaussianField-configuration-eval-measurable, GaussianField-Configuration, GaussianField-DyninMityaginSpace-basis, GaussianField-instMeasurableSpaceConfiguration, GaussianField-configBasisEval}
-  Equal 1D marginals for all $f : E$ imply equal pushforward measures on $\mathbb{R}^{\mathbb{N}}$ via \texttt{configBasisEval}. Proved by Cramer-Wold (\texttt{ext\_of\_charFunDual} for finite-dim marginals) + Kolmogorov uniqueness (\texttt{IsProjectiveLimit.unique}).
-\end{theorem}
-\begin{theorem}[\texttt{mgf\_eq\_of\_covariance}]\label{GaussianField-mgf-eq-of-covariance}
-  \lean{GaussianField.mgf_eq_of_covariance}\leanok
-  \uses{GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration}
-  If two Gaussian measures have the same covariance, their moment generating functions agree on all test functions: $\int e^{\omega(f)}\, d\mu_1 = \int e^{\omega(f)}\, d\mu_2$.
-\end{theorem}
-\begin{theorem}[\texttt{eval\_map\_eq\_gaussianReal}]\label{GaussianField-eval-map-eq-gaussianReal}
-  \lean{GaussianField.eval_map_eq_gaussianReal}\leanok
-  \uses{GaussianField-configuration-eval-measurable, GaussianField-Configuration, GaussianField-mgf-at-scaled, GaussianField-instMeasurableSpaceConfiguration, Lattice-toSemilatticeInf}
-  \texttt{GaussianField.eval\_map\_eq\_gaussianReal}
 \end{theorem}
 \section{\texttt{Lattice.Convergence}}
 \begin{theorem}[\texttt{lattice\_green\_tendsto\_continuum}]\label{GaussianField-lattice-green-tendsto-continuum}
@@ -7523,15 +7538,15 @@ available (otherwise the node shows its Lean name). Declarations flagged
   \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, GaussianField-schwartz-dyninMityaginSpace, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, GaussianField-prokhorov-configuration, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, Pphi2-ContinuumTestFunction}
   Sequential Prokhorov extraction on configuration space, derived from \texttt{prokhorov\_sequential} using the two topological axioms.
 \end{theorem}
-\begin{theorem}[\texttt{pphi2\_limit\_exists}]\label{Pphi2-pphi2-limit-exists}
+\begin{theorem}[\texttt{pphi2\_limit\_exists} (axiom)]\label{Pphi2-pphi2-limit-exists}
   \lean{Pphi2.pphi2_limit_exists}\leanok
-  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-FieldConfig2, Pphi2-EuclideanPlaneBackground-RealTestFunction, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-IsPphi2Limit, Pphi2-SpaceTime2, GaussianField-configuration-measurable-of-eval-measurable, Pphi2-PositiveTimeTestFunction2, GaussianField-configuration-eval-measurable, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, Pphi2-TestFunction2, Pphi2-ContinuumTestFunction, Pphi2-compTimeReflection2, Pphi2-schwartzTranslate}
-  There exists a probability measure $\mu$ on $\mathcal{S}'(\mathbb{R}^2)$ satisfying \texttt{IsPphi2Limit}. Proved by constructing the Dirac measure at $0$ as a trivial witness.
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-IsPphi2Limit, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, Pphi2-ContinuumTestFunction}
+  There exists a probability measure $\mu$ on $\mathcal{S}'(\mathbb{R}^2)$ satisfying the strengthened concrete \texttt{IsPphi2Limit} certificate. This now requires coupled UV/IR approximants \texttt{continuumMeasure 2 (N\_k) P a\_k mass} with $a_k \to 0$, $N_k \to \infty$, and $N_k a_k \to \infty$; the former Dirac-measure witness path has been removed.
 \end{theorem}
 \section{\texttt{Pphi2.ContinuumLimit.Embedding}}
 \begin{definition}[\texttt{IsPphi2Limit}]\label{Pphi2-IsPphi2Limit}
   \lean{Pphi2.IsPphi2Limit}\leanok
-  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-FieldConfig2, Pphi2-EuclideanPlaneBackground-RealTestFunction, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-SpaceTime2, Pphi2-PositiveTimeTestFunction2, GaussianField-instMeasurableSpaceConfiguration, Pphi2-TestFunction2, Pphi2-ContinuumTestFunction, Pphi2-compTimeReflection2, Pphi2-schwartzTranslate}
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-FieldConfig2, Pphi2-EuclideanPlaneBackground-RealTestFunction, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-SpaceTime2, Pphi2-PositiveTimeTestFunction2, Pphi2-continuumMeasure, GaussianField-instMeasurableSpaceConfiguration, Pphi2-TestFunction2, Pphi2-ContinuumTestFunction, Pphi2-compTimeReflection2, Pphi2-schwartzTranslate}
   ``\texttt{lean def IsPphi2Limit \{d : ℕ\} (μ : Measure (Configuration (ContinuumTestFunction d))) (\_P : InteractionPolynomial) (\_mass : ℝ) : Prop }`` Marker predicate: $\mu$ is a $P(\varphi)_2$ continuum limit if there exist lattice spacings $a_k \to 0$ and measures $\nu_k$ with convergent Schwinger functions, $\mathbb{Z}_2$ symmetry, characteristic functional convergence, and lattice translation invariance.
 \end{definition}
 \begin{definition}[\texttt{latticeEmbed}]\label{Pphi2-latticeEmbed}
@@ -8374,9 +8389,9 @@ available (otherwise the node shows its Lean name). Declarations flagged
   \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-FieldConfig2, Pphi2-EuclideanPlaneBackground-RealTestFunction, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-IsPphi2Limit, GaussianField-Configuration, Pphi2-continuum-exponential-moment-bound, GaussianField-instMeasurableSpaceConfiguration, Pphi2-continuumGreenBilinear, Pphi2-TestFunction2}
   \texttt{Pphi2.continuum\_exponential\_moments}
 \end{theorem}
-\begin{theorem}[\texttt{canonical\_continuumMeasure\_cf\_tendsto} (axiom)]\label{Pphi2-canonical-continuumMeasure-cf-tendsto}
+\begin{theorem}[\texttt{canonical\_continuumMeasure\_cf\_tendsto}]\label{Pphi2-canonical-continuumMeasure-cf-tendsto}
   \lean{Pphi2.canonical_continuumMeasure_cf_tendsto}\leanok
-  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-FieldConfig2, Pphi2-EuclideanPlaneBackground-RealTestFunction, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-IsPphi2Limit, Pphi2-continuumMeasure, Pphi2-plane2Background, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, Pphi2-TestFunction2, Pphi2-ContinuumTestFunction, Pphi2-EuclideanOS-generatingFunctional}
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-FieldConfig2, Pphi2-EuclideanPlaneBackground-RealTestFunction, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-IsPphi2Limit, Pphi2-SpaceTime2, Pphi2-PositiveTimeTestFunction2, Pphi2-continuumMeasure, Pphi2-plane2Background, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, Pphi2-TestFunction2, Pphi2-ContinuumTestFunction, Pphi2-compTimeReflection2, Pphi2-EuclideanOS-generatingFunctional, Pphi2-schwartzTranslate}
   \texttt{Pphi2.canonical\_continuumMeasure\_cf\_tendsto}
 \end{theorem}
 \begin{theorem}[\texttt{exponential\_moment\_schwartz\_bound}]\label{Pphi2-exponential-moment-schwartz-bound}
@@ -8503,7 +8518,7 @@ available (otherwise the node shows its Lean name). Declarations flagged
 \section{\texttt{Pphi2.ContinuumLimit.CharacteristicFunctional}}
 \begin{theorem}[\texttt{pphi2\_measure\_neg\_invariant}]\label{Pphi2-pphi2-measure-neg-invariant}
   \lean{Pphi2.pphi2_measure_neg_invariant}\leanok
-  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-FieldConfig2, Pphi2-EuclideanPlaneBackground-RealTestFunction, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-IsPphi2Limit, Pphi2-SpaceTime2, Pphi2-PositiveTimeTestFunction2, GaussianField-instMeasurableSpaceConfiguration, Pphi2-TestFunction2, Pphi2-ContinuumTestFunction, Pphi2-compTimeReflection2, Pphi2-schwartzTranslate}
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-FieldConfig2, Pphi2-EuclideanPlaneBackground-RealTestFunction, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-IsPphi2Limit, Pphi2-SpaceTime2, Pphi2-PositiveTimeTestFunction2, Pphi2-continuumMeasure, GaussianField-instMeasurableSpaceConfiguration, Pphi2-TestFunction2, Pphi2-ContinuumTestFunction, Pphi2-compTimeReflection2, Pphi2-schwartzTranslate}
   \texttt{Pphi2.pphi2\_measure\_neg\_invariant}
 \end{theorem}
 \begin{theorem}[\texttt{complex\_gf\_invariant\_of\_real\_gf\_invariant}]\label{Pphi2-complex-gf-invariant-of-real-gf-invariant}
@@ -8659,7 +8674,7 @@ available (otherwise the node shows its Lean name). Declarations flagged
 \end{definition}
 \begin{theorem}[\texttt{os3\_for\_continuum\_limit}]\label{Pphi2-os3-for-continuum-limit}
   \lean{Pphi2.os3_for_continuum_limit}\leanok
-  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-FieldConfig2, Pphi2-EuclideanPlaneBackground-RealTestFunction, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-IsPphi2Limit, Pphi2-SpaceTime2, Pphi2-EuclideanTimeStructure-positiveTimeSubmodule, Pphi2-PositiveTimeTestFunction2, Pphi2-OS3-ReflectionPositivity, Pphi2-plane2Background, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, Pphi2-EuclideanTimeStructure-reflectOnRealTestFunctions, Pphi2-TestFunction2, Pphi2-ContinuumTestFunction, Pphi2-compTimeReflection2, Pphi2-EuclideanOS-generatingFunctional, Pphi2-plane2TimeStructure, Pphi2-schwartzTranslate, Pphi2-EuclideanPlaneBackground-Distribution}
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-FieldConfig2, Pphi2-EuclideanPlaneBackground-RealTestFunction, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-IsPphi2Limit, Pphi2-SpaceTime2, Pphi2-EuclideanTimeStructure-positiveTimeSubmodule, Pphi2-PositiveTimeTestFunction2, Pphi2-OS3-ReflectionPositivity, Pphi2-continuumMeasure, Pphi2-plane2Background, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, Pphi2-EuclideanTimeStructure-reflectOnRealTestFunctions, Pphi2-TestFunction2, Pphi2-ContinuumTestFunction, Pphi2-compTimeReflection2, Pphi2-EuclideanOS-generatingFunctional, Pphi2-plane2TimeStructure, Pphi2-schwartzTranslate, Pphi2-EuclideanPlaneBackground-Distribution}
   \texttt{Pphi2.os3\_for\_continuum\_limit}
 \end{theorem}
 \begin{theorem}[\texttt{anomaly\_vanishes}]\label{Pphi2-anomaly-vanishes}
@@ -8694,7 +8709,7 @@ available (otherwise the node shows its Lean name). Declarations flagged
 \end{definition}
 \begin{theorem}[\texttt{translation\_invariance\_continuum}]\label{Pphi2-translation-invariance-continuum}
   \lean{Pphi2.translation_invariance_continuum}\leanok
-  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-FieldConfig2, Pphi2-generatingFunctional, Pphi2-EuclideanPlaneBackground-RealTestFunction, Pphi2-planeBackground, Pphi2-SchwartzMap-translate, Pphi2-EuclideanPlaneBackground-dim, Pphi2-IsPphi2Limit, Pphi2-SpaceTime2, Pphi2-PositiveTimeTestFunction2, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, Pphi2-TestFunction2, Pphi2-ContinuumTestFunction, Pphi2-compTimeReflection2, Pphi2-schwartzTranslate}
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-FieldConfig2, Pphi2-generatingFunctional, Pphi2-EuclideanPlaneBackground-RealTestFunction, Pphi2-planeBackground, Pphi2-SchwartzMap-translate, Pphi2-EuclideanPlaneBackground-dim, Pphi2-IsPphi2Limit, Pphi2-SpaceTime2, Pphi2-PositiveTimeTestFunction2, Pphi2-continuumMeasure, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, Pphi2-TestFunction2, Pphi2-ContinuumTestFunction, Pphi2-compTimeReflection2, Pphi2-schwartzTranslate}
   \texttt{Pphi2.translation\_invariance\_continuum}
 \end{theorem}
 \begin{theorem}[\texttt{massOperator\_translation\_commute}]\label{Pphi2-massOperator-translation-commute}
@@ -8981,6 +8996,11 @@ available (otherwise the node shows its Lean name). Declarations flagged
   \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-continuumGreenBilinear, Pphi2-ContinuumTestFunction, Lattice-toSemilatticeInf}
   \texttt{Pphi2.continuumGreenBilinear\_le\_mass\_inv\_sq}
 \end{theorem}
+\begin{theorem}[\texttt{latticeGreenBilinear\_basis\_tendsto\_continuum\_of\_uv\_ir}]\label{Pphi2-latticeGreenBilinear-basis-tendsto-continuum-of-uv-ir}
+  \lean{Pphi2.latticeGreenBilinear_basis_tendsto_continuum_of_uv_ir}\leanok
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, GaussianField-DyninMityaginSpace-basis, Pphi2-latticeGreenBilinear, Pphi2-continuumGreenBilinear, Pphi2-ContinuumTestFunction}
+  \texttt{Pphi2.latticeGreenBilinear\_basis\_tendsto\_continuum\_of\_uv\_ir}
+\end{theorem}
 \begin{theorem}[\texttt{latticeGreenBilinear\_basis\_tendsto\_continuum} (axiom)]\label{Pphi2-latticeGreenBilinear-basis-tendsto-continuum}
   \lean{Pphi2.latticeGreenBilinear_basis_tendsto_continuum}\leanok
   \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, GaussianField-DyninMityaginSpace-basis, Pphi2-latticeGreenBilinear, Pphi2-continuumGreenBilinear, Pphi2-ContinuumTestFunction}
@@ -9253,6 +9273,85 @@ available (otherwise the node shows its Lean name). Declarations flagged
   \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-EuclideanPlaneBackground-RealTestFunction, Pphi2-EuclideanPlaneBackground-dim, Pphi2-EuclideanPlaneBackground-Motion, Pphi2-EuclideanPlaneBackground, Pphi2-EuclideanPlaneBackground-actionComplex, Pphi2-EuclideanOS-generatingFunctional-, GaussianField-instMeasurableSpaceConfiguration, Pphi2-EuclideanPlaneBackground-ComplexTestFunction, Pphi2-EuclideanPlaneBackground-Distribution}
   \texttt{Pphi2.EuclideanOS.OS2\_EuclideanInvariance}
 \end{definition}
+\section{\texttt{Pphi2.Bridge}}
+\begin{definition}[\texttt{isPhi4}]\label{Pphi2-Bridge-isPhi4}
+  \lean{Pphi2.Bridge.isPhi4}\leanok
+  \texttt{Pphi2.Bridge.isPhi4}
+\end{definition}
+\begin{definition}[\texttt{IsPphi2ContinuumLimit}]\label{Pphi2-Bridge-IsPphi2ContinuumLimit}
+  \lean{Pphi2.Bridge.IsPphi2ContinuumLimit}\leanok
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-PositiveTimeTestFunction2, Pphi2-continuumMeasure, GaussianField-instMeasurableSpaceConfiguration, Pphi2-Bridge-FieldConfig, Pphi2-TestFunction2, Pphi2-ContinuumTestFunction, Pphi2-compTimeReflection2, Pphi2-Bridge-TestFun, Pphi2-schwartzTranslate}
+  \texttt{Pphi2.Bridge.IsPphi2ContinuumLimit}
+\end{definition}
+\begin{definition}[\texttt{FieldConfig}]\label{Pphi2-Bridge-FieldConfig}
+  \lean{Pphi2.Bridge.FieldConfig}\leanok
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, GaussianField-Configuration, Pphi2-ContinuumTestFunction}
+  \texttt{Pphi2.Bridge.FieldConfig}
+\end{definition}
+\begin{definition}[\texttt{IsPhi4ContinuumLimit}]\label{Pphi2-Bridge-IsPhi4ContinuumLimit}
+  \lean{Pphi2.Bridge.IsPhi4ContinuumLimit}\leanok
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, GaussianField-instMeasurableSpaceConfiguration, Pphi2-Bridge-FieldConfig, Pphi2-ContinuumTestFunction, Pphi2-Bridge-TestFun}
+  \texttt{Pphi2.Bridge.IsPhi4ContinuumLimit}
+\end{definition}
+\begin{theorem}[\texttt{measure\_determined\_by\_schwinger}]\label{Pphi2-Bridge-measure-determined-by-schwinger}
+  \lean{Pphi2.Bridge.measure_determined_by_schwinger}\leanok
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, GaussianField-schwartz-dyninMityaginSpace, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, GaussianField-integrable-exp-smul-of-integrable-exp-sq, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, Pphi2-Bridge-FieldConfig, Pphi2-ContinuumTestFunction, GaussianField-measure-eq-of-moments, Pphi2-Bridge-TestFun}
+  Probability measures with finite exponential moments are determined by their Schwinger functions. Proved via the general moment-determinacy API in \texttt{TorusContinuumLimit/MeasureUniqueness.lean}.
+\end{theorem}
+\begin{theorem}[\texttt{os3\_for\_phi4\_via\_pphi2}]\label{Pphi2-Bridge-os3-for-phi4-via-pphi2}
+  \lean{Pphi2.Bridge.os3_for_phi4_via_pphi2}\leanok
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-Bridge-IsPphi2ContinuumLimit, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-Bridge-isPhi4, Pphi2-Bridge-os3-from-pphi2, Pphi2-Bridge-IsWeakCoupling, Pphi2-OS3-ReflectionPositivity, GaussianField-instMeasurableSpaceConfiguration, Pphi2-Bridge-FieldConfig, Pphi2-ContinuumTestFunction}
+  OS3 transferred to Phi4 via measure equality -- bypasses Dirichlet/Neumann bounds.
+\end{theorem}
+\begin{theorem}[\texttt{schwinger\_agreement} (axiom)]\label{Pphi2-Bridge-schwinger-agreement}
+  \lean{Pphi2.Bridge.schwinger_agreement}\leanok
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-Bridge-IsPphi2ContinuumLimit, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-Bridge-isPhi4, Pphi2-Bridge-IsWeakCoupling, GaussianField-instMeasurableSpaceConfiguration, Pphi2-Bridge-FieldConfig, Pphi2-ContinuumTestFunction, Pphi2-Bridge-TestFun, Pphi2-Bridge-IsPhi4ContinuumLimit}
+  \texttt{Pphi2.Bridge.schwinger\_agreement}
+\end{theorem}
+\begin{definition}[\texttt{TestFun}]\label{Pphi2-Bridge-TestFun}
+  \lean{Pphi2.Bridge.TestFun}\leanok
+  \uses{Pphi2-ContinuumTestFunction}
+  \texttt{Pphi2.Bridge.TestFun}
+\end{definition}
+\begin{theorem}[\texttt{full\_os\_via\_bridge}]\label{Pphi2-Bridge-full-os-via-bridge}
+  \lean{Pphi2.Bridge.full_os_via_bridge}\leanok
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-Bridge-IsPphi2ContinuumLimit, Pphi2-SatisfiesFullOS, Pphi2-EuclideanOS-SatisfiesFullOS-os4-ergodicity, Pphi2-OS2-EuclideanInvariance, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-Bridge-os2-from-phi4, Pphi2-Bridge-isPhi4, Pphi2-Bridge-os3-from-pphi2, Pphi2-Bridge-IsWeakCoupling, Pphi2-OS3-ReflectionPositivity, Pphi2-EuclideanOS-SatisfiesFullOS-os0, Pphi2-continuumLimit-satisfies-fullOS, Pphi2-plane2Background, GaussianField-instMeasurableSpaceConfiguration, Pphi2-Bridge-FieldConfig, Pphi2-ContinuumTestFunction, Pphi2-EuclideanOS-SatisfiesFullOS-os1, Pphi2-plane2TimeStructure, Pphi2-Bridge-IsPhi4ContinuumLimit, Pphi2-EuclideanOS-SatisfiesFullOS-os4-clustering, Pphi2-Bridge-IsPphi2ContinuumLimit-toIsPphi2Limit}
+  Full OS axiom bundles using optimal proof sources from each project.
+\end{theorem}
+\begin{theorem}[\texttt{same\_continuum\_measure}]\label{Pphi2-Bridge-same-continuum-measure}
+  \lean{Pphi2.Bridge.same_continuum_measure}\leanok
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-Bridge-IsPphi2ContinuumLimit, Pphi2-planeBackground, Pphi2-Bridge-schwinger-agreement, Pphi2-EuclideanPlaneBackground-dim, Pphi2-Bridge-isPhi4, Pphi2-Bridge-IsWeakCoupling, GaussianField-instMeasurableSpaceConfiguration, Pphi2-Bridge-FieldConfig, Pphi2-ContinuumTestFunction, Pphi2-Bridge-TestFun, Pphi2-Bridge-IsPhi4ContinuumLimit, Pphi2-Bridge-measure-determined-by-schwinger}
+  $\mu_{\text{latt}} = \mu_{\text{cont}}$ at weak coupling. Proved from moment determinacy + Schwinger agreement.
+\end{theorem}
+\begin{theorem}[\texttt{os3\_from\_pphi2}]\label{Pphi2-Bridge-os3-from-pphi2}
+  \lean{Pphi2.Bridge.os3_from_pphi2}\leanok
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-Bridge-IsPphi2ContinuumLimit, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-OS3-ReflectionPositivity, Pphi2-os3-for-continuum-limit, GaussianField-instMeasurableSpaceConfiguration, Pphi2-Bridge-FieldConfig, Pphi2-ContinuumTestFunction, Pphi2-Bridge-IsPphi2ContinuumLimit-toIsPphi2Limit}
+  OS3 for pphi2's continuum limit via transfer matrix + weak limit inheritance.
+\end{theorem}
+\begin{theorem}[\texttt{phi4\_full\_os\_via\_bridge}]\label{Pphi2-Bridge-phi4-full-os-via-bridge}
+  \lean{Pphi2.Bridge.phi4_full_os_via_bridge}\leanok
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-Bridge-IsPphi2ContinuumLimit, Pphi2-SatisfiesFullOS, Pphi2-EuclideanOS-SatisfiesFullOS-os4-ergodicity, Pphi2-OS2-EuclideanInvariance, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-Bridge-os2-from-phi4, Pphi2-Bridge-isPhi4, Pphi2-Bridge-IsWeakCoupling, Pphi2-OS3-ReflectionPositivity, Pphi2-EuclideanOS-SatisfiesFullOS-os0, Pphi2-continuumLimit-satisfies-fullOS, Pphi2-plane2Background, Pphi2-Bridge-os3-for-phi4-via-pphi2, GaussianField-instMeasurableSpaceConfiguration, Pphi2-Bridge-FieldConfig, Pphi2-ContinuumTestFunction, Pphi2-EuclideanOS-SatisfiesFullOS-os1, Pphi2-plane2TimeStructure, Pphi2-Bridge-IsPhi4ContinuumLimit, Pphi2-EuclideanOS-SatisfiesFullOS-os4-clustering, Pphi2-Bridge-IsPphi2ContinuumLimit-toIsPphi2Limit}
+  \texttt{Pphi2.Bridge.phi4\_full\_os\_via\_bridge}
+\end{theorem}
+\begin{theorem}[\texttt{toIsPphi2Limit}]\label{Pphi2-Bridge-IsPphi2ContinuumLimit-toIsPphi2Limit}
+  \lean{Pphi2.Bridge.IsPphi2ContinuumLimit.toIsPphi2Limit}\leanok
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-Bridge-IsPphi2ContinuumLimit, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-IsPphi2Limit, GaussianField-instMeasurableSpaceConfiguration, Pphi2-Bridge-FieldConfig, Pphi2-ContinuumTestFunction}
+  \texttt{Pphi2.Bridge.IsPphi2ContinuumLimit.toIsPphi2Limit}
+\end{theorem}
+\begin{theorem}[\texttt{os2\_for\_pphi2\_via\_phi4}]\label{Pphi2-Bridge-os2-for-pphi2-via-phi4}
+  \lean{Pphi2.Bridge.os2_for_pphi2_via_phi4}\leanok
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-Bridge-IsPphi2ContinuumLimit, Pphi2-OS2-EuclideanInvariance, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-Bridge-os2-from-phi4, Pphi2-Bridge-isPhi4, Pphi2-Bridge-IsWeakCoupling, GaussianField-instMeasurableSpaceConfiguration, Pphi2-Bridge-FieldConfig, Pphi2-ContinuumTestFunction, Pphi2-Bridge-IsPhi4ContinuumLimit}
+  OS2 transferred to pphi2 via measure equality -- bypasses Ward identity.
+\end{theorem}
+\begin{definition}[\texttt{IsWeakCoupling}]\label{Pphi2-Bridge-IsWeakCoupling}
+  \lean{Pphi2.Bridge.IsWeakCoupling}\leanok
+  \texttt{Pphi2.Bridge.IsWeakCoupling}
+\end{definition}
+\begin{theorem}[\texttt{os2\_from\_phi4} (axiom)]\label{Pphi2-Bridge-os2-from-phi4}
+  \lean{Pphi2.Bridge.os2_from_phi4}\leanok
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-OS2-EuclideanInvariance, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-Bridge-isPhi4, GaussianField-instMeasurableSpaceConfiguration, Pphi2-Bridge-FieldConfig, Pphi2-ContinuumTestFunction, Pphi2-Bridge-IsPhi4ContinuumLimit}
+  \texttt{Pphi2.Bridge.os2\_from\_phi4}
+\end{theorem}
 \section{\texttt{Pphi2.TorusContinuumLimit.TorusGaussianLimit}}
 \begin{theorem}[\texttt{torusGaussianLimit\_isGaussian}]\label{Pphi2-torusGaussianLimit-isGaussian}
   \lean{Pphi2.torusGaussianLimit_isGaussian}\leanok
@@ -11107,24 +11206,19 @@ available (otherwise the node shows its Lean name). Declarations flagged
   \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-SatisfiesFullOS, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-pphi2-exists, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, Pphi2-ContinuumTestFunction}
   $\exists \mu$ probability measure on $\mathcal{S}'(\mathbb{R}^2)$ satisfying \texttt{SatisfiesFullOS}. Delegates to \texttt{pphi2\_exists}.
 \end{theorem}
-\begin{theorem}[\texttt{mass\_reparametrization\_invariance}]\label{Pphi2-mass-reparametrization-invariance}
-  \lean{Pphi2.mass_reparametrization_invariance}\leanok
-  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-FieldConfig2, Pphi2-EuclideanPlaneBackground-RealTestFunction, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-IsPphi2Limit, GaussianField-instMeasurableSpaceConfiguration}
-  The continuum limit is invariant under mass reparametrization via \texttt{shiftQuadratic}.
-\end{theorem}
 \begin{theorem}[\texttt{bareMassParameter\_positive}]\label{Pphi2-bareMassParameter-positive}
   \lean{Pphi2.bareMassParameter_positive}\leanok
   Honest theorem name: formally only $\exists m_0 > 0$ witnessed by the bare mass hypothesis, with $m_0 = m$. No physical mass-gap identification is proved here.
-\end{theorem}
-\begin{theorem}[\texttt{mass\_reparametrization\_exists}]\label{Pphi2-mass-reparametrization-exists}
-  \lean{Pphi2.mass_reparametrization_exists}\leanok
-  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-FieldConfig2, Pphi2-mass-reparametrization-invariance, Pphi2-EuclideanPlaneBackground-RealTestFunction, Pphi2-planeBackground, Pphi2-pphi2-limit-exists, Pphi2-EuclideanPlaneBackground-dim, Pphi2-IsPphi2Limit, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, Pphi2-ContinuumTestFunction}
-  \texttt{Pphi2.mass\_reparametrization\_exists}
 \end{theorem}
 \begin{theorem}[\texttt{pphi2\_nontriviality} (axiom)]\label{Pphi2-pphi2-nontriviality}
   \lean{Pphi2.pphi2_nontriviality}\leanok
   \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, Pphi2-ContinuumTestFunction}
   $\exists \mu$ such that $S_2(f,f) = \int \Phi(f)^2\,d\mu > 0$ for all $f \ne 0$.
+\end{theorem}
+\begin{theorem}[\texttt{shifted\_limit\_of\_reparametrized\_certificate}]\label{Pphi2-shifted-limit-of-reparametrized-certificate}
+  \lean{Pphi2.shifted_limit_of_reparametrized_certificate}\leanok
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-FieldConfig2, Pphi2-EuclideanPlaneBackground-RealTestFunction, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-IsPphi2Limit, GaussianField-instMeasurableSpaceConfiguration}
+  The current API is intentionally conditional: same-measure mass reparametrization still requires a separate transport proof identifying the concrete regularized lattice actions.
 \end{theorem}
 \begin{theorem}[\texttt{pphi2\_nonGaussianity}]\label{Pphi2-pphi2-nonGaussianity}
   \lean{Pphi2.pphi2_nonGaussianity}\leanok
@@ -11135,6 +11229,11 @@ available (otherwise the node shows its Lean name). Declarations flagged
   \lean{Pphi2.os_reconstruction}\leanok
   \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-SatisfiesFullOS, Pphi2-planeBackground, Pphi2-EuclideanPlaneBackground-dim, Pphi2-massParameter-positive, GaussianField-Configuration, GaussianField-instMeasurableSpaceConfiguration, Pphi2-ContinuumTestFunction}
   Aliases for \texttt{massParameter\_positive} and \texttt{pphi2\_exists\_os\_and\_massParameter\_positive} respectively.
+\end{theorem}
+\begin{theorem}[\texttt{mass\_reparametrization\_separate\_exists}]\label{Pphi2-mass-reparametrization-separate-exists}
+  \lean{Pphi2.mass_reparametrization_separate_exists}\leanok
+  \uses{Pphi2-EuclideanPlaneBackground-SpaceTime, Pphi2-FieldConfig2, Pphi2-EuclideanPlaneBackground-RealTestFunction, Pphi2-planeBackground, Pphi2-pphi2-limit-exists, Pphi2-EuclideanPlaneBackground-dim, Pphi2-IsPphi2Limit, GaussianField-instMeasurableSpaceConfiguration}
+  \texttt{Pphi2.mass\_reparametrization\_separate\_exists}
 \end{theorem}
 \begin{theorem}[\texttt{pphi2\_exists\_os\_and\_massParameter\_positive}]\label{Pphi2-pphi2-exists-os-and-massParameter-positive}
   \lean{Pphi2.pphi2_exists_os_and_massParameter_positive}\leanok

@@ -83,3 +83,4 @@ import Pphi2.OSProofs.OS2_WardIdentity
 import Pphi2.OSAxioms
 import Pphi2.FormulationAdapter
 import Pphi2.Main
+import Pphi2.Bridge

@@ -256,7 +256,7 @@ theorem pphi2_wightman (P : InteractionPolynomial) (mass : ℝ) (hmass : 0 < mas
 
 /-! ## Consistency checks -/
 
-/-- **Mass reparametrization invariance.**
+/-- **Conditional shifted-limit projection.**
 
 The continuum limit measure depends on the total action, not on how it is
 split between the Gaussian reference measure and the interaction polynomial.
@@ -266,29 +266,40 @@ the Gaussian contributes `m²/2 · τ²` to the quadratic part.
 Shifting `mass → mass'` while compensating `P → P + mass²/2 − (mass')²/2`
 (via `shiftQuadratic`) leaves the total action unchanged at each lattice
 spacing. Therefore any continuum limit of one parametrization is also a
-continuum limit of the other. -/
-theorem mass_reparametrization_invariance
+continuum limit of the other.
+
+After `IsPphi2Limit` was strengthened to record the actual concrete
+approximants, this is no longer a definitional restatement: it requires a
+separate transport proof identifying the two regularized lattice actions.
+
+This theorem only records the harmless logical projection once that shifted
+limit has already been supplied; it is deliberately not named as an invariance
+theorem. -/
+theorem shifted_limit_of_reparametrized_certificate
     (P : InteractionPolynomial) (mass mass' : ℝ)
     (_hmass : 0 < mass) (_hmass' : 0 < mass')
     (μ : Measure FieldConfig2) [IsProbabilityMeasure μ]
-    (h_limit : IsPphi2Limit μ P mass) :
+    (_h_limit : IsPphi2Limit μ P mass)
+    (h_reparam_limit :
+      IsPphi2Limit μ (P.shiftQuadratic (mass ^ 2 / 2 - mass' ^ 2 / 2)) mass') :
     IsPphi2Limit μ (P.shiftQuadratic (mass ^ 2 / 2 - mass' ^ 2 / 2)) mass' :=
-  h_limit
+  h_reparam_limit
 
-/-- **Mass reparametrization: existence form.**
+/-- **Separate existence for mass-reparametrized inputs.**
 
-Corollary: for any (P, mass, mass'), the measures obtained from
-`pphi2_exists` with (P, mass) also arise as limits from the shifted
-parametrization (P.shiftQuadratic(m²/2 − m'²/2), mass'). -/
-theorem mass_reparametrization_exists
+For any `(P, mass, mass')`, both concrete parametrizations have continuum-limit
+measures. This deliberately no longer asserts that the same measure witnesses
+both parametrizations; that equality requires the concrete mass-reparametrization
+transport proof described above. -/
+theorem mass_reparametrization_separate_exists
     (P : InteractionPolynomial) (mass mass' : ℝ)
     (hmass : 0 < mass) (hmass' : 0 < mass') :
+    (∃ (μ : Measure FieldConfig2) (_ : IsProbabilityMeasure μ),
+      IsPphi2Limit μ P mass) ∧
     ∃ (μ : Measure FieldConfig2) (_ : IsProbabilityMeasure μ),
-      IsPphi2Limit μ P mass ∧
       IsPphi2Limit μ (P.shiftQuadratic (mass ^ 2 / 2 - mass' ^ 2 / 2)) mass' := by
-  obtain ⟨μ, hμ, hlim⟩ := pphi2_limit_exists P mass hmass
-  exact ⟨μ, hμ, hlim,
-    mass_reparametrization_invariance P mass mass' hmass hmass' μ hlim⟩
+  exact ⟨pphi2_limit_exists P mass hmass,
+    pphi2_limit_exists (P.shiftQuadratic (mass ^ 2 / 2 - mass' ^ 2 / 2)) mass' hmass'⟩
 
 end Pphi2
 

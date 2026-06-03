@@ -324,7 +324,7 @@ corresponding coupled UV/IR family `continuumMeasure 2 (N_n) P (a_n) mass`
 converges to `μ` in characteristic functionals. This is the bridge where the
 abstract limit marker is tied back to the concrete `P(Φ)₂` approximants used in
 the Ward estimate. -/
-axiom canonical_continuumMeasure_cf_tendsto (P : InteractionPolynomial)
+theorem canonical_continuumMeasure_cf_tendsto (P : InteractionPolynomial)
     (mass : ℝ) (hmass : 0 < mass)
     (μ : Measure FieldConfig2) [IsProbabilityMeasure μ]
     (h_limit : IsPphi2Limit μ P mass) :
@@ -341,7 +341,14 @@ axiom canonical_continuumMeasure_cf_tendsto (P : InteractionPolynomial)
               Complex.exp (Complex.I * ↑(ω f)) ∂
                 (continuumMeasure 2 (N n) P (a n) mass (ha_pos n) hmass))
           Filter.atTop
-          (nhds (EuclideanOS.generatingFunctional (B := plane2Background) μ f))
+          (nhds (EuclideanOS.generatingFunctional (B := plane2Background) μ f)) := by
+  rcases h_limit with ⟨a, ν, _hprob, ha_tend, _ha_pos, ha_le, hconcrete, _hmom, _hneg, hcf,
+    _hlat, _hweakconv, _happrox_os3⟩
+  rcases hconcrete with ⟨N, hN_pos, ha_pos, hmass', hN_tend, hphys_tend, hν_eq⟩
+  refine ⟨N, a, hN_pos, ha_pos, ha_le, ha_tend, hN_tend, hphys_tend, ?_⟩
+  intro f
+  have hcf' := hcf f
+  simpa [EuclideanOS.generatingFunctional, hν_eq] using hcf'
 
 /-- **Exponential clustering of the continuum limit** from spectral gap.
 
